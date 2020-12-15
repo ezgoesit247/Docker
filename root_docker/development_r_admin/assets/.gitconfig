@@ -1,0 +1,10 @@
+# This is Git's per-user configuration file.
+[user]
+# Please adapt and uncomment the following lines:
+	name = Brandon R. India
+	email = brandon.r.india@gmail.com
+[advice]
+	addIgnoredFile = false
+[core]
+	excludesfile = ***REMOVED***/.gitignore_global
+	editor = vim

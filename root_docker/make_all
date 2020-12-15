@@ -1,0 +1,51 @@
+#!/bin/bash
+
+cd ${HOME}/Docker
+src_dir=./test_admin
+dst_dir=./${1}_admin
+
+if [ -d ${src_dir} ] && [ ! -d ${dst_dir} ];then
+    mkdir ${dst_dir} && mv ${src_dir}/Dockerfile.sh ${_} && mv ${src_dir}/README.md ${_} && mkdir ${_}/assets \
+    && pushd ${dst_dir} > /dev/null && ln -s ./Dockerfile.sh ./Dockerfile && popd > /dev/null
+
+    echo|cat > ${src_dir}/Dockerfile.sh <<EOF
+FROM development_admin
+EOF
+
+    echo|cat > ${src_dir}/README.md <<EOF
+#RUN HERE (ANYWHERE, REALLY ;-)
+docker run -it -P \\
+  -v \${PWD}:/root/assets \\
+  -v \${HOME}/.m2:/root/.m2 \\
+  -v \${HOME}/.aws:/root/.aws \\
+  --rm \${src_dir}
+
+#RUN NAMED
+docker run -it -P \\
+  -v \${HOME}/Docker/shared_assets:/root/assets \\
+  -v \${HOME}/Docker/shared_assets/bash_history:/root/bash_history \\
+  -v \${HOME}/.m2:/root/.m2 \\
+  -v \${HOME}/.aws:/root/.aws \\
+  -v \${HOME}/eclipse-workspace:/root/eclipse-workspace \\
+  -v \${HOME}/git_clone:/root/git_clone \\
+  --name \${PWD##*/} \\
+  \${PWD##*/}
+
+#RUN REMOVE
+docker run -it -P \\
+  -v \${HOME}/Docker/shared_assets:/root/assets \\
+  -v \${HOME}/Docker/shared_assets/bash_history:/root/bash_history \\
+  -v \${HOME}/.m2:/root/.m2 \\
+  -v \${HOME}/.aws:/root/.aws \\
+  -v \${HOME}/eclipse-workspace:/root/eclipse-workspace \\
+  -v \${HOME}/git_clone:/root/git_clone \\
+  --rm \${PWD##*/}
+
+#START attach
+docker start \${PWD##*/} && docker attach \${_}
+
+#BUILD IMAGE
+docker build -t \${PWD##*/} .
+
+EOF
+else echo ERROR; fi

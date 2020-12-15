@@ -1,0 +1,141 @@
+Tue Nov 10 20:52:00 UTC 2020
+aws ec2 describe-regions --output table
+ntpstat
+aws iam create-group --group-name kmsadmingroup
+aws iam attach-group-policy --policy-arn arn:aws:iam::aws:policy/AdministratorAccess --group-name kmsadmingroup
+aws iam list-attached-group-policies --group-name kmsadmingroup
+aws iam create-user --user-name kmsadmin
+aws iam add-user-to-group --user-name kmsadmin --group-name kmsadmingroup
+aws iam create-access-key --user-name kmsadmin > kmsadmin_keys.json
+aws iam list-groups --output table
+aws iam list-users --output table
+
+aws ec2 describe-availability-zones
+aws ec2 create-vpc --cidr-block 10.250.0.0/16
+VPC_ID=vpc-065fcb689d130b23a
+mkdir assets/KMS_Lesson && echo "VPC_ID=${VPC_ID}" >> ${_}/vars.sh
+aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block 10.250.0.0/24 --availability-zone us-east-1a
+SUBNET_ID1=subnet-0b5a9c504ba153902
+echo SUBNET_ID1=${SUBNET_ID1} >> assets/KMS_Lesson/vars.sh
+aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block 10.250.1.0/24 --availability-zone us-east-1b
+SUBNET_ID2=subnet-00007fe26c2932590 ;echo SUBNET_ID2=${SUBNET_ID2} >> assets/KMS_Lesson/vars.sh
+aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block 10.250.2.0/24 --availability-zone us-east-1c
+SUBNET_ID3=subnet-043a4794213a7dfe3 ;echo SUBNET_ID3=${SUBNET_ID3} >> assets/KMS_Lesson/vars.sh
+aws ec2 create-subnet --vpc-id ${VPC_ID} --cidr-block 10.250.3.0/24 --availability-zone us-east-1d
+SUBNET_ID4=subnet-0ca8a7d7a1d49f22e ;echo SUBNET_ID4=${SUBNET_ID4} >> assets/KMS_Lesson/vars.sh
+aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}"
+aws ec2 create-internet-gateway
+IGW=igw-08572602890a5f4a9
+vars=~/assets/KMS_Lesson/vars.sh
+echo "{IGW}=${IGW}" >> $vars
+aws ec2 attach-internet-gateway --vpc-id ${VPC_ID} --internet-gateway-id ${IGW}
+aws ec2 describe-internet-gateways
+aws ec2 describe-route-tables --filters "Name=vpc-id,Values=${VPC_ID}"
+RT=rtb-0a6c5931970c0bc37
+echo "RT=${RT}" >> $vars
+aws ec2 create-route --route-table-id ${RT} --destination-cidr-block 0.0.0.0/0 --gateway-id ${IGW}
+aws ec2 describe-route-tables --route-table-id ${RT}
+aws ec2 associate-route-table --subnet-id ${SUBNET_ID1} --route-table-id ${RT}
+aws ec2 associate-route-table --subnet-id ${SUBNET_ID2} --route-table-id ${RT}
+aws ec2 associate-route-table --subnet-id ${SUBNET_ID3} --route-table-id ${RT}
+aws ec2 associate-route-table --subnet-id ${SUBNET_ID4} --route-table-id ${RT}
+aws ec2 describe-route-tables --route-table-id ${RT}
+
+Tue Nov 10 21:52:00 UTC 2020
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID1} --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID2} --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID3} --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID4} --map-public-ip-on-launch
+aws ec2 create-tags --resources ${SUBNET_ID1} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 create-tags --resources ${SUBNET_ID2} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 create-tags --resources ${SUBNET_ID3} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 create-tags --resources ${SUBNET_ID4} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}"
+
+Tue Nov 10 21:59:02 UTC 2020
+>.bash_history
+source assets/KMS_Lesson/vars.sh
+echo ${SUBNET_ID4}
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID1} --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID2} --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID3} --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id ${SUBNET_ID4} --map-public-ip-on-launch
+aws ec2 create-tags --resources ${SUBNET_ID1} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 create-tags --resources ${SUBNET_ID2} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 create-tags --resources ${SUBNET_ID3} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 create-tags --resources ${SUBNET_ID4} --tags Key=kubernetes.io/role/elb,Value=1
+aws ec2 describe-subnets --filters "Name=vpc-id,Values=${VPC_ID}"
+
+
+Wed Nov 11 14:59:02 UTC 2020
+eksctl create cluster -f assets/KMS/my-eks-course.yaml
+eksctl get cluster
+eksctl get nodegroup --cluster EKS-course-cluster
+eksctl scale nodegroup --cluster=EKS-course-cluster --name=ng-1 --nodes-max=5 --nodes=5
+
+eksctl delete nodegroup --config-file=assets/KMS/my-eks-course.yaml --include=ng-1
+eksctl delete nodegroup --config-file=assets/KMS/my-eks-course.yaml --include=ng-mixed --approve
+
+curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+cd -
+
+helm repo add stable https://charts.helm.sh/stable
+helm install redis-test stable/redis
+
+
+kubectl apply -f redis-master.yaml
+
+Fri Nov 13 03:57:07 UTC 2020
+mkdir assets/KMS/config-exercise
+
+echo|cat >> config-demo<<EOF
+apiVersion: v1
+kind: Config
+preferences: {}
+
+clusters:
+- cluster:
+  name: development
+- cluster:
+  name: scratch
+
+users:
+- name: developer
+- name: experimenter
+
+contexts:
+- context:
+  name: dev-frontend
+- context:
+  name: dev-storage
+- context:
+  name: exp-scratch
+EOF
+
+kubectl config --kubeconfig=config-demo set-cluster development --server=https://1.2.3.4 --certificate-authority=fake-ca-file
+kubectl config --kubeconfig=config-demo set-cluster scratch --server=https://5.6.7.8 --insecure-skip-tls-verify
+kubectl config --kubeconfig=config-demo set-credentials developer --client-certificate=fake-cert-file --client-key=fake-key-seefile
+kubectl config --kubeconfig=config-demo set-credentials experimenter --username=exp --password=some-password
+kubectl config --kubeconfig=config-demo set-context dev-frontend --cluster=development --namespace=frontend --user=developer
+kubectl config --kubeconfig=config-demo set-context dev-storage --cluster=development --namespace=storage --user=developer
+kubectl config --kubeconfig=config-demo set-context exp-scratch --cluster=scratch --namespace=default --user=experimenter
+kubectl config --kubeconfig=config-demo view
+kubectl config --kubeconfig=config-demo use-context dev-frontend
+kubectl config --kubeconfig=config-demo view
+kubectl config --kubeconfig=config-demo view --minify
+kubectl config --kubeconfig=config-demo use-context exp-scratch
+kubectl config --kubeconfig=config-demo view --minify
+
+kubectl config set-cluster development --server=https://1.2.3.4 --certificate-authority=fake-ca-file
+kubectl config set-cluster scratch --server=https://5.6.7.8 --insecure-skip-tls-verify
+kubectl config set-credentials developer --client-certificate=fake-cert-file --client-key=fake-key-seefile
+kubectl config set-credentials experimenter --username=exp --password=some-password
+kubectl config set-context dev-frontend --cluster=development --namespace=frontend --user=developer
+kubectl config set-context dev-storage --cluster=development --namespace=storage --user=developer
+kubectl config set-context exp-scratch --cluster=scratch --namespace=default --user=experimenter
+kubectl config view
+kubectl config use-context dev-frontend
+kubectl config view
+kubectl config view --minify
+kubectl config use-context exp-scratch
+kubectl config view --minify

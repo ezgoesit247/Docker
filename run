@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [ -z $1 ]; then echo "Looking for container image: ${PWD##*/}"
+docker run --privileged -it -P \
+  -v ${PWD}:/home/poweruser/_assets.local \
+  -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
+  -v ${HOME}/.m2:/home/poweruser/.m2 \
+  -v ${HOME}/.aws:/home/poweruser/.aws \
+  -v ${HOME}/.ssh:/home/poweruser/.ssh \
+  --user poweruser \
+  --rm \
+  ${PWD##*/}
+else
+if ! docker run --privileged -it -P \
+  -v ${PWD}:/home/poweruser/_assets.local \
+  -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
+  -v ${HOME}/.m2:/home/poweruser/.m2 \
+  -v ${HOME}/.aws:/home/poweruser/.aws \
+  -v ${HOME}/.ssh:/home/poweruser/.ssh \
+  --user poweruser \
+  --name ${1} \
+  ${PWD##*/} 2> /dev/null
+   then echo "looking for container ${1}..." && if docker start ${1} > /dev/null 2>&1; then docker attach ${_}
+   else echo "can't start, running container: docker run --privileged -it -P ${1}" && docker run --privileged -it -P \
+     -v ${PWD}:/home/poweruser/_assets.local \
+     -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
+     -v ${HOME}/.m2:/home/poweruser/.m2 \
+     -v ${HOME}/.aws:/home/poweruser/.aws \
+     -v ${HOME}/.ssh:/home/poweruser/.ssh \
+     --user poweruser \
+     --rm \
+     ${1}
+fi
+fi
+fi

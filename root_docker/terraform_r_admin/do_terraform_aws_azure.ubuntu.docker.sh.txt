@@ -1,0 +1,191 @@
+#
+# HOST DOCKER COMMAND
+# docker run -it --privileged ubuntu /bin/bash
+#
+# COPY AND PAST EVERYTHING ELSE IN UBUNTU
+#
+
+export KEY_ID=__your__key__id__ && \
+export ACCESS_KEY=__your__access__key__ && \
+echo | cat >> /root/script.sh<<AWS
+#!/bin/bash
+
+#Ubuntu
+
+
+apt-get -y update && apt-get -y upgrade
+apt-get -y install \
+   curl \
+   gnupg \
+   unzip \
+   vim
+echo "12 4" | apt-get -y install software-properties-common
+
+# Docker
+apt-get -y install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+apt-key fingerprint 0EBFCD88
+add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   \$(lsb_release -cs) \
+   stable"
+apt-get update
+apt-get -y install docker-ce docker-ce-cli containerd.io
+
+service docker start
+service docker status
+docker run hello-world
+
+# https://docs.docker.com/engine/install/ubuntu/
+# https://docs.docker.com/engine/install/linux-postinstall/
+
+# Terraform https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started Ubuntu/Debian
+# Add the HashiCorp GPG key.
+curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+
+#Add the official HashiCorp Linux repository.
+apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com \$(lsb_release -cs) main"
+
+apt-get update && apt-get install terraform
+terraform -install-autocomplete
+
+#hello-world
+mkdir /terraform-docker-demo && cd \$_
+echo | cat >> /terraform-docker-demo/main.tf <<EOF
+terraform {
+  required_providers {
+    docker = {
+      source = "terraform-providers/docker"
+    }
+  }
+}
+
+provider "docker" {}
+
+resource "docker_image" "nginx" {
+  name         = "nginx:latest"
+  keep_locally = false
+}
+
+resource "docker_container" "nginx" {
+  image = docker_image.nginx.latest
+  name  = "tutorial"
+  ports {
+    internal = 80
+    external = 8000
+  }
+}
+EOF
+
+terraform init
+echo "yes" | terraform apply
+curl localhost:8000
+echo "yes" | terraform destroy
+
+#AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+/usr/local/bin/aws --version
+
+# Terraform build infra
+mkdir /learn-terraform-aws-instance && cd \$_
+
+echo | cat >> example.tf<<EOF
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 2.70"
+    }
+  }
+}
+
+provider "aws" {
+  profile = "default"
+  region  = "us-west-2"
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-830c94e3"
+  instance_type = "t2.micro"
+}
+EOF
+
+terraform init
+
+#DOES NOTHING, SHOULD DO NOTHING
+terraform fmt
+
+#EXPECT GREATNESS
+terraform validate
+
+mkdir ~/.aws && echo | cat >> ~/.aws/credentials<<EOF
+[default]
+***REMOVED***=${KEY_ID}
+***REMOVED***=${ACCESS_KEY}
+EOF
+
+
+
+#DO THE DEED
+echo yes | terraform apply
+
+#CRUSH THE DREAM
+echo yes | terraform destroy
+
+AWS
+
+echo | cat >> /root/script.sh<<AZ
+
+curl -sL https://aka.ms/InstallAzureCLIDeb | /bin/bash
+
+curl -sL https://packages.microsoft.com/keys/microsoft.asc |
+    gpg --dearmor |
+    tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+
+AZ_REPO=\$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ \$AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list
+
+apt-get update
+apt-get install azure-cli
+
+#BROWSWER STEP >>> WOAH >> DOMAIN TRUST IS GOOD
+az login
+
+mkdir /learn-terraform-azure && cd \$_
+echo | cat >> main.tf<<EOF
+# Configure the Azure provider
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = ">= 2.26"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_resource_group" "rg" {
+  name     = "myTFResourceGroup"
+  location = "westus2"
+}
+EOF
+terraform init
+terraform plan
+echo yes | terraform apply
+terraform show
+terraform state list
+echo yes | terraform destroy
+
+AZ
+
+. /root/script.sh
+
