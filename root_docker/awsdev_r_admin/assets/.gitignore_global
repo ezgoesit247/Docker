@@ -1,0 +1,20 @@
+# ALL DIRECTORIES NAMED:
+target/
+.settings/
+ignored/
+ignore/
+
+# IGNORE WHATEVER AT THIS TREE ROOT
+/SOMEDIR
+/SOMEFILE
+
+# ALL FILES NAMED:
+.DS_Store
+.project
+.classpath
+ignored
+ignore
+
+# DON'T IGNORE
+!.gitignore
+
