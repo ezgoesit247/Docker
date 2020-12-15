@@ -15,6 +15,9 @@ case $i in
 esac
 done
 
+###
+### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
+###
 if [ -z $1 ]; then echo "Looking for container image: ${PWD##*/}"
 if ! docker run --privileged -it -P \
   -v ${PWD}:/home/poweruser/_assets.local \
@@ -24,8 +27,11 @@ if ! docker run --privileged -it -P \
   -v ${HOME}/.ssh:/home/poweruser/.ssh \
   --user poweruser \
   --rm \
-  ${PWD##*/} 2> /dev/null; then echo "Usage: run NOARGS must be in parent dir\n     run [NAME] saves container if in parent dir, else creates anonymous"; fi
+  ${PWD##*/} 2> /dev/null; then echo -e " Usage:\trun NOARGS must be in parent dir\n\trun [NAME] saves container if PWD is parent dir\n\t else creates rm anonymous"; exit 1; fi
 else
+###
+### CASE 2 STARTS/ATTACHES TO EXISTING NAMED CONTAINER, NAMED AS PWD
+###
 if ! docker run --privileged -it -P \
   -v ${PWD}:/home/poweruser/_assets.local \
   -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
@@ -36,6 +42,13 @@ if ! docker run --privileged -it -P \
   --name ${1} \
   ${PWD##*/} 2> /dev/null
    then echo "looking for container ${1}..." && if docker start ${1} > /dev/null 2>&1; then docker attach ${_}
+###
+### CASE 3a & 3b ARE DEPENDANT ON -n
+###   IF -n/name argument DOES NOT EXIST, THEN RUN/REMOVE ANONYMOUS FOR IMAGE ${1}
+###      ELSE
+### ex 3a run node
+### ex 3b run -n=MyNode node
+###
    else echo "can't start, running container: docker run --privileged -it -P ${1}" && docker run --privileged -it -P \
      -v ${PWD}:/home/poweruser/_assets.local \
      -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
