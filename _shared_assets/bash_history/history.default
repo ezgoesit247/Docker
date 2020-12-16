@@ -266,3 +266,27 @@ cd hello/
 cdk8s init typescript-app
 #1607981398
 history
+#1608039805
+ls
+#1608039809
+build
+#1608039816
+echo $PATH
+#1608085177
+vi .bashrc
+#1608085485
+ls
+#1608085492
+ls -A
+#1608085513
+cd .nvm
+#1608085515
+ll
+#1608085521
+git pull
+#1608085539
+cd ..
+#1608085547
+git pull .nvm/
+#1608085570
+pushd .nvm && git pull && popd
