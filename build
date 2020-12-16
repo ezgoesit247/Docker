@@ -12,12 +12,12 @@ function do_build {
    msg "do_build" "building docker tag ${1}"
    while ! docker build -t ${1} . > /dev/null; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
-         msg "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
+         msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
             && ln -s ./Dockerfile.sh ./Dockerfile \
-            && msg "Retrying..." && continue
+            && msg "do_build" "Retrying..." && continue
       fi
-      msg "Error in ${1}, fix then press <Enter> to retry";
-      read x; msg "Retrying ${1}";
+      msg "do_build" "Error in ${1}, fix then press <Enter> to retry"; usage;
+      read x; msg "do_build" "Retrying for tag ${1}";
    done
 }
 function build {
@@ -28,15 +28,12 @@ function build {
     else do_build ${tag}
   fi
 }
-
+function usage {
+   echo -e "\n Usage:\tbuild [NAME] looks for Dockerfile ${docker_dir}/NAME/\n\tbuild NOARGS looks for Dockerfile in PWD"; echo
+}
+###
 # - main
-#if [ -z ${1} ]; then build ${PWD##*/}
-#   else if [ -d ${docker_dir}/${1} ]
-#      then pushd ${docker_dir}/${1} > /dev/null
-#      build ${1}
-#      popd
-#   fi
-#fi
+###
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   pushd ${docker_dir}/${1} > /dev/null
   build ${1}
