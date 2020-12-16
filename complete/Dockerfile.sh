@@ -1,8 +1,8 @@
 FROM ubuntu:18.04
 CMD ["/bin/bash"]
 
-RUN apt-get -y -qq update && apt-get -y -qq upgrade \
-  && apt-get -y -qq install \
+RUN apt-get -qq update \
+  && apt-get -qq install \
     sudo
 RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
   && useradd -rm -s /bin/bash -d /home/poweruser -U -G sudo -u 1001 poweruser
@@ -14,16 +14,15 @@ if [ -d _assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_hist
 export HISTTIMEFORMAT="%F	%T	"' >> /home/poweruser/.bashrc
 
 ### GEN EDS- yarrgh ###
-RUN sudo apt-get -y -qq install \
+RUN sudo apt-get -qq install \
    curl \
    wget \
-   gnupg2 \
    unzip \
    vim \
    iputils-ping
-RUN echo "12 4" | sudo apt-get -y -qq install software-properties-common
-RUN sudo apt-get -y -qq update && sudo apt-get -y -qq upgrade \
-  && sudo apt-get -y -qq install \
+RUN echo "12 4" | sudo apt-get -qq install software-properties-common
+RUN sudo apt-get -qq update \
+  && sudo apt-get -qq install \
    apt-transport-https \
    ca-certificates \
    gnupg-agent \
@@ -44,10 +43,10 @@ function red    { color 9 1 "${*}"; }\n \
 function blue   { color 6 4 "${*}"; }\n \
 function cyan   { color 9 6 "${*}"; }\n \
 function grey   { color 0 7 "${*}"; }\n \
-function pass   { echo; echo "$(green PASS: ${*})"; echo; }\n \
-function warn   { echo; echo "$(yellow PASS: ${*})"; echo; }\n \
-function fail   { echo; echo "$(red FAIL: ${*})"; echo; }\n \
-function info   { echo; echo "$(grey INFO: ${*})"; echo; }\n \
+function pass   { echo "$(green PASS: ${*})"; }\n \
+function warn   { echo "$(yellow PASS: ${*})"; }\n \
+function fail   { echo "$(red FAIL: ${*})"; }\n \
+function info   { echo "$(grey INFO: ${*})"; }\n \
 blue "python:"; python --version\n \
 blue "pip: "; pip --version' >> /home/poweruser/.bashrc
 
@@ -55,10 +54,10 @@ blue "pip: "; pip --version' >> /home/poweruser/.bashrc
 ### NTP ###
 ENV DEBIAN_FRONTEND=noninteractive
 RUN sudo ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
-   && sudo apt-get install -y tzdata \
+   && sudo apt-get install -qq tzdata \
    && sudo dpkg-reconfigure --frontend noninteractive tzdata \
-   && sudo apt-get -y -qq update && sudo apt-get -y -qq upgrade \
-   && sudo apt-get -y -qq install \
+   && sudo apt-get -qq update \
+   && sudo apt-get -qq install \
       ntp \
       ntpdate \
       ntpstat
@@ -80,12 +79,16 @@ fi' >>  /home/poweruser/.bashrc
 
 
 ### DOCKER ###
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key --keyring /etc/apt/trusted.gpg.d/docker.gpg add -
-RUN sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-RUN echo waiting... && sleep 3 \
-   && sudo apt-get -y -qq update \
-   && sudo apt-get -y -qq upgrade \
-   && sudo apt-get -y -qq install \
+RUN sudo apt-get install -qq \
+      apt-transport-https \
+      ca-certificates \
+      gnupg-agent \
+      software-properties-common \
+   && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
+   && sudo apt-key fingerprint 0EBFCD88 \
+   && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+   && sudo apt-get update \
+   && sudo apt-get install -qq \
       docker-ce \
       docker-ce-cli \
       containerd.io
@@ -104,15 +107,15 @@ RUN echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc
 #RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6A030B21BA07F4FB
 RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 RUN echo waiting... && sleep 3 \
-   && sudo apt-get -y -qq update \
-   && sudo apt-get -y -qq upgrade \
-   && sudo apt-get -y -qq install \
+   && sudo apt-get -qq update \
+   \
+   && sudo apt-get -qq install \
     kubectl \
     kubelet \
     kubeadm \
     kubernetes-cni
 RUN   echo '### K8S ###\n \
-if command -v kubelet > /dev/null 2>&1; then cyan "kubelet:"; kubelet --version; else yellow "No kubelet"; fi;\n \
+if command -v kubelet > /dev/null 2>&1; then cyan "kubelet:"; kubelet --version; else yellow "No kubelet"; echo; fi;\n \
 if command -v kubectl > /dev/null 2>&1; then cyan "kubectl:"; kubectl version --short --client; else yellow "No kubectl"; echo; fi;\n \
 if command -v kubeadm > /dev/null 2>&1; then cyan "kubeadm:"; kubeadm version --output short; else yellow "No kubeadm"; echo; fi;\n \
 if command -v eksctl > /dev/null 2>&1; then cyan "eksctl:"; eksctl version; else yellow "No eksctl"; echo; fi;\n \
@@ -128,11 +131,11 @@ cyan "helm"; helm version --short' >> /home/poweruser/.bashrc
 ### AWS CLI ###
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" \
   && unzip -qq /tmp/awscliv2.zip -d /tmp/ \
-  && sudo /tmp/aws/install
-
+  && sudo /tmp/aws/install \
+   && echo 'cyan "AWS CLI:"; aws --version' >> /home/poweruser/.bashrc
 
 ### JAVA & DEV ###
-RUN sudo apt-get -y -qq install \
+RUN sudo apt-get -qq install \
    openjdk-8-jdk \
    maven \
    mysql-client
@@ -149,13 +152,14 @@ if [ -d /apache-activemq-5.16.0 ];\n \
 fi;' >> /home/poweruser/.bashrc
 
 ### NODE ###
-RUN sudo apt-get -y -qq update && sudo apt-get -y -qq upgrade \
+RUN sudo apt-get -qq update \
    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - \
    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list \
-   && sudo apt-get -y install \
+   && sudo apt-get -qq install \
       yarn \
    && git clone https://github.com/nvm-sh/nvm.git /home/poweruser/.nvm
 RUN   echo '### NODE ###\n \
+pushd .nvm && git pull && popd\n \
 if  ! command -v nvm > /dev/null; then\n \
 . /home/poweruser/.nvm/nvm.sh\n \
 export NVM_DIR="$HOME/.nvm"\n \
@@ -168,18 +172,6 @@ else blue "Node:"; node -v \n \
 fi' >> /home/poweruser/.bashrc
 
 
-### ANSIBLE ###
-RUN pip install virtualenv
-RUN    echo '### ANSIBLE ###\n \
-python -m virtualenv ansible\n \
-source ansible/bin/activate\n \
-python -m pip install ansible' >> /home/poweruser/.bashrc
-
-### LINUX KERNEL HACING ###
-RUN sudo apt-get -y -qq update && sudo apt-get -y -qq upgrade \
-  && sudo apt-get -y install build-essential dkms
-
-
 #AZURE CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo /bin/bash \
 && curl -sL https://packages.microsoft.com/keys/microsoft.asc \
@@ -187,7 +179,7 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo /bin/bash \
  | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
 && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
 | sudo tee /etc/apt/sources.list.d/azure-cli.list \
-&& sudo apt-get -y update && sudo apt-get -y install \
+&& sudo apt-get -qq update && sudo apt-get -qq install \
  azure-cli
 
 #TERRAFORM
@@ -204,7 +196,7 @@ RUN sudo mkdir /terraform-docker-demo /home/poweruser/terraform \
 
 COPY ./terraform/* /home/poweruser/terraform/
 
-RUN echo 'color 9 6 "AZ_CLI:"; /usr/bin/az --version' >> /home/poweruser/.bashrc \
+RUN echo 'cyan "Azure CLI:"; /usr/bin/az --version' >> /home/poweruser/.bashrc \
  && echo 'f1="/home/poweruser/terraform/terraform.aws.run.sh"; if [ -r $f1 ]; then info "#NORUN: . $f1"; else echo "$f1 Not Found"; fi' >> /home/poweruser/.bashrc \
  && echo 'f2="/home/poweruser/terraform/terraform.az.run.sh"; if [ -r $f2 ]; then info "#NORUN: . $f2"; else echo "$f2 Not Found"; fi' >> /home/poweruser/.bashrc \
  && echo 'f3="/home/poweruser/terraform/terraform.aws.eks-cluster.run.sh"; if [ -r $f3 ]; then info "#NORUN: . $f3"; else echo "$f3 Not Found"; fi' >> /home/poweruser/.bashrc \
@@ -214,3 +206,22 @@ RUN echo '#NORUN . $f1' >> /home/poweruser/.bashrc \
  &&  echo '#NORUN . $f2' >> /home/poweruser/.bashrc \
  &&  echo '#NORUN . $f3' >> /home/poweruser/.bashrc \
  &&  echo '#NORUN . $f4' >> /home/poweruser/.bashrc
+
+
+
+ ### COMPOSE
+ RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose \
+   && sudo chmod +x /usr/local/bin/docker-compose
+
+
+
+### ANSIBLE ###
+#RUN pip install virtualenv
+#RUN    echo '### ANSIBLE ###\n \
+#python -m virtualenv ansible\n \
+#source ansible/bin/activate\n \
+#python -m pip install ansible' >> /home/poweruser/.bashrc
+
+### LINUX KERNEL HACING ###
+#RUN sudo apt-get -qq update \
+#  && sudo apt-get -qq install build-essential dkms
