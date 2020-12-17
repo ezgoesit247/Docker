@@ -1,11 +1,17 @@
 #!/bin/bash
 
 NAME="--rm"
+PRIV=""
 for i in "$@"
 do
 case $i in
         -n=*|--name=*)
         NAME="--name ${i#*=}"
+        IMAGE=${1}
+        shift # past argument=value
+        ;;
+        -priv)
+        PRIV="--privileged"
         IMAGE=${1}
         shift # past argument=value
         ;;
@@ -15,11 +21,25 @@ case $i in
 esac
 done
 
+case $1 in
+   mysqld)
+SECRET=***REMOVED*** && CONTAINER=mysql-server && ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
+echo "Connecting..."
+pswd=`docker run --name=${CONTAINER} -d mysqld > /dev/null 2>&1 \
+&& until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
+#echo "root pwd is ${pswd}"
+until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
+#docker rm -f mysql-server
+echo "Root password is: ${SECRET}"
+#
+   ;;
+
+   *)
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
 ###
 if [ -z $1 ]; then echo "Looking for container image: ${PWD##*/}"
-if ! docker run --privileged -it -P \
+if ! docker run ${PRIV} -it -P \
   -v ${PWD}:/home/poweruser/_assets.local \
   -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
   -v ${HOME}/.m2:/home/poweruser/.m2 \
@@ -32,8 +52,8 @@ else
 ###
 ### CASE 2 STARTS/ATTACHES TO EXISTING NAMED CONTAINER, NAMED AS PWD
 ###
-if ! docker run --privileged -it -P \
-  -v ${PWD}:/home/poweruser/_assets.local \
+if ! docker run ${PRIV} -it -P \
+  -v "${PWD}":/home/poweruser/_assets.local \
   -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
   -v ${HOME}/.m2:/home/poweruser/.m2 \
   -v ${HOME}/.aws:/home/poweruser/.aws \
@@ -49,8 +69,8 @@ if ! docker run --privileged -it -P \
 ### ex 3a run node
 ### ex 3b run -n=MyNode node
 ###
-   else echo "can't start, running container: docker run --privileged -it -P ${1}" && docker run --privileged -it -P \
-     -v ${PWD}:/home/poweruser/_assets.local \
+   else echo "can't start, running container: docker run ${PRIV} -it -P ${1}" && docker run ${PRIV} -it -P \
+     -v "${PWD}":/home/poweruser/_assets.local \
      -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
      -v ${HOME}/.m2:/home/poweruser/.m2 \
      -v ${HOME}/.aws:/home/poweruser/.aws \
