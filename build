@@ -2,15 +2,15 @@
 
 docker_dir=${HOME}/Docker
 function msg {
-  echo "  build::${1} says: ${2}"
+  echo "  build::${1} says, ${2}"
 }
 function init { #
   for path in ~/Docker/root_docker/node_r_admin ~/Docker/root_docker/awsdev_r_admin ~/Docker/root_docker/terraform_r_admin ~/Docker/root_docker/kubernetes_r_admin ~/Docker/root_docker/docker_r_admin ~/Docker/root_docker/development_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin
   do pushd ${path} > /dev/null; done
 }
 function do_build {
-   msg "do_build" "building docker tag ${1}"
-   while ! docker build -t ${1} . > /dev/null; do
+   msg "do_build" "executing: docker build -t ${1} ."
+   while ! docker build -t ${1} . | grep -i SUCCESSFULLY; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
          msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
             && ln -s ./Dockerfile.sh ./Dockerfile \
