@@ -81,3 +81,6 @@ if ! docker run ${PRIV} -it -P \
 fi
 fi
 fi
+
+;;
+esac
