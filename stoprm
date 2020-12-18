@@ -1,0 +1,21 @@
+#!/bin/bash
+
+function usage {
+    local script=`basename $0`
+    echo -e "\tUsage: ${script} -y \n\tImmediately removes the named container ${PWD##*/}"
+}
+PROCEED=false
+c=${PWD##*/}
+
+for i in "$@"
+do
+case $i in
+    -y)
+    PROCEED=true
+    shift
+    ;;
+esac
+done
+
+if ${PROCEED}; then docker rm -f ${c}; exit; fi
+usage
