@@ -78,17 +78,36 @@ function driver_test {
 }
 
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
+SECRET=***REMOVED***
+DATAVOL=mysql-server-volume
 case $1 in
-   mysqld)
-SECRET=***REMOVED*** && CONTAINER=mysql-server && ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
-echo "Connecting..."
-pswd=`docker run --name=${CONTAINER} -d mysqld > /dev/null 2>&1 \
-&& until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
-#echo "root pwd is ${pswd}"
-until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
-#docker rm -f mysql-server
-echo "Root password is: ${SECRET}"
+   mysql-server)
+CONTAINER=mysql-server
+if ! docker ps -a|grep -q ${CONTAINER}; then if ! docker volume list|grep -q ${DATAVOL}; then
+      ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
+      echo "Connecting..."
+      docker run --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+      echo "Connecting..." && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
+      #echo "root pwd is ${pswd}"
+      until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
+      #docker rm -f mysql-server
+      echo "Root password is: ${SECRET}"
+      else docker run --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1; sleep 2
+   fi; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`
+else if ! docker ps|grep -q ${CONTAINER}; then docker start ${CONTAINER}; sleep 2; fi
+docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`
+
+fi
+
 #
+   ;;
+   mysqld)
+CONTAINER=mysqld
+if ! docker ps -a|grep -q ${CONTAINER}; then
+   docker run -p3306:3306 -v ${DATAVOL}:/var/lib/mysql -d --name mysqld ${CONTAINER} > /dev/null \
+      && sleep 2 && docker exec -it ${CONTAINER} bash
+else docker start ${CONTAINER} > /dev/null && docker exec -it ${CONTAINER} bash
+fi
    ;;
    docker)
 PRIV="--privileged"
