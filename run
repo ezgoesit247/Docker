@@ -2,39 +2,8 @@
 
 NAME="--rm"
 PRIV=""
-for i in "$@"
-do
-case $i in
-        -n=*|--name=*)
-        NAME="--name ${i#*=}"
-        IMAGE=${1}
-        shift # past argument=value
-        ;;
-        -priv)
-        PRIV="--privileged"
-        IMAGE=${1}
-        shift # past argument=value
-        ;;
-        *)
-        IMAGE=${1}
-        ;;
-esac
-done
 
-case $1 in
-   mysqld)
-SECRET=***REMOVED*** && CONTAINER=mysql-server && ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
-echo "Connecting..."
-pswd=`docker run --name=${CONTAINER} -d mysqld > /dev/null 2>&1 \
-&& until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
-#echo "root pwd is ${pswd}"
-until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
-#docker rm -f mysql-server
-echo "Root password is: ${SECRET}"
-#
-   ;;
-
-   *)
+function driver {
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
 ###
@@ -81,6 +50,52 @@ if ! docker run ${PRIV} -it -P \
 fi
 fi
 fi
+}
 
-;;
+for i in "$@"
+do
+case $i in
+        -n=*|--name=*)
+        NAME="--name ${i#*=}"
+        IMAGE=${1}
+        shift # past argument=value
+        ;;
+        -p|--priv)
+        PRIV="--privileged"
+        IMAGE=${1}
+        shift # past argument=value
+        ;;
+        *)
+        IMAGE=${1}
+        ;;
+esac
+done
+
+function driver_test {
+   echo $1 $2 $3
+   echo ${IMAGE} ${NAME}
+
+}
+
+### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
+case $1 in
+   mysqld)
+SECRET=***REMOVED*** && CONTAINER=mysql-server && ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
+echo "Connecting..."
+pswd=`docker run --name=${CONTAINER} -d mysqld > /dev/null 2>&1 \
+&& until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
+#echo "root pwd is ${pswd}"
+until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
+#docker rm -f mysql-server
+echo "Root password is: ${SECRET}"
+#
+   ;;
+   docker)
+PRIV="--privileged"
+driver ${@}
+   ;;
+   *)
+driver ${@}
+   ;;
+
 esac
