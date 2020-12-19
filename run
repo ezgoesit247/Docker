@@ -27,7 +27,7 @@ if ! docker run ${PRIV} -it -P \
   ${USER} \
   --rm \
   ${PWD##*/}; then DEBUG "29"; echo -e " Usage:\trun NOARGS must be in parent dir\n\trun [NAME] saves container if PWD is parent dir\n\t else creates rm anonymous"; exit 1; fi
-else
+else DEBUG "30"
 ###
 ### CASE 2 STARTS/ATTACHES TO EXISTING NAMED CONTAINER, NAMED AS PWD
 ###
@@ -37,10 +37,10 @@ if ! docker run ${PRIV} -it -P \
   -v ${HOME}/.m2:/home/poweruser/.m2 \
   -v ${HOME}/.aws:/home/poweruser/.aws \
   -v ${HOME}/.ssh:/home/poweruser/.ssh \
-  --user poweruser \
+  ${USER} \
   --name ${1} \
   ${PWD##*/} 2> /dev/null
-   then echo "looking for container ${1}..." && if docker start ${1} > /dev/null 2>&1; then docker attach ${_}
+   then DEBUG "43"; echo "looking for container ${1}..." && if docker start ${1} > /dev/null 2>&1; then docker attach ${_}
 ###
 ### CASE 3a & 3b ARE DEPENDANT ON -n
 ###   IF -n/name argument DOES NOT EXIST, THEN RUN/REMOVE ANONYMOUS FOR IMAGE ${1}
@@ -54,7 +54,7 @@ if ! docker run ${PRIV} -it -P \
      -v ${HOME}/.m2:/home/poweruser/.m2 \
      -v ${HOME}/.aws:/home/poweruser/.aws \
      -v ${HOME}/.ssh:/home/poweruser/.ssh \
-     --user poweruser \
+     ${USER} \
      ${NAME} \
      ${IMAGE}
 fi
@@ -112,6 +112,7 @@ case $i in
         ;;
         --user=*)
         USER="--user ${i#*=}"
+        shift
         ;;
         --new)
         DASH_N=true
