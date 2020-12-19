@@ -163,6 +163,7 @@ eval ${cmd}
    *)
 DEBUG "***"
 if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
+if [[ ${PWD##*/} -eq c7-systemd ]]; then echo " use: `basename ${0}` c7-systemd"; exit; fi
 driver ${@}
    ;;
 
