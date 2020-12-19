@@ -137,7 +137,7 @@ PRIV=""
 ### THIS STARTS MAIN ###
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
-MYSQLVOL=mysql-server-volume && C7SYSTEMDVOL=centos-7-datavol
+MYSQLVOL=mysql-server-volume
 case $1 in
    mysql-server)
 DEBUG "142"
@@ -153,10 +153,12 @@ PRIV="--privileged"
 driver ${@}
    ;;
    c7-systemd)
-   DEBUG "155"
-   cmd="docker run --privileged -it -v C7SYSTEMDVOL:/sys/fs/cgroup ${NAME} c7-systemd"
-   DEBUG "Executing ${cmd}"
-   eval ${cmd}
+DEBUG "156"
+EMBED="docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${NAME} c7-systemd"
+cmd="docker exec -it `${EMBED}` /bin/bash"
+DEBUG "Embedded ${EMBED}"
+DEBUG "Executing ${cmd}"
+eval ${cmd}
    ;;
    *)
 DEBUG "***"
