@@ -155,8 +155,11 @@ driver ${@}
    c7-systemd)
 DEBUG "156"
 EMBED="docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${NAME} c7-systemd"
-cmd="docker exec -it `${EMBED}` /bin/bash"
-DEBUG "Embedded ${EMBED}"
+DEBUG "EMBED ${EMBED}"
+GUID=`eval ${EMBED}`
+cmd="docker exec -it ${GUID} /bin/bash"
+if [[ ${NAME} = "--rm" ]]; then DEBUG "160"; cmd="${cmd} && docker rm -f ${GUID}"; fi
+DEBUG "NAME ${NAME}"
 DEBUG "Executing ${cmd}"
 eval ${cmd}
    ;;
