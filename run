@@ -66,17 +66,17 @@ fi
 ### SPECIFIC CONTAINERS ###
 function mysql-server {
 local CONTAINER=mysql-server
-DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${DATAVOL}"
-if ! docker ps -a|grep -q ${CONTAINER}; then DEBUG "70a"; if ! docker volume list|grep -q ${DATAVOL}; then DEBUG "70b";
+DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
+if ! docker ps -a|grep -q ${CONTAINER}; then DEBUG "70a"; if ! docker volume list|grep -q ${MYSQLVOL}; then DEBUG "70b";
       ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
       echo "Connecting..."
-      docker run -p3306:3306 --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+      docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
       echo "Connecting..." && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
       #echo "root pwd is ${pswd}"
       until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
       #docker rm -f mysql-server
       echo "Root password is: ${SECRET}"
-      else DEBUG "79"; docker run -p3306:3306 --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+      else DEBUG "79"; docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
    fi; if ! ${DETACHED}; then DEBUG "80"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
 else if ! docker ps|grep -q ${CONTAINER}; DEBUG "81"; then docker start ${CONTAINER}; fi
    if ! ${DETACHED}; then DEBUG "82"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
@@ -86,12 +86,12 @@ fi
 ### END MYSQL-SERVER ###
 function mysqld {
 local CONTAINER=mysqld
-DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${DATAVOL}"
+DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
 if ${DASH_N}; then DEBUG "90"
-   docker run -p3306:3306 -v ${DATAVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
+   docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
    && if ! ${DETACHED}; then DEBUG "92a" && echo "Connecting..." && sleep 15; while ! docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}` 2>&1; do DEBUG "92b" && echo "Connecting..." && sleep 2; continue; done; fi
 else  DEBUG "93"
-   docker run -p3306:3306 -v ${DATAVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
+   docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
    DEBUG "95a"; docker start ${CONTAINER} && if ! ${DETACHED}; then DEBUG "95b"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
 fi
 }
@@ -137,7 +137,7 @@ PRIV=""
 ### THIS STARTS MAIN ###
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
-DATAVOL=mysql-server-volume
+MYSQLVOL=mysql-server-volume && C7SYSTEMDVOL=centos-7-datavol
 case $1 in
    mysql-server)
 DEBUG "142"
@@ -154,7 +154,9 @@ driver ${@}
    ;;
    c7-systemd)
    DEBUG "155"
-   docker run -it -v centos-7-datavol ${NAME} c7-systemd
+   cmd="docker run --privileged -it -v C7SYSTEMDVOL:/sys/fs/cgroup ${NAME} c7-systemd"
+   DEBUG "Executing ${cmd}"
+   eval ${cmd}
    ;;
    *)
 DEBUG "***"
