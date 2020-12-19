@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function DEBUG { if [ 1 -eq 1 ]; then echo "DEBUG ${1}"; fi }
+function DEBUG { if [ 1 -eq 0 ]; then echo "DEBUG ${1}"; fi }
 
 NAME="--rm"
 USER=""
@@ -154,7 +154,7 @@ driver ${@}
    ;;
    c7-systemd)
    DEBUG "155"
-   docker run -it -v centos-7-datavol c7-systemd
+   docker run -it -v centos-7-datavol ${NAME} c7-systemd
    ;;
    *)
 DEBUG "***"
