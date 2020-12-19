@@ -290,3 +290,141 @@ cd ..
 git pull .nvm/
 #1608085570
 pushd .nvm && git pull && popd
+#1608148622
+sudo apt-get update
+#1608148639
+ls
+#1608148649
+cd _assets.local/
+#1608148650
+ls
+#1608148783
+SERVICE_TEST_ENVIRONMENT=DV1
+#1608148783
+mvn clean package -DSERVICE_TEST_ENVIRONMENT=${SERVICE_TEST_ENVIRONMENT}
+#1608148883
+mvn clean && if [ ! -d target ]; then     echo mvn clean failed; fi   && mvn package -DskipTests
+#1608148909
+ENV=QA1
+#1608148909
+mvn clean && if [ ! -d target ]; then   mvn spring-boot:run -Dspring-boot.run.profiles=${ENV}; else   echo mvn clean failed; fi
+#1608148980
+cd mdaservice/
+#1608148997
+SERVICE_TEST_ENVIRONMENT=DV1
+#1608148997
+mvn clean package -DSERVICE_TEST_ENVIRONMENT=${SERVICE_TEST_ENVIRONMENT}
+#1608149052
+# clean, then package skip tests
+#1608149052
+mvn clean && if [ ! -d target ]; then     echo mvn clean failed; fi   && mvn package -DskipTests
+#1608149067
+# clean & run
+#1608149067
+ENV=QA1
+#1608149067
+mvn clean && if [ ! -d target ]; then   mvn spring-boot:run -Dspring-boot.run.profiles=${ENV}; else   echo mvn clean failed; fi
+#1608149180
+# clean, then package skip tests
+#1608149180
+SERVICE_TEST_ENVIRONMENT=DV1
+#1608149180
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${SERVICE_TEST_ENVIRONMENT}     -DskipTests; else   echo mvn clean failed; fi
+#1608149195
+# run the jar
+#1608149195
+MDA_SERVICE_VERSION=1.1.4-SNAPSHOT
+#1608149195
+java -jar    -Dspring.profiles.active=QA1    target/mdaservice-${MDA_SERVICE_VERSION}.jar
+#1608149341
+cd ../mdsc
+#1608149345
+cd ../mdaclient/
+#1608149346
+ls
+#1608149365
+. ./maven.commands.sh 
+#1608149625
+cd ../
+#1608149626
+ls
+#1608149637
+. build_mdaservice.bat 
+#1608150317
+cd mdaservice/
+#1608150350
+ls 
+#1608150353
+ls target/
+#1608150436
+grep SERVICE_TEST_ENVIRONMENT -r .
+#1608152197
+SERVICE_TEST_ENVIRONMENT=DV1
+#1608152197
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${SERVICE_TEST_ENVIRONMENT}     -DskipTests; else   echo mvn clean failed; fi
+#1608152981
+SERVICE_TEST_ENVIRONMENT=DV1
+#1608152981
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${SERVICE_TEST_ENVIRONMENT}     -DskipTests; else   echo mvn clean failed; fi
+#1608153101
+SERVICE_RUN_ENVIRONMENT=INT
+#1608153106
+MDA_SERVICE_VERSION=1.1.4-SNAPSHOT
+#1608153113
+ls target/
+#1608153125
+java -jar    -Dspring.profiles.active=${SERVICE_RUN_ENVIRONMENT}    target/mdaservice-${MDA_SERVICE_VERSION}.jar
+#1608153309
+SERVICE_TEST_ENVIRONMENT=DV1
+#1608153309
+MDA_SERVICE_VERSION=1.1.4-SNAPSHOT
+#1608153309
+SERVICE_RUN_ENVIRONMENT=QA1
+#1608153309
+mvn clean package -DSERVICE_TEST_ENVIRONMENT=${SERVICE_TEST_ENVIRONMENT}
+#1608153364
+# clean, then package skip tests
+#1608153364
+mvn clean && if [ ! -d target ]; then     echo mvn clean failed; fi   && mvn package -DskipTests
+#1608153413
+mvn spring-boot:run -Dspring-boot.run.profiles=${SERVICE_TEST_ENVIRONMENT}
+#1608154639
+MDA_SERVICE_VERSION=1.1.4-SNAPSHOT   && TEST_ENVIRONMENT=DV1   && TEST_RUN_ENVIRONMENT=QA1   && RUN_ENVIRONMENT=INT
+#1608154792
+MDA_SERVICE_VERSION=1.1.4-SNAPSHOT   && TEST_ENVIRONMENT=DV1   && TEST_RUN_ENVIRONMENT=QA1   && INT_ENVIRONMENT=INT   && RUN_ENVIRONMENT=INT
+#1608154997
+mvn clean package -DSERVICE_TEST_ENVIRONMENT=${TEST_ENVIRONMENT}
+#1608155214
+ls target/
+#1608155428
+if [ -f target/mdaservice-${MDA_SERVICE_VERSION}.jar ]; then   mvn spring-boot:run -Dspring-boot.run.profiles=${TEST_RUN_ENVIRONMENT}; else   echo packaging jar failed; fi
+#1608155608
+# clean & run
+#1608155608
+mvn clean package -DSERVICE_TEST_ENVIRONMENT=${TEST_ENVIRONMENT} && mvn clean && if [ -d target ]; then     echo mvn clean failed; else     mvn package -DskipTests; fi
+#1608155680
+&& if [ -f target/mdaservice-${MDA_SERVICE_VERSION}.jar ]; then
+#1608155793
+if [ -f target/mdaservice-${MDA_SERVICE_VERSION}.jar ]; then   mvn spring-boot:run -Dspring-boot.run.profiles=${TEST_RUN_ENVIRONMENT}; else   echo packaging jar failed; fi
+#1608155844
+# clean, then package skip tests
+#1608155844
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${INT_ENVIRONMENT}     -DskipTests; else   echo mvn clean failed; fi
+#1608155880
+ls
+#1608155911
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${INT_ENVIRONMENT}; else   echo mvn clean failed; fi
+#1608156086
+mvn clean package -DSERVICE_TEST_ENVIRONMENT=${TEST_ENVIRONMENT} && mvn clean && if [ -d target ]; then     echo mvn clean failed; else     mvn package -DskipTests; fi
+#1608156211
+mvn clean && if [ -d target ]; then     echo mvn clean failed; else     mvn package -DskipTests; fi && if [ -f target/mdaservice-${MDA_SERVICE_VERSION}.jar ]; then   mvn spring-boot:run -Dspring-boot.run.profiles=${TEST_RUN_ENVIRONMENT}; else   echo packaging jar failed; fi
+#1608156376
+# clean, then package skip tests
+#1608156376
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${INT_ENVIRONMENT}; else   echo mvn clean failed; fi
+#1608156389
+echo ${INT_ENVIRONMENT}
+#1608156390
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${INT_ENVIRONMENT}; else   echo mvn clean failed; fi
+#1608157099
+mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${INT_ENVIRONMENT}; else   echo mvn clean failed; fi
