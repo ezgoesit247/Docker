@@ -9,8 +9,8 @@ function init { #
   do pushd ${path} > /dev/null; done
 }
 function do_build {
-   msg "do_build" "executing: docker build -t ${1} ."
-   while ! docker build -t ${1} . | grep -i SUCCESSFULLY; do
+   msg "do_build" "executing: docker ${RM} build -t ${1} ."
+   while ! docker build ${RM} -t ${1} . | grep -i SUCCESSFULLY; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
          msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
             && ln -s ./Dockerfile.sh ./Dockerfile \
@@ -31,6 +31,17 @@ function build {
 function usage {
    echo -e "\n Usage:\tbuild [NAME] looks for Dockerfile ${docker_dir}/NAME/\n\tbuild NOARGS looks for Dockerfile in PWD"; echo
 }
+
+RM=""
+for i in "$@"
+do
+case $i in
+   -r)
+   RM="--rm"
+   shift
+   ;;
+esac
+done
 ###
 # - main
 ###
