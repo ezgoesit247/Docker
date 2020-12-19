@@ -1,22 +1,32 @@
 #!/bin/bash
 
+function DEBUG { if [ 1 -eq 0 ]; then echo "DEBUG ${1}"; fi }
+
 NAME="--rm"
-PRIV=""
+USER=""
+DASH_N=false
+DETACHED=false
+
+function driver_test {
+   echo $1 $2 $3
+   echo ${IMAGE} ${NAME}
+
+}
 
 function driver {
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
 ###
-if [ -z $1 ]; then echo "Looking for container image: ${PWD##*/}"
+if [ -z $1 ]; then DEBUG "20"; echo "Looking for container image: ${PWD##*/}"
 if ! docker run ${PRIV} -it -P \
   -v ${PWD}:/home/poweruser/_assets.local \
   -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
   -v ${HOME}/.m2:/home/poweruser/.m2 \
   -v ${HOME}/.aws:/home/poweruser/.aws \
   -v ${HOME}/.ssh:/home/poweruser/.ssh \
-  --user poweruser \
+  ${USER} \
   --rm \
-  ${PWD##*/} 2> /dev/null; then echo -e " Usage:\trun NOARGS must be in parent dir\n\trun [NAME] saves container if PWD is parent dir\n\t else creates rm anonymous"; exit 1; fi
+  ${PWD##*/}; then DEBUG "29"; echo -e " Usage:\trun NOARGS must be in parent dir\n\trun [NAME] saves container if PWD is parent dir\n\t else creates rm anonymous"; exit 1; fi
 else
 ###
 ### CASE 2 STARTS/ATTACHES TO EXISTING NAMED CONTAINER, NAMED AS PWD
@@ -51,7 +61,43 @@ fi
 fi
 fi
 }
+### END FUNCTION DRIVER
 
+### SPECIFIC CONTAINERS ###
+function mysql-server {
+local CONTAINER=mysql-server
+DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${DATAVOL}"
+if ! docker ps -a|grep -q ${CONTAINER}; then DEBUG "70a"; if ! docker volume list|grep -q ${DATAVOL}; then DEBUG "70b";
+      ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
+      echo "Connecting..."
+      docker run -p3306:3306 --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+      echo "Connecting..." && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
+      #echo "root pwd is ${pswd}"
+      until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
+      #docker rm -f mysql-server
+      echo "Root password is: ${SECRET}"
+      else DEBUG "79"; docker run -p3306:3306 --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+   fi; if ! ${DETACHED}; then DEBUG "80"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+else if ! docker ps|grep -q ${CONTAINER}; DEBUG "81"; then docker start ${CONTAINER}; fi
+   if ! ${DETACHED}; then DEBUG "82"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+fi
+
+}
+### END MYSQL-SERVER ###
+function mysqld {
+local CONTAINER=mysqld
+DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${DATAVOL}"
+if ${DASH_N}; then DEBUG "90"
+   docker run -p3306:3306 -v ${DATAVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
+   && if ! ${DETACHED}; then DEBUG "92a" && echo "Connecting..." && sleep 15; while ! docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}` 2>&1; do DEBUG "92b" && echo "Connecting..." && sleep 2; continue; done; fi
+else  DEBUG "93"
+   docker run -p3306:3306 -v ${DATAVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
+   DEBUG "95a"; docker start ${CONTAINER} && if ! ${DETACHED}; then DEBUG "95b"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+fi
+}
+### END MYSQLD ###
+
+### GET PARAMETERS ###
 for i in "$@"
 do
 case $i in
@@ -60,9 +106,24 @@ case $i in
         IMAGE=${1}
         shift # past argument=value
         ;;
+        -u)
+        USER="--user poweruser"
+        shift
+        ;;
+        --user=*)
+        USER="--user ${i#*=}"
+        ;;
+        --new)
+        DASH_N=true
+        shift # past argument=value
+        ;;
         -p|--priv)
         PRIV="--privileged"
         IMAGE=${1}
+        shift # past argument=value
+        ;;
+        -d)
+        DETACHED=true
         shift # past argument=value
         ;;
         *)
@@ -70,50 +131,32 @@ case $i in
         ;;
 esac
 done
+PRIV=""
 
-function driver_test {
-   echo $1 $2 $3
-   echo ${IMAGE} ${NAME}
-
-}
-
+### THIS STARTS MAIN ###
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
 DATAVOL=mysql-server-volume
 case $1 in
    mysql-server)
-CONTAINER=mysql-server
-if ! docker ps -a|grep -q ${CONTAINER}; then if ! docker volume list|grep -q ${DATAVOL}; then
-      ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
-      echo "Connecting..."
-      docker run --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
-      echo "Connecting..." && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
-      #echo "root pwd is ${pswd}"
-      until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
-      #docker rm -f mysql-server
-      echo "Root password is: ${SECRET}"
-      else docker run --name=${CONTAINER} -v ${DATAVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1; sleep 2
-   fi; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`
-else if ! docker ps|grep -q ${CONTAINER}; then docker start ${CONTAINER}; sleep 2; fi
-docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`
-
-fi
-
-#
+DEBUG "142"
+mysql-server
    ;;
    mysqld)
-CONTAINER=mysqld
-if ! docker ps -a|grep -q ${CONTAINER}; then
-   docker run -p3306:3306 -v ${DATAVOL}:/var/lib/mysql -d --name mysqld ${CONTAINER} > /dev/null \
-      && sleep 2 && docker exec -it ${CONTAINER} bash
-else docker start ${CONTAINER} > /dev/null && docker exec -it ${CONTAINER} bash
-fi
+DEBUG "146"
+mysqld
    ;;
    docker)
+DEBUG "150"
 PRIV="--privileged"
 driver ${@}
    ;;
+   c7_systemd)
+   DEBUG "155"
+   ;;
    *)
+DEBUG "***"
+if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
 driver ${@}
    ;;
 
