@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function DEBUG { if [ 1 -eq 0 ]; then echo "DEBUG ${1}"; fi }
+function DEBUG { if [ 1 -eq 1 ]; then echo "DEBUG ${1}"; fi }
 
 NAME="--rm"
 USER=""
@@ -127,6 +127,14 @@ case $i in
         DETACHED=true
         shift # past argument=value
         ;;
+        --port=*)
+        PORT="${PORT} -p ${i#*=}"
+        shift # past argument=value
+        ;;
+        -v=*)
+        BINDINGS="${BINDINGS} -v ${i#*=}"
+        shift # past argument=value
+        ;;
         *)
         IMAGE=${1}
         ;;
@@ -135,11 +143,13 @@ done
 PRIV=""
 
 function c7systemd {
-   EMBED="docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${NAME} c7-systemd"
+   EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} ${NAME} c7-systemd"
    DEBUG "EMBED ${EMBED}"
    GUID=`eval ${EMBED}`
+   DEBUG "GUID ${GUID}"
    cmd="docker exec -it ${GUID} /bin/bash"
-   if [[ ${NAME} = "--rm" ]]; then DEBUG "160"; cmd="${cmd} && docker rm -f ${GUID}"; fi
+   DEBUG "cmd ${cmd}"
+   if [[ ${NAME} = "--rm" ]]; then DEBUG "148"; cmd="${cmd} && docker rm -f ${GUID}"; fi
    DEBUG "NAME ${NAME}"
    DEBUG "Executing ${cmd}"
    eval ${cmd}
@@ -150,11 +160,11 @@ SECRET=***REMOVED***
 MYSQLVOL=mysql-server-volume
 case $1 in
    mysql-server)
-DEBUG "142"
+DEBUG "157"
 mysql-server
    ;;
    mysqld)
-DEBUG "146"
+DEBUG "1"
 mysqld
    ;;
    docker)
@@ -163,7 +173,7 @@ PRIV="--privileged"
 driver ${@}
    ;;
    c7-systemd)
-DEBUG "156"
+DEBUG "170"
 c7systemd
    ;;
    *)
