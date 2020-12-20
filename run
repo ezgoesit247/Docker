@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function DEBUG { if [ 0 -eq 1 ]; then echo "DEBUG ${1}"; fi }
+function DEBUG { if [ 1 -eq 0 ]; then echo "DEBUG ${1}"; fi }
 
 NAME="--rm"
 USER=""
@@ -17,7 +17,7 @@ function driver {
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
 ###
-if [ -z $1 ]; then DEBUG "20a"; if [[ ${PWD##*/} == "c7-systemd" ]]; then c7systemd; else DEBUG "20b"; echo "Looking for container image: ${PWD##*/}"
+if [ -z $1 ]; then DEBUG "20a"; if [[ ${PWD##*/} == "c7-docker" ]]; then c7docker; else DEBUG "20b"; echo "Looking for container image: ${PWD##*/}"
 if ! docker run ${PRIV} -it -P \
   -v ${PWD}:/home/poweruser/_assets.local \
   -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
@@ -142,8 +142,8 @@ esac
 done
 PRIV=""
 
-function c7systemd {
-   EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} ${NAME} c7-systemd"
+function c7docker {
+   EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} ${NAME} c7-docker"
    DEBUG "EMBED ${EMBED}"
    GUID=`eval ${EMBED}`
    DEBUG "GUID ${GUID}"
@@ -172,9 +172,9 @@ DEBUG "150"
 PRIV="--privileged"
 driver ${@}
    ;;
-   c7-systemd)
+   c7-docker)
 DEBUG "170"
-c7systemd
+c7docker
    ;;
    *)
 DEBUG "***"
