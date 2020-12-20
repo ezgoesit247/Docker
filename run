@@ -147,12 +147,17 @@ function c7docker {
    DEBUG "EMBED ${EMBED}"
    GUID=`eval ${EMBED}`
    DEBUG "GUID ${GUID}"
-   cmd="docker exec -it ${GUID} /bin/bash"
-   DEBUG "cmd ${cmd}"
-   if [[ ${NAME} = "--rm" ]]; then DEBUG "148"; cmd="${cmd} && docker rm -f ${GUID}"; fi
+   CMD="docker exec -it ${GUID} /bin/bash"
+   DEBUG "CMD ${CMD}"
+   if [[ ${NAME} = "--rm" ]]; then DEBUG "148"; CMD="${CMD} && docker rm -f ${GUID}"; fi
    DEBUG "NAME ${NAME}"
-   DEBUG "Executing ${cmd}"
-   eval ${cmd}
+   DEBUG "Executing ${CMD}"
+   eval ${CMD}
+}
+function c7systemd {
+   GUID=`docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} --rm c7-systemd`
+   CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID}"
+   eval ${CMD}
 }
 ### THIS STARTS MAIN ###
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
@@ -160,7 +165,7 @@ SECRET=***REMOVED***
 MYSQLVOL=mysql-server-volume
 case $1 in
    mysql-server)
-DEBUG "157"
+DEBUG "167"
 mysql-server
    ;;
    mysqld)
@@ -168,13 +173,17 @@ DEBUG "1"
 mysqld
    ;;
    docker)
-DEBUG "150"
+DEBUG "175"
 PRIV="--privileged"
 driver ${@}
    ;;
    c7-docker)
-DEBUG "170"
+DEBUG "180"
 c7docker
+   ;;
+   c7-systemd)
+DEBUG "184"
+c7systemd
    ;;
    *)
 DEBUG "***"
