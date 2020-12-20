@@ -17,7 +17,7 @@ function driver {
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
 ###
-if [ -z $1 ]; then DEBUG "20"; echo "Looking for container image: ${PWD##*/}"
+if [ -z $1 ]; then DEBUG "20a"; if [[ ${PWD##*/} == "c7-systemd" ]]; then c7systemd; else DEBUG "20b"; echo "Looking for container image: ${PWD##*/}"
 if ! docker run ${PRIV} -it -P \
   -v ${PWD}:/home/poweruser/_assets.local \
   -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
@@ -26,7 +26,7 @@ if ! docker run ${PRIV} -it -P \
   -v ${HOME}/.ssh:/home/poweruser/.ssh \
   ${USER} \
   --rm \
-  ${PWD##*/}; then DEBUG "29"; echo -e " Usage:\trun NOARGS must be in parent dir\n\trun [NAME] saves container if PWD is parent dir\n\t else creates rm anonymous"; exit 1; fi
+  ${PWD##*/}; then DEBUG "29"; echo -e " Usage:\trun NOARGS must be in parent dir\n\trun [NAME] saves container if PWD is parent dir\n\t else creates rm anonymous"; exit 1; fi; fi
 else DEBUG "30"
 ###
 ### CASE 2 STARTS/ATTACHES TO EXISTING NAMED CONTAINER, NAMED AS PWD
@@ -134,6 +134,16 @@ esac
 done
 PRIV=""
 
+function c7systemd {
+   EMBED="docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${NAME} c7-systemd"
+   DEBUG "EMBED ${EMBED}"
+   GUID=`eval ${EMBED}`
+   cmd="docker exec -it ${GUID} /bin/bash"
+   if [[ ${NAME} = "--rm" ]]; then DEBUG "160"; cmd="${cmd} && docker rm -f ${GUID}"; fi
+   DEBUG "NAME ${NAME}"
+   DEBUG "Executing ${cmd}"
+   eval ${cmd}
+}
 ### THIS STARTS MAIN ###
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
@@ -154,19 +164,11 @@ driver ${@}
    ;;
    c7-systemd)
 DEBUG "156"
-EMBED="docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${NAME} c7-systemd"
-DEBUG "EMBED ${EMBED}"
-GUID=`eval ${EMBED}`
-cmd="docker exec -it ${GUID} /bin/bash"
-if [[ ${NAME} = "--rm" ]]; then DEBUG "160"; cmd="${cmd} && docker rm -f ${GUID}"; fi
-DEBUG "NAME ${NAME}"
-DEBUG "Executing ${cmd}"
-eval ${cmd}
+c7systemd
    ;;
    *)
 DEBUG "***"
 if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
-if [[ ${PWD##*/} -eq c7-systemd ]]; then echo " use: `basename ${0}` c7-systemd"; exit; fi
 driver ${@}
    ;;
 
