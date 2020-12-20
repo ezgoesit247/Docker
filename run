@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function DEBUG { if [ 1 -eq 1 ]; then echo "DEBUG ${1}"; fi }
+function DEBUG { if [ 0 -eq 1 ]; then echo "DEBUG ${1}"; fi }
 
 NAME="--rm"
 USER=""
