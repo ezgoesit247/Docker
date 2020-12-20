@@ -9,7 +9,7 @@ function init { #
   do pushd ${path} > /dev/null; done
 }
 function do_build {
-   msg "do_build" "executing: docker ${RM} build -t ${1} ."
+   msg "do_build" "executing: docker${RM} build -t ${1} ."
    while ! docker build ${RM} -t ${1} . | grep -i SUCCESSFULLY; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
          msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
@@ -36,8 +36,8 @@ RM=""
 for i in "$@"
 do
 case $i in
-   -r)
-   RM="--rm"
+   -r|--rm)
+   RM=" --rm"
    shift
    ;;
 esac
