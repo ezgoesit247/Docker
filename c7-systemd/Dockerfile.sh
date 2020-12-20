@@ -1,4 +1,12 @@
 FROM local/c7-systemd
+### RUN CONTAINER WITH THIS COMMAND:
+#  docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --rm c7-systemd
+# THEN CONNECT WITH THIS COMMAND:
+#  docker exec -it <GUID_RETURNED_ABOVE> sh
+#
+### WRAPPED INTO A ONE-LINER:
+#  docker exec -it `docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name systemd c7-systemd` /bin/bash
+
 RUN yum -y update \
    && yum install -y -q yum-utils python3 \
    && yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo \
@@ -39,13 +47,9 @@ if docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"; \
   else fail "Docker Hello World"; \
 fi;' >> /etc/bashrc
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-CMD ["/sbin/init"]
+RUN yum install -y -q git which
 
-### RUN CONTAINER WITH THIS COMMAND:
-#  docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --rm c7-systemd
-# THEN CONNECT WITH THIS COMMAND:
-#  docker exec -it <GUID_RETURNED_ABOVE> sh
-#
-### WRAPPED INTO A ONE-LINER:
-#  docker exec -it `docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name systemd c7-systemd` /bin/bash
+### DO YUMS BEFORE CHANGING PYTHON ###
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+CMD ["/sbin/init"]
