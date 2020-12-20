@@ -5,7 +5,7 @@ RUN yum -y update \
    && yum install -y -q docker-ce docker-ce-cli containerd.io
 RUN curl -sL "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
    && chmod +x /usr/local/bin/docker-compose
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+#RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 CMD ["/sbin/init"]
 
 
