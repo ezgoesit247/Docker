@@ -3,7 +3,7 @@
 function DEBUG { if [ 1 -eq 0 ]; then echo "DEBUG ${1}"; fi }
 
 NAME="--rm"
-USER=""
+USER="" && PRIV=""
 DASH_N=false
 DETACHED=false
 
@@ -38,17 +38,17 @@ if ! docker run ${PRIV} -it -P \
   -v ${HOME}/.aws:/home/poweruser/.aws \
   -v ${HOME}/.ssh:/home/poweruser/.ssh \
   ${USER} \
-  --name ${1} \
+  --name ${IMAGE} \
   ${PWD##*/} 2> /dev/null
-   then DEBUG "43"; echo "looking for container ${1}..." && if docker start ${1} > /dev/null 2>&1; then docker attach ${_}
+   then DEBUG "43"; echo "looking for container ${IMAGE}..." && docker start ${IMAGE} && docker exec -it ${IMAGE} /bin/bash;
 ###
 ### CASE 3a & 3b ARE DEPENDANT ON -n
-###   IF -n/name argument DOES NOT EXIST, THEN RUN/REMOVE ANONYMOUS FOR IMAGE ${1}
+###   IF -n/name argument DOES NOT EXIST, THEN RUN/REMOVE ANONYMOUS FOR IMAGE ${IMAGE}
 ###      ELSE
 ### ex 3a run node
 ### ex 3b run -n=MyNode node
 ###
-   else echo "can't start, running container: docker run ${PRIV} -it -P ${1}" && docker run ${PRIV} -it -P \
+   else echo "can't start, running container: docker run ${PRIV} -it -P ${IMAGE}" && docker run ${PRIV} -it -P \
      -v "${PWD}":/home/poweruser/_assets.local \
      -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
      -v ${HOME}/.m2:/home/poweruser/.m2 \
@@ -59,7 +59,7 @@ if ! docker run ${PRIV} -it -P \
      ${IMAGE}
 fi
 fi
-fi
+
 }
 ### END FUNCTION DRIVER
 
@@ -96,52 +96,6 @@ else  DEBUG "93"
 fi
 }
 ### END MYSQLD ###
-
-### GET PARAMETERS ###
-for i in "$@"
-do
-case $i in
-        -n=*|--name=*)
-        NAME="--name ${i#*=}"
-        IMAGE=${1}
-        shift # past argument=value
-        ;;
-        -u)
-        USER="--user poweruser"
-        shift
-        ;;
-        --user=*)
-        USER="--user ${i#*=}"
-        shift
-        ;;
-        --new)
-        DASH_N=true
-        shift # past argument=value
-        ;;
-        -p|--priv)
-        PRIV="--privileged"
-        IMAGE=${1}
-        shift # past argument=value
-        ;;
-        -d)
-        DETACHED=true
-        shift # past argument=value
-        ;;
-        --port=*)
-        PORT="${PORT} -p ${i#*=}"
-        shift # past argument=value
-        ;;
-        -v=*)
-        BINDINGS="${BINDINGS} -v ${i#*=}"
-        shift # past argument=value
-        ;;
-        *)
-        IMAGE=${1}
-        ;;
-esac
-done
-PRIV=""
-
 function c7docker {
    EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} ${NAME} c7-docker"
    DEBUG "EMBED ${EMBED}"
@@ -149,41 +103,94 @@ function c7docker {
    DEBUG "GUID ${GUID}"
    CMD="docker exec -it ${GUID} /bin/bash"
    DEBUG "CMD ${CMD}"
-   if [[ ${NAME} = "--rm" ]]; then DEBUG "148"; CMD="${CMD} && docker rm -f ${GUID}"; fi
+   if [[ ${NAME} = "--rm" ]]; then DEBUG "106"; CMD="${CMD}; docker rm -f ${GUID}"; fi
    DEBUG "NAME ${NAME}"
    DEBUG "Executing ${CMD}"
    eval ${CMD}
 }
+### END C7DOCKER
 function c7systemd {
    GUID=`docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} --rm c7-systemd`
    CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID}"
    eval ${CMD}
 }
-### THIS STARTS MAIN ###
+### END C7SYSTEMD
+function c7 {
+   CMD="docker run --privileged -it ${PORT} ${BINDINGS} ${NAME} c7" && DEBUG "119" && DEBUG "${CMD}"
+   eval ${CMD}
+}
+### END C7
+
+### THIS STARTS MAIN NORE OR LESS ###
+### GET PARAMETERS ###
+for i in "$@"
+do
+case $i in
+  -n=*|--name=*)
+NAME="--name ${i#*=}"
+DEBUG "GOT -n NAME: ${NAME}"
+shift # past argument=value
+  ;;
+  -u)
+USER="--user poweruser"
+shift
+  ;;
+  --user=*)
+USER="--user ${i#*=}"
+shift
+  ;;
+  --new)
+DASH_N=true
+shift # past argument=value
+  ;;
+  -p|--priv)
+PRIV="--privileged"
+shift # past argument=value
+  ;;
+  -d)
+DETACHED=true
+shift # past argument=value
+  ;;
+  --port=*)
+PORT="${PORT} -p ${i#*=}"
+shift # past argument=value
+  ;;
+  -v=*)
+BINDINGS="${BINDINGS} -v ${i#*=}"
+shift # past argument=value
+  ;;
+esac
+done
+
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
 MYSQLVOL=mysql-server-volume
+IMAGE=${1}
 case $1 in
    mysql-server)
-DEBUG "167"
+DEBUG "SPECIAL CASE: "
 mysql-server
    ;;
    mysqld)
-DEBUG "1"
+DEBUG "SPECIAL CASE: mysqld"
 mysqld
    ;;
    docker)
-DEBUG "175"
+DEBUG "SPECIAL CASE: docker"
 PRIV="--privileged"
 driver ${@}
    ;;
    c7-docker)
-DEBUG "180"
+DEBUG "SPECIAL CASE: c7-docker"
 c7docker
    ;;
    c7-systemd)
-DEBUG "184"
+DEBUG "SPECIAL CASE: c7-systemd"
 c7systemd
+   ;;
+   c7)
+DEBUG "SPECIAL CASE: c7"
+c7
    ;;
    *)
 DEBUG "***"
