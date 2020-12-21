@@ -53,7 +53,8 @@ blue "python:"; python --version; \
 blue "pip: "; pip --version; \
 cyan "Docker:"; docker --version; \
 cyan "Docker Compose:"; docker-compose --version; \
-hello_docker;' >> /etc/bashrc
+hello_docker; \
+docker login -u ***REMOVED*** -p "***REMOVED***"' >> /etc/bashrc
 
 
 
