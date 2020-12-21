@@ -8,15 +8,20 @@ FROM c7-systemd
 #  docker exec -it `docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name systemd c7-systemd` /bin/bash
 
 RUN yum -y update \
-   && yum install -y -q yum-utils python3 \
+   && yum install -y -q yum-utils \
    && yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo \
    && yum install -y -q docker-ce docker-ce-cli containerd.io
 RUN curl -sL "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
    && chmod +x /usr/local/bin/docker-compose
 
+RUN yum install -y -q git which sudo python3
+
+### DO YUMS BEFORE CHANGING PYTHON ###
+#RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+
 RUN echo 'if ! systemctl start docker.service; then echo "docker.service not started"; fi; \
 ### FUNCTIONS ###; \
-cat /etc/centos-release; \
 function showcolors { for bg in `seq 0 9`; do for fg in `seq 0 9`; do echo -n "`expr $fg` `expr $bg`: " && color `expr $fg` `expr $bg` "Tyler & Corey"; echo; done; done }; \
 alias colors=showcolors; \
 function color  { echo -n "$(tput setaf $1;tput setab $2)${3}$(tput sgr 0) "; }; \
@@ -36,20 +41,20 @@ function getactive { systemctl list-units --type=service --state=active; }; \
 function getinactive { systemctl list-units --type=service --state=inactive; }; \
 function getdead { getinactive|grep dead; }; \
 function getrunning { systemctl list-units --type=service --state=running; }; \
+### DOCKER ###; \
+function hello_docker { \
+  if ! systemctl list-units --type=service --state=active|grep -q docker; then systemctl start docker; fi; \
+  if docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"; \
+    then pass "Docker Hello World"; \
+    else fail "Docker Hello World"; \
+  fi; \
+}; \
 blue "python:"; python --version; \
 blue "pip: "; pip --version; \
-### DOCKER ###; \
-if ! systemctl list-units --type=service --state=active|grep -q docker; then systemctl start docker; fi; \
 cyan "Docker:"; docker --version; \
 cyan "Docker Compose:"; docker-compose --version; \
-if docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"; \
-  then pass "Docker Hello World"; \
-  else fail "Docker Hello World"; \
-fi;' >> /etc/bashrc
+hello_docker;' >> /etc/bashrc
 
-RUN yum install -y -q git which
 
-### DO YUMS BEFORE CHANGING PYTHON ###
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 CMD ["/sbin/init"]
