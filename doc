@@ -1,3 +1,4 @@
 #!/bin/bash
 
-ln -fsn ${1} ./Dockerfile
+if [ $# -eq 0 ]; then ln -fsn ./Dockerfile.sh ./Dockerfile
+else ln -fsn ${1} ./Dockerfile;  fi
