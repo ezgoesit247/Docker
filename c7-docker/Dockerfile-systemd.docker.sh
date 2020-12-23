@@ -1,4 +1,4 @@
-FROM c7-systemd
+FROM local/c7-systemd
 ### RUN CONTAINER WITH THIS COMMAND:
 #  docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --rm c7-systemd
 # THEN CONNECT WITH THIS COMMAND:
