@@ -1,36 +1,26 @@
-FROM ubuntu:18.04
+FROM local/u18-seedling
 CMD ["/bin/bash"]
 
-RUN apt-get -y -qq update && apt-get -y -qq upgrade \
-  && apt-get -y -qq install \
-    sudo
-RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
-  && useradd -rm -s /bin/bash -d /home/poweruser -U -G sudo -u 1001 poweruser
-USER poweruser
-WORKDIR /home/poweruser
-ENV DOCKER_ENV=default
-RUN   echo 'clear\n \
-if [ -d _assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_history/history.${DOCKER_ENV}" && echo "Shared bash history at: ${HISTFILE}"; else echo "bash history not persisted: ${HISTFILE}"; fi\n \
-export HISTTIMEFORMAT="%F	%T	"' >> /home/poweruser/.bashrc
-
 ### GEN EDS- yarrgh ###
-RUN sudo apt-get -y -qq install \
+RUN sudo apt-get -qq purge openjdk-\*
+RUN sudo apt-get -qq update \
+   && sudo apt-get -qq install -y \
    curl \
    wget \
    gnupg2 \
    unzip \
    vim \
-   iputils-ping
-RUN echo "12 4" | sudo apt-get -y -qq install software-properties-common
-RUN sudo apt-get -y -qq install \
+   iputils-ping \
+   software-properties-common \
    apt-transport-https \
    ca-certificates \
    gnupg-agent \
    python \
    git \
    python3-pip
-RUN   sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
-RUN   sudo ln -s /usr/bin/pip3 /usr/bin/pip
+RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+   && sudo ln -s /usr/bin/pip3 /usr/bin/pip
+
 RUN   echo '\n \
 ### FUNCTIONS ###\n \
    grep "DISTRIB_DESCRIPTION" /etc/lsb-release\n \
