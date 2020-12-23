@@ -1,0 +1,9 @@
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+<description>Default block replication.</description>
+</property>
+<property>
+<name>dfs.datanode.data.dir</name>
+<value>/home/hduser_/hdfs</value>
+</property>

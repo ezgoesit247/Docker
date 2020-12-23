@@ -1,0 +1,7 @@
+<property>
+<name>mapreduce.jobtracker.address</name>
+<value>localhost:54311</value>
+<description>MapReduce job tracker runs at this host and port.
+</description>
+</property>
+:
