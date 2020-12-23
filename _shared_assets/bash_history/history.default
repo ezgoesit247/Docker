@@ -428,3 +428,31 @@ echo ${INT_ENVIRONMENT}
 mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${INT_ENVIRONMENT}; else   echo mvn clean failed; fi
 #1608157099
 mvn clean && if [ ! -d target ]; then   mvn package     -DSERVICE_TEST_ENVIRONMENT=${INT_ENVIRONMENT}; else   echo mvn clean failed; fi
+#1608652144
+sudo apt-get -y -qq install    curl    wget    gnupg2    unzip    vim    iputils-ping
+#1608659716
+ls
+#1608659723
+ls -A
+#1608660851
+ls -lA
+#1608668972
+sudo apt-get -y -qq install    curl
+#1608668990
+sudo apt-get update
+#1608668998
+sudo apt-get -y -qq install    curl
+#1608669023
+sudo apt-get -y -qq install    curl    wget    gnupg2    unzip    vim    iputils-ping
+#1608669038
+echo $?
+#1608669082
+sudo apt-get update -q
+#1608669089
+sudo apt-get update -qq
+#1608669150
+sudo apt-get install -qq curl    wget    gnupg2    unzip    vim    iputils-ping
+#1608669201
+sudo apt-get install -qq software-properties-common
+#1608669253
+sudo apt-get install -qq apt-transport-https    ca-certificates    gnupg-agent    python    git    python3-pip
