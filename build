@@ -9,15 +9,17 @@ function init { #
   do pushd ${path} > /dev/null; done
 }
 function do_build {
-   msg "do_build" "executing: docker${RM} build -t ${1} ."
-   while ! docker build ${RM} -t ${1} . | grep -i SUCCESSFULLY; do
+   CMD="docker build ${RM} -t ${REMOTE}${1} ."
+   msg "do_build" "executing: ${CMD}"
+#   while ! docker build ${RM} -t ${REMOTE}${1} . | grep -i SUCCESSFULLY; do
+   while ! ${CMD} | grep -i SUCCESSFULLY; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
          msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
             && ln -s ./Dockerfile.sh ./Dockerfile \
             && msg "do_build" "Retrying..." && continue
       fi
-      msg "do_build" "Error in ${1}, fix then press <Enter> to retry"; usage;
-      read x; msg "do_build" "Retrying for tag ${1}";
+      msg "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry"; usage;
+      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
    done
 }
 function build {
@@ -31,13 +33,47 @@ function build {
 function usage {
    echo -e "\n Usage:\tbuild [NAME] looks for Dockerfile ${docker_dir}/NAME/\n\tbuild NOARGS looks for Dockerfile in PWD"; echo
 }
+function error
+{
+    # Send the first element as one argument, and the rest of the elements as a combined argument.
+    # Arguments to println:
+    #   1 -> '\e[31mError (%d): %s\e[m'
+    #   2 -> "$1"
+    #   3 -> "${*:2}"
 
+    println '\e[31mError (%d): %s\e[m' "$1" "${*:2}"
+    exit "$1"
+}
+function success
+{
+    # Send the first element as one argument, and the rest of the elements as a combined argument.
+    # Arguments to println:
+    #   1 -> '\e[31mError (%d): %s\e[m'
+    #   2 -> "$1"
+    #   3 -> "${*:2}"
+
+    println '\e[32mComplete: %s\e[m' "${*:1}"
+}
+function println
+{
+   printf "$1\n" "${@:2}"
+}
 RM=""
+REMOTE="local/"
 for i in "$@"
 do
 case $i in
-   -r|--rm)
+-r|--rm)
    RM=" --rm"
+   shift
+   ;;
+### LOCAL IS DEFAULT ###
+--local)
+   REMOTE="local/"
+   shift
+   ;;
+--remote=*)
+   REMOTE="${i#*=}/"
    shift
    ;;
 esac
