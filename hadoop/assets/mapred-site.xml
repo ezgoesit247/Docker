@@ -1,7 +1,10 @@
-<property>
-<name>mapreduce.jobtracker.address</name>
-<value>localhost:54311</value>
-<description>MapReduce job tracker runs at this host and port.
-</description>
-</property>
-:
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+   <property>
+      <name>mapreduce.jobtracker.address</name>
+      <value>localhost:54311</value>
+      <description>MapReduce job tracker runs at this host and port.</description>
+   </property>
+</configuration>
+EOF
