@@ -50,32 +50,6 @@ RUN   echo '### NODE ###\n \
    blue "Node:"; node -v \n \
    ' >> /home/poweruser/.bashrc
 
-COPY assets/hadoop-2.10.1.tar.gz hadoop-2.10.1.tar.gz
-RUN sudo tar -zxf hadoop-2.10.1.tar.gz \
-   && sudo mv hadoop-2.10.1 /hadoop \
-   && sudo rm -rf hadoop-2.10.1.tar.gz
-
-USER root
-#RUN echo 'export JAVA_HOME=/usr/share/jdk1.8 \
-#   && export M2_HOME=/usr/share/maven \
-#   && export HADOOP_HOME=/hadoop \
-#   && export PATH="$PATH:$JAVA_HOME/bin:${HADOOP_HOME}/bin:${M2_HOME}/bin"' >> /etc/bash.bashrc
-RUN addgroup hadoop_ \
-   && useradd -rm -s /bin/bash -d /home/hduser_ -U -G sudo -G hadoop_ -u 1002 hduser_
-RUN chown -R hduser_:hadoop_ /hadoop
-
-ENV JAVA_HOME=/usr/share/jdk1.8
-ENV M2_HOME=/usr/share/maven/
-ENV HADOOP_HOME=/hadoop
-ENV PATH="$PATH:$JAVA_HOME/bin:${HADOOP_HOME}/bin:${M2_HOME}/bin"
-
-RUN mkdir /app && sudo mkdir /app/hadoop && sudo mkdir /app/hadoop/tmp
-RUN chown -R hduser_:hadoop_ /app
-RUN chmod 750 -R /app
-
-USER poweruser
-
-
 
 
 ENV DOCKER_ENV=developer
