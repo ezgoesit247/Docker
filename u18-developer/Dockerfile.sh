@@ -1,14 +1,16 @@
 FROM local/u18-seed
 
+ENV JAVA_HOME=/jdk1.8
+ENV M2_HOME=/maven
 ###  JAVA & DEV ###
 COPY assets/jdk-8u271-linux-x64.tar.gz jdk-8u271-linux-x64.tar.gz
 RUN sudo tar -zxf jdk-8u271-linux-x64.tar.gz \
-   && sudo mv jdk1.8.0_271 /usr/share/jdk1.8 \
+   && sudo mv jdk1.8.0_271 $JAVA_HOME \
    && sudo rm -rf jdk-8u271-linux-x64.tar.gz
 
 COPY assets/apache-maven-3.6.3-bin.tar.gz apache-maven-3.6.3-bin.tar.gz
 RUN sudo tar -zxf apache-maven-3.6.3-bin.tar.gz \
-   && sudo mv apache-maven-3.6.3 /usr/share/maven \
+   && sudo mv apache-maven-3.6.3 $M2_HOME \
    && sudo rm -rf apache-maven-3.6.3-bin.tar.gz
 
 #ENV JAVA_HOME=/usr/share/jdk1.8
@@ -51,5 +53,7 @@ RUN   echo '### NODE ###\n \
    ' >> /home/poweruser/.bashrc
 
 
+
+ENV PATH=${PATH}:${JAVA_HOME}/bin:${M2_HOME}/bin
 
 ENV DOCKER_ENV=developer
