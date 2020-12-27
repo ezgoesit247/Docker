@@ -19,10 +19,10 @@ RUN sudo apt-get -qq update \
    && sudo apt-get -qq install \
    mysql-client
 RUN   echo '### DEVTOOLS ###\n \
-   if command -v java > /dev/null 2>&1; then blue "java:"; java -version; else yellow "No Java"; fi;\n \
-   if command -v javac > /dev/null 2>&1; then blue "javac:"; javac -version; else yellow "No JDK"; fi;\n \
-   if command -v mvn > /dev/null 2>&1; then blue "maven"; mvn --version; else yellow "No Maven"; fi;\n \
-   if command -v mysql > /dev/null 2>&1; then blue "mysql client:"; mysql --version; else yellow "No MySql Cient"; fi;\n \
+   if command -v java > /dev/null 2>&1; then blue "java:"; java -version; else yellow "No Java"; echo; fi;\n \
+   if command -v javac > /dev/null 2>&1; then blue "javac:"; javac -version; else yellow "No JDK"; echo; fi;\n \
+   if command -v mvn > /dev/null 2>&1; then blue "maven"; mvn --version; else yellow "No Maven"; echo; fi;\n \
+   if command -v mysql > /dev/null 2>&1; then blue "mysql client:"; mysql --version; else yellow "No MySql Cient"; echo; fi;\n \
    if [ -d /apache-activemq-5.16.0 ];\n \
       then green "$(/apache-activemq-5.16.0/bin/activemq start)"; echo;\n \
       else grey "apache-activemq not mounted, not installed"; echo;\n \
