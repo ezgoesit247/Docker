@@ -3,3 +3,7 @@
 !assets/
 !assets/*
 !Dockerfile.sh
+!my-spark-master/
+!my-spark-master/Dockerfile.sh
+!my-spark-worker/
+!my-spark-worker/Dockerfile.sh
