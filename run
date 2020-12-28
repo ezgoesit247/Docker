@@ -7,7 +7,8 @@ function VARS { if [ ${debug} -eq 1 ]; then echo -e "********\n\t\$IMAGE:\t${IMA
 NAME="--rm"
 USER="" && PRIV=""
 DASH_N=false
-DETACHED=false
+MYSQLD_DETACHED=false
+DETACHED=
 function driver {
 DEBUG "${LINENO} FUNCTION driver" && VARS
 ###
@@ -20,7 +21,7 @@ BNDGNS=" \
   -v ${HOME}/.m2:/home/poweruser/.m2 \
   -v ${HOME}/.aws:/home/poweruser/.aws \
   -v ${HOME}/.ssh:/home/poweruser/.ssh"
-CMD="docker run ${PRIV} -it -P \
+CMD="docker run ${PRIV} ${DETACHED} -it -P \
   ${USER} ${NAME}"
 IMAGE="local/${PWD##*/}"
 DEBUG "${LINENO} Executing CMD:${CMD} ${IMAGE}" && VARS
@@ -35,14 +36,14 @@ else DEBUG ${LINENO} && VARS
 #  -v ${HOME}/.m2:/home/poweruser/.m2 \
 #  -v ${HOME}/.aws:/home/poweruser/.aws \
 #  -v ${HOME}/.ssh:/home/poweruser/.ssh"
-CMD="docker run ${PRIV} -it -P ${USER} --name ${IMAGE}"
+CMD="docker run ${PRIV} ${DETACHED} -it -P ${USER} --name ${IMAGE}"
 LCL_IMAGE_VAR="local/${PWD##*/}"
 DEBUG "${LINENO} Executing \$CMD:${CMD} ${LCL_IMAGE_VAR}" && VARS
    if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
       then CMD="docker start ${IMAGE}"
          DEBUG "${LINENO} Executing \$CMD:${CMD}" && VARS
          if ${CMD} 2> /dev/null; then docker exec -it ${IMAGE} /bin/bash;
-         else CMD="docker run ${PRIV} -it -P ${NAME}"; DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}" && VARS && ${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}; fi
+         else CMD="docker run ${PRIV} ${DETACHED} -it -P ${NAME}"; DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}" && VARS && ${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}; fi
 
       else DEBUG "${LINENO}" && echo "can't start, running container: docker run ${PRIV} -it -P ${IMAGE}" && docker run ${PRIV} -it -P \
         -v "${PWD}":/home/poweruser/_assets.local \
@@ -73,9 +74,9 @@ if ! docker ps -a|grep -q ${CONTAINER}; then DEBUG "${LINENO}-A"; if ! docker vo
       #docker rm -f mysql-server
       echo "Root password is: ${SECRET}"
       else DEBUG "${LINENO}"; docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
-   fi; if ! ${DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+   fi; if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
 else if ! docker ps|grep -q ${CONTAINER}; DEBUG "${LINENO}"; then docker start ${CONTAINER}; fi
-   if ! ${DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+   if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
 fi
 
 }
@@ -85,10 +86,10 @@ local CONTAINER=mysqld
 DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
 if ${DASH_N}; then DEBUG "${LINENO}"
    docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
-   && if ! ${DETACHED}; then DEBUG "${LINENO}-A" && echo "Connecting..." && sleep 15; while ! docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}` 2>&1; do DEBUG "${LINENO}-B" && echo "Connecting..." && sleep 2; continue; done; fi
+   && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-A" && echo "Connecting..." && sleep 15; while ! docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}` 2>&1; do DEBUG "${LINENO}-B" && echo "Connecting..." && sleep 2; continue; done; fi
 else  DEBUG "${LINENO}"
    docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
-   DEBUG "${LINENO}-A"; docker start ${CONTAINER} && if ! ${DETACHED}; then DEBUG "${LINENO}-B"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+   DEBUG "${LINENO}-A"; docker start ${CONTAINER} && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-B"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
 fi
 }
 ### END MYSQLD ###
@@ -149,7 +150,8 @@ case $i in
    shift # past argument=value
    ;;
 -d)
-   DETACHED=true
+   MYSQLD_DETACHED=true
+   DETACHED="-d"
    shift # past argument=value
    ;;
 --port=*)
@@ -192,6 +194,18 @@ c7-systemd|local/c7-systemd)
 c7|local/c7)
    DEBUG "${LINENO} SPECIAL CASE: c7"
    c7
+   ;;
+seedling|local/seedling)
+   DEBUG "${LINENO} SPECIAL CASE: seed"
+   ${0} local/u18-seed ${@}
+   ;;
+seed|local/seed)
+   DEBUG "${LINENO} SPECIAL CASE: seed"
+   ${0} local/u18-seed ${@}
+   ;;
+developer|local/developer)
+   DEBUG "${LINENO} SPECIAL CASE: seed"
+   ${0} local/u18-seed ${@}
    ;;
 *)
    DEBUG "*** ${LINENO} NOTHING IS SPECIAL ANYMORE ***"
