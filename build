@@ -9,7 +9,7 @@ function init { #
   do pushd ${path} > /dev/null; done
 }
 function do_build {
-   if [ -n ${TAG} ]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
+   if [[ -n ${TAG} ]]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
    CMD="docker build ${RM} -t ${REMOTE}${1} ${TG} ."
    msg "do_build:${LINENO}" "executing: ${CMD}"
 #   while ! docker build ${RM} -t ${REMOTE}${1} . | grep -i SUCCESSFULLY; do
