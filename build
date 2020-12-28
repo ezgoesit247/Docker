@@ -9,8 +9,9 @@ function init { #
   do pushd ${path} > /dev/null; done
 }
 function do_build {
-   CMD="docker build ${RM} -t ${REMOTE}${1} ."
-   msg "do_build" "executing: ${CMD}"
+   if [ -n ${TAG} ]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
+   CMD="docker build ${RM} -t ${REMOTE}${1} ${TG} ."
+   msg "do_build:${LINENO}" "executing: ${CMD}"
 #   while ! docker build ${RM} -t ${REMOTE}${1} . | grep -i SUCCESSFULLY; do
    while ! ${CMD} | grep -i SUCCESSFULLY; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
@@ -60,6 +61,7 @@ function println
 }
 RM=""
 REMOTE="local/"
+TAG=""
 for i in "$@"
 do
 case $i in
@@ -67,7 +69,11 @@ case $i in
    RM=" --rm"
    shift
    ;;
-### LOCAL IS DEFAULT ###
+-t=*)
+   TAG="${i#*=}"
+   shift
+   ;;
+### THIS IS THE DEFAULT why is this even here? ###
 --local)
    REMOTE="local/"
    shift
