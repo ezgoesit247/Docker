@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=0
+debug=1
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e "********\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t${NAME}\n\t\$USER:\t${USER}\n********\n"; fi }
 
@@ -195,8 +195,16 @@ c7|local/c7)
    DEBUG "${LINENO} SPECIAL CASE: c7"
    c7
    ;;
+local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-scala-template)
+   DEBUG "${LINENO} SPECIAL CASE: spark-scala-submit"
+   BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/_assets"
+   BNDGNS="${BNDGNS} -v ${PWD}:/_assets.local"
+   CMD="docker run -it ${BNDGNS} --rm local/spark-scala-submit sbt console"
+   DEBUG "${LINENO} Executing CMD:${CMD}"
+   ${CMD}
+   ;;
 seedling|local/seedling)
-   DEBUG "${LINENO} SPECIAL CASE: seed"
+   DEBUG "${LINENO} SPECIAL CASE: seedling"
    ${0} local/u18-seed ${@}
    ;;
 seed|local/seed)
@@ -204,15 +212,15 @@ seed|local/seed)
    ${0} local/u18-seed ${@}
    ;;
 developer|local/developer)
-   DEBUG "${LINENO} SPECIAL CASE: seed"
+   DEBUG "${LINENO} SPECIAL CASE: developer"
    ${0} local/u18-seed ${@}
    ;;
 *)
    DEBUG "*** ${LINENO} NOTHING IS SPECIAL ANYMORE ***"
    if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
    if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="  -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
-   BNDGNS="${BNDGNS}  -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
-   BNDGNS="${BNDGNS}  -v ${PWD}/assets:/home/poweruser/_assets.local"
+   BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
+   BNDGNS="${BNDGNS} -v ${PWD}/assets:/home/poweruser/_assets.local"
    driver ${@}
    ;;
 
