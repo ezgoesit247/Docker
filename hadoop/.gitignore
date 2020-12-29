@@ -7,3 +7,12 @@
 !spark-master/Dockerfile.sh
 !spark-worker/
 !spark-worker/Dockerfile.sh
+!spark-base/
+!spark-base/*
+!README.md
+!*.sh
+
+!spark-scala-submit/
+!spark-scala-submit/*
+
+**Dockerfile
