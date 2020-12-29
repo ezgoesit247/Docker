@@ -1,9 +1,16 @@
 #!/bin/bash
 
-debug=1
+debug=0
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e "********\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t${NAME}\n\t\$USER:\t${USER}\n********\n"; fi }
-
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t${NAME}\n\t\$USER:\t${USER}\n********\n$(tput sgr 0)"; fi }
+function println
+{
+   printf "$1\n" "${@:2}"
+}
+function error {
+   println '\e[31mError(%d): %s\e[m' "$1" "${*:2}"
+   exit "$1"
+}
 NAME="--rm"
 USER="" && PRIV=""
 DASH_N=false
@@ -25,7 +32,7 @@ CMD="docker run ${PRIV} ${DETACHED} -it -P \
   ${USER} ${NAME}"
 IMAGE="local/${PWD##*/}"
 DEBUG "${LINENO} Executing CMD:${CMD} ${IMAGE}" && VARS
-if ! ${CMD} ${BNDGNS} ${IMAGE}; then DEBUG "${LINENO}"; echo -e " Usage:\trun NOARGS must be in parent dir\n\trun [NAME] saves container if PWD is parent dir\n\t else creates rm anonymous"; exit 1; fi; fi
+if ! ${CMD} ${BNDGNS} ${IMAGE}; then error ${LINENO} Something did not work; fi; fi
 else DEBUG ${LINENO} && VARS
 ###
 ### CASE 2 RUN & NAMES CONTAINER FOR IMAGE $PWD
