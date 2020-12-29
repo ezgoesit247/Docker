@@ -6,7 +6,7 @@ function println
    printf "$1\n" "${@:2}"
 }
 function usage {
-   println '\e[31mError (%d): %s\e[m' "$1" "${*:2}"
+   println '\e[33musage (%d): %s\e[m' "$1" "${*:2}"
    exit "$1"
 }
 
