@@ -1,0 +1,14 @@
+#!/bin/bash
+
+### PRINTS A TITLE AND A MESSAGE
+function println
+{
+   printf "$1\n" "${@:2}"
+}
+function usage {
+   println '\e[31mError (%d): %s\e[m' "$1" "${*:2}"
+   exit "$1"
+}
+
+if [ $# -ne 1 ]; then usage 1 specify container name; fi
+docker exec -it ${1} /bin/bash
