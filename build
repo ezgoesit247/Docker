@@ -10,7 +10,7 @@ function init { #
 }
 function do_build {
    if [[ -n ${TAG} ]]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
-   CMD="docker build ${RM} -t ${REMOTE}${1} ${TG} ."
+   CMD="docker build ${NOCACHE} --rm -t ${REMOTE}${1} ${TG} ."
    msg "do_build:${LINENO}" "executing: ${CMD}"
 #   while ! docker build ${RM} -t ${REMOTE}${1} . | grep -i SUCCESSFULLY; do
    while ! ${CMD} | grep -i SUCCESSFULLY; do
@@ -71,6 +71,10 @@ case $i in
    ;;
 -t=*)
    TAG="${i#*=}"
+   shift
+   ;;
+-n|--nc)
+   NOCACHE="--no-cache"
    shift
    ;;
 ### THIS IS THE DEFAULT why is this even here? ###

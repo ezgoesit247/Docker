@@ -16,12 +16,14 @@ USER="" && PRIV=""
 DASH_N=false
 MYSQLD_DETACHED=false
 DETACHED=
+BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
+BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
 function driver {
 DEBUG "${LINENO} FUNCTION driver" && VARS
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
 ###
-if [ -z $1 ]; then DEBUG "${LINENO}-A"; if [[ ${PWD##*/} == "c7-docker" ]]; then c7docker; else DEBUG "${LINENO}-B"; echo "Looking for container image: ${PWD##*/}"
+if [ -z $1 ]; then DEBUG "${LINENO}-A"; if [[ ${PWD##*/} == "c7-docker" ]]; then c7-docker; else DEBUG "${LINENO}-B"; echo "Looking for container image: ${PWD##*/}"
 BNDGNS=" \
   -v ${PWD}:/home/poweruser/_assets.local \
   -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
@@ -100,8 +102,8 @@ else  DEBUG "${LINENO}"
 fi
 }
 ### END MYSQLD ###
-function c7docker {
-   EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} ${NAME} c7-docker"
+function c7-docker {
+   EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
    DEBUG "${LINENO} EMBED ${EMBED}"
    GUID=`eval ${EMBED}`
    DEBUG "${LINENO} GUID ${GUID}"
@@ -112,18 +114,26 @@ function c7docker {
    DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
-### END C7DOCKER
-function c7systemd {
-   GUID=`docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BINDINGS} --rm c7-systemd`
-   CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID}"
+### END C7-DOCKER
+function c7-systemd {
+   CMD="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} --name c7-systemd --rm local/c7-systemd" && DEBUG "${LINENO} Executing:${CMD}"
+   GUID=`${CMD}`
+   CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID} > /dev/null"
    eval ${CMD}
 }
-### END C7SYSTEMD
+### END C7-SYSTEMD
 function c7 {
-   CMD="docker run --privileged -it ${PORT} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
+   CMD="docker run --privileged -it ${PORT} ${BNDGNS} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
 ### END C7
+function u18-systemd {
+   CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
+   GUID=`${CMD}`
+   CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
+   eval ${CMD}
+}
+### END U18-SYSTEMD
 
 ### THIS STARTS MAIN NORE OR LESS ###
 ### GET PARAMETERS ###
@@ -178,55 +188,58 @@ MYSQLVOL=mysql-server-volume
 IMAGE=${1}
 case $1 in
 mysql-server|local/mysql-server)
-   DEBUG "${LINENO} SPECIAL CASE: mysql-server"
+   DEBUG "${LINENO} calling function: mysql-server"
    mysql-server
    ;;
 mysqld|local/mysqld)
-   DEBUG "${LINENO} SPECIAL CASE: mysqld"
+   DEBUG "${LINENO} calling function: mysqld"
    mysqld
    ;;
 docker|local/docker)
-   DEBUG "${LINENO} SPECIAL CASE: docker"
+   DEBUG "${LINENO} calling function: docker"
    PRIV="--privileged"
    driver ${@}
    ;;
 c7-docker|local/c7-docker)
-   DEBUG "${LINENO} SPECIAL CASE: c7-docker"
-   c7docker
+   DEBUG "${LINENO} calling function: c7-docker"
+   c7-docker
    ;;
 c7-systemd|local/c7-systemd)
-   DEBUG "${LINENO} SPECIAL CASE: c7-systemd"
-   c7systemd
+   DEBUG "${LINENO} calling function: c7-systemd"
+   c7-systemd
+   ;;
+local/u18-systemd)
+   DEBUG "${LINENO} calling function: u18-systemd"
+   u18-systemd
    ;;
 c7|local/c7)
-   DEBUG "${LINENO} SPECIAL CASE: c7"
+   DEBUG "${LINENO} calling function: c7"
    c7
    ;;
 local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-scala-template)
-   DEBUG "${LINENO} SPECIAL CASE: spark-scala-submit"
+   DEBUG "${LINENO} spark-scala-submit"
    BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/_assets"
-   BNDGNS="${BNDGNS} -v ${PWD}:/_assets.local"
    CMD="docker run -it ${BNDGNS} --rm local/spark-scala-submit sbt console"
    DEBUG "${LINENO} Executing CMD:${CMD}"
    ${CMD}
    ;;
 seedling|local/seedling)
-   DEBUG "${LINENO} SPECIAL CASE: seedling"
-   ${0} local/u18-seed ${@}
+   DEBUG "${LINENO} SPECIAL CASE, recalling as: u18-seedling"
+   ${0} local/u18-seedling ${@}
    ;;
 seed|local/seed)
-   DEBUG "${LINENO} SPECIAL CASE: seed"
+   DEBUG "${LINENO} SPECIAL CASE, recalling as: u18-seed"
    ${0} local/u18-seed ${@}
    ;;
 developer|local/developer)
-   DEBUG "${LINENO} SPECIAL CASE: developer"
-   ${0} local/u18-seed ${@}
+   DEBUG "${LINENO} SPECIAL CASE, recalling as: u18-developer"
+   ${0} local/u18-developer ${@}
    ;;
 *)
    DEBUG "*** ${LINENO} NOTHING IS SPECIAL ANYMORE ***"
    if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
-   if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="  -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
-   BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
+   if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
+   #BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
    BNDGNS="${BNDGNS} -v ${PWD}/assets:/home/poweruser/_assets.local"
    driver ${@}
    ;;
