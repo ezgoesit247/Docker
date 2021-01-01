@@ -1,5 +1,6 @@
 FROM local/u18-seed
 
+RUN sudo apt-get update
 ### DOCKER ###
 RUN sudo apt-get install -qq \
       apt-transport-https \

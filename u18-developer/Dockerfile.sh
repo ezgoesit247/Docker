@@ -52,8 +52,7 @@ RUN   echo '### NODE ###\n \
    blue "Node:"; node -v \n \
    ' >> /home/poweruser/.bashrc
 
-
+RUN sudo apt-get -qq clean
 
 ENV PATH=${PATH}:${JAVA_HOME}/bin:${M2_HOME}/bin
-
 ENV DOCKER_ENV=developer
