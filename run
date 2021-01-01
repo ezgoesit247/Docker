@@ -224,15 +224,15 @@ local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-sca
    DEBUG "${LINENO} Executing CMD:${CMD}"
    ${CMD}
    ;;
-seedling|local/seedling)
+seedling)
    DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-seedling ${@}" && VARS
    ${0} local/u18-seedling ${@}
    ;;
-seed|local/seed)
+seed)
    DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-seed ${@}" && VARS
    ${0} local/u18-seed ${@}
    ;;
-developer|local/developer)
+developer)
    DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-developer ${@}" && VARS
    ${0} local/u18-developer ${@}
    ;;
