@@ -1,5 +1,5 @@
 FROM local/u18-seedling
-CMD ["/bin/bash"]
+ENV DOCKER_ENV=default
 
 ### GEN EDS- yarrgh ###
 RUN sudo apt-get -qq purge openjdk-\*
@@ -39,3 +39,5 @@ RUN   echo '\n \
    function info   { echo; echo "$(grey INFO: ${*})"; echo; }\n \
    blue "python:"; python --version\n \
    blue "pip: "; pip --version' >> /home/poweruser/.bashrc
+
+RUN sudo apt-get -qq clean
