@@ -18,6 +18,7 @@ MYSQLD_DETACHED=false
 DETACHED=
 BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
 BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
+DEBUG "${LINENO} STARTING..." && VARS
 function driver {
 DEBUG "${LINENO} FUNCTION driver" && VARS
 ###
@@ -224,15 +225,15 @@ local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-sca
    ${CMD}
    ;;
 seedling|local/seedling)
-   DEBUG "${LINENO} SPECIAL CASE, recalling as: u18-seedling"
+   DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-seedling ${@}" && VARS
    ${0} local/u18-seedling ${@}
    ;;
 seed|local/seed)
-   DEBUG "${LINENO} SPECIAL CASE, recalling as: u18-seed"
+   DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-seed ${@}" && VARS
    ${0} local/u18-seed ${@}
    ;;
 developer|local/developer)
-   DEBUG "${LINENO} SPECIAL CASE, recalling as: u18-developer"
+   DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-developer ${@}" && VARS
    ${0} local/u18-developer ${@}
    ;;
 *)
@@ -241,6 +242,7 @@ developer|local/developer)
    if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
    #BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
    BNDGNS="${BNDGNS} -v ${PWD}/assets:/home/poweruser/_assets.local"
+   DEBUG "Calling driveer with ${@}" && VARS
    driver ${@}
    ;;
 
