@@ -2,7 +2,7 @@
 
 debug=0
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t${NAME}\n\t\$USER:\t${USER}\n********\n$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$IMAGE:\t${NAME}\n\t\$USER:\t${USER}${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
 function println
 {
    printf "$1\n" "${@:2}"
@@ -10,6 +10,9 @@ function println
 function error {
    println '\e[31mError(%d): %s\e[m' "$1" "${*:2}"
    exit "$1"
+}
+function info {
+   println '\e[33m%s\e[m' "$*"
 }
 NAME="--rm"
 USER="" && PRIV=""
@@ -20,89 +23,121 @@ BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
 BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
 DEBUG "${LINENO} STARTING..." && VARS
 function driver {
-DEBUG "${LINENO} FUNCTION driver" && VARS
+   DEBUG ${LINENO} FUNCTION driver && VARS
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
 ###
-if [ -z $1 ]; then DEBUG "${LINENO}-A"; if [[ ${PWD##*/} == "c7-docker" ]]; then c7-docker; else DEBUG "${LINENO}-B"; echo "Looking for container image: ${PWD##*/}"
-BNDGNS=" \
-  -v ${PWD}:/home/poweruser/_assets.local \
-  -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
-  -v ${HOME}/.m2:/home/poweruser/.m2 \
-  -v ${HOME}/.aws:/home/poweruser/.aws \
-  -v ${HOME}/.ssh:/home/poweruser/.ssh"
-CMD="docker run ${PRIV} ${DETACHED} -it -P \
-  ${USER} ${NAME}"
-IMAGE="local/${PWD##*/}"
-DEBUG "${LINENO} Executing CMD:${CMD} ${IMAGE}" && VARS
-if ! ${CMD} ${BNDGNS} ${IMAGE}; then error ${LINENO} Something did not work; fi; fi
-else DEBUG ${LINENO} && VARS
-###
-### CASE 2 RUN & NAMES CONTAINER FOR IMAGE $PWD
-###
-#BNDGNS=" \
-#  -v ${PWD}:/home/poweruser/_assets.local \
-#  -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
-#  -v ${HOME}/.m2:/home/poweruser/.m2 \
-#  -v ${HOME}/.aws:/home/poweruser/.aws \
-#  -v ${HOME}/.ssh:/home/poweruser/.ssh"
-CMD="docker run ${PRIV} ${DETACHED} -it -P ${USER} --name ${IMAGE}"
-LCL_IMAGE_VAR="local/${PWD##*/}"
-DEBUG "${LINENO} Executing \$CMD:${CMD} ${LCL_IMAGE_VAR}" && VARS
-   if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
-      then CMD="docker start ${IMAGE}"
-         DEBUG "${LINENO} Executing \$CMD:${CMD}" && VARS
-         if ${CMD} 2> /dev/null; then docker exec -it ${IMAGE} /bin/bash;
-         else CMD="docker run ${PRIV} ${DETACHED} -it -P ${NAME}"; DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}" && VARS && ${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}; fi
-
-      else DEBUG "${LINENO}" && echo "can't start, running container: docker run ${PRIV} -it -P ${IMAGE}" && docker run ${PRIV} -it -P \
-        -v "${PWD}":/home/poweruser/_assets.local \
+   if [ -z $1 ]; then DEBUG ${LINENO}-A;
+      if [[ ${PWD##*/} == "u18-systemd" ]]; then u18-systemd; else
+      if [[ ${PWD##*/} == "c7-docker" ]]; then c7-docker; else
+      DEBUG ${LINENO}-B; echo "Looking for container image: ${PWD##*/}"
+      BNDGNS=" \
+        -v ${PWD}:/home/poweruser/_assets.local \
         -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
         -v ${HOME}/.m2:/home/poweruser/.m2 \
         -v ${HOME}/.aws:/home/poweruser/.aws \
-        -v ${HOME}/.ssh:/home/poweruser/.ssh \
-        ${USER} \
-        ${NAME} \
-        ${IMAGE}
+        -v ${HOME}/.ssh:/home/poweruser/.ssh"
+      IMAGE="local/${PWD##*/}"
+      CMD="docker run ${PRIV} ${DETACHED} -it -P --hostname ${PWD##*/} ${USER} ${NAME}"
+      DEBUG ${LINENO} Case \#1 calling do_it
+      if ! do_it ${CMD} ${BNDGNS} ${IMAGE}; then error ${LINENO} Something did not work; fi;
+      fi; fi
+###
+### CASE 2
+###
+   else DEBUG ${LINENO} && VARS
+   CMD="docker run ${PRIV} ${DETACHED} -it -P ${USER} --name ${IMAGE}"
+   LCL_IMAGE_VAR="local/${PWD##*/}"
+   #   if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
+   DEBUG ${LINENO} Case \#2 calling do_it && if ! do_it ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR}
+###
+### CASE 3
+###
+   then CMD="docker start ${IMAGE}"
+      DEBUG ${LINENO} Case \#3a calling do_it
+      if do_it ${CMD}; then
+         CMD="docker exec -it ${IMAGE} /bin/bash"
+         DEBUG ${LINENO} Case \#3b calling do_it
+         do_it ${CMD}
+###
+### CASE 4
+###
+      else
+         CMD="docker run ${PRIV} ${DETACHED} -it -P ${NAME}";
+         DEBUG ${LINENO} Case \#4 alling do_it && do_it ${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE};
+      fi
+###
+### CASE 5
+###
+      else
+         echo "can't start, running container: docker run ${PRIV} -it -P ${IMAGE}"
+         BNDGNS="-v ${PWD}:/home/poweruser/_assets.local"
+         BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
+         BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2"
+         BNDGNS="${BNDGNS} -v ${HOME}/.aws:/home/poweruser/.aws"
+         BNDGNS="${BNDGNS} -v ${HOME}/.ssh:/home/poweruser/.ssh"
+         set_hostname && CMD="docker run ${PRIV} -it -P ${USER} ${NAME}"
+         DEBUG ${LINENO} Case \#5 calling do_it && do_it ${CMD} ${BNDGNS} ${IMAGE}
+      fi
    fi
-fi
 
 }
-### END FUNCTION DRIVER
+### END DRIVER
 
-### SPECIFIC CONTAINERS ###
+function run_it {
+   VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
+   print_bindings
+   if [ ${debug} -ne 1 ]; then GUID=`${*}`; fi
+}
+function do_it {
+   VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
+   print_bindings
+   if [ ${debug} -ne 1 ]; then print_bindings && ${*} 2>/dev/null; fi
+}
+function set_hostname {
+   DEBUG ${LINENO} start set_hostname && VARS
+   if [[ ${NAME} == "--rm" ]]; then NAME="--hostname `basename ${IMAGE}` ${NAME}";
+   else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}"; fi;
+   DEBUG ${LINENO} end set_hostname && VARS
+}
+function print_bindings {
+   info VIRTUAL BINDINGS
+   v="${BNDGNS} ${BINDINGS}"
+   for x in ${v}; do if [[ ${x} != -v ]]; then info ${x}; fi; done
+}
+
+### MYSQL-SERVER ###
 function mysql-server {
-local CONTAINER=mysql-server
-DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
-if ! docker ps -a|grep -q ${CONTAINER}; then DEBUG "${LINENO}-A"; if ! docker volume list|grep -q ${MYSQLVOL}; then DEBUG "${LINENO}-B";
-      ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
-      echo "Connecting..."
-      docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
-      echo "Connecting..." && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
-      #echo "root pwd is ${pswd}"
-      until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
-      #docker rm -f mysql-server
-      echo "Root password is: ${SECRET}"
-      else DEBUG "${LINENO}"; docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
-   fi; if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
-else if ! docker ps|grep -q ${CONTAINER}; DEBUG "${LINENO}"; then docker start ${CONTAINER}; fi
-   if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
-fi
-
+   local CONTAINER=mysql-server
+   DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
+   if ! docker ps -a|grep -q ${CONTAINER}; then DEBUG "${LINENO}-A"; if ! docker volume list|grep -q ${MYSQLVOL}; then DEBUG "${LINENO}-B";
+         ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
+         echo "Connecting..."
+         docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+         echo "Connecting..." && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
+         #echo "root pwd is ${pswd}"
+         until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
+         #docker rm -f mysql-server
+         echo "Root password is: ${SECRET}"
+         else DEBUG "${LINENO}"; docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+      fi; if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+   else if ! docker ps|grep -q ${CONTAINER}; DEBUG "${LINENO}"; then docker start ${CONTAINER}; fi
+      if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+   fi
 }
-### END MYSQL-SERVER ###
+### MYSQLD ###
 function mysqld {
-local CONTAINER=mysqld
-DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
-if ${DASH_N}; then DEBUG "${LINENO}"
-   docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
-   && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-A" && echo "Connecting..." && sleep 15; while ! docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}` 2>&1; do DEBUG "${LINENO}-B" && echo "Connecting..." && sleep 2; continue; done; fi
-else  DEBUG "${LINENO}"
-   docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
-   DEBUG "${LINENO}-A"; docker start ${CONTAINER} && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-B"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
-fi
+   local CONTAINER=mysqld
+   DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
+   if ${DASH_N}; then DEBUG "${LINENO}"
+      docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
+      && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-A" && echo "Connecting..." && sleep 15; while ! docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}` 2>&1; do DEBUG "${LINENO}-B" && echo "Connecting..." && sleep 2; continue; done; fi
+   else  DEBUG "${LINENO}"
+      docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
+      DEBUG "${LINENO}-A"; docker start ${CONTAINER} && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-B"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
+   fi
 }
-### END MYSQLD ###
+### C7-DOCKER
 function c7-docker {
    EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
    DEBUG "${LINENO} EMBED ${EMBED}"
@@ -115,26 +150,34 @@ function c7-docker {
    DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
-### END C7-DOCKER
+### C7-SYSTEMD
 function c7-systemd {
    CMD="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} --name c7-systemd --rm local/c7-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID} > /dev/null"
    eval ${CMD}
 }
-### END C7-SYSTEMD
+### C7
 function c7 {
    CMD="docker run --privileged -it ${PORT} ${BNDGNS} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
-### END C7
+### U18-SYSTEMD
 function u18-systemd {
-   CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
+   print_bindings
+   CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --hostname=u18-systemd --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
-### END U18-SYSTEMD
+### U18-CRIO
+function u18-crio {
+   print_bindings
+   CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --name u18-crio --rm local/u18-crio" && DEBUG "${LINENO} Executing:${CMD}"
+   GUID=`${CMD}`
+   CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
+   eval ${CMD}
+}
 
 ### THIS STARTS MAIN NORE OR LESS ###
 ### GET PARAMETERS ###
@@ -186,7 +229,7 @@ done
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
 MYSQLVOL=mysql-server-volume
-IMAGE=${1}
+IMAGE=${1} #&& set_hostname
 case $1 in
 mysql-server|local/mysql-server)
    DEBUG "${LINENO} calling function: mysql-server"
@@ -196,8 +239,9 @@ mysqld|local/mysqld)
    DEBUG "${LINENO} calling function: mysqld"
    mysqld
    ;;
-docker|local/docker)
-   DEBUG "${LINENO} calling function: docker"
+local/u18-docker)
+   DEBUG "${LINENO} calling function: driver"
+   BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"
    PRIV="--privileged"
    driver ${@}
    ;;
@@ -213,16 +257,21 @@ local/u18-systemd)
    DEBUG "${LINENO} calling function: u18-systemd"
    u18-systemd
    ;;
+local/u18-crio)
+   DEBUG "${LINENO} calling function: u18-crio"
+   u18-crio
+   ;;
 c7|local/c7)
    DEBUG "${LINENO} calling function: c7"
    c7
    ;;
 local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-scala-template)
-   DEBUG "${LINENO} spark-scala-submit"
+   DEBUG ${LINENO} spark-scala-submit
+   IMAGE="local/spark-scala-submit sbt console"
    BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/_assets"
-   CMD="docker run -it ${BNDGNS} --rm local/spark-scala-submit sbt console"
-   DEBUG "${LINENO} Executing CMD:${CMD}"
-   ${CMD}
+   CMD="docker run -it --rm"
+   DEBUG ${LINENO} calling do_it
+   do_it ${CMD} ${BNDGNS} ${IMAGE}
    ;;
 seedling)
    DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-seedling ${@}" && VARS
@@ -242,7 +291,7 @@ developer)
    if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
    #BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
    BNDGNS="${BNDGNS} -v ${PWD}/assets:/home/poweruser/_assets.local"
-   DEBUG "Calling driveer with ${@}" && VARS
+   DEBUG "Calling driver with ${@}" && VARS
    driver ${@}
    ;;
 
