@@ -14,5 +14,7 @@
 
 !spark-scala-submit/
 !spark-scala-submit/*
+!learn-spark/
+!learn-spark/*
 
 **Dockerfile
