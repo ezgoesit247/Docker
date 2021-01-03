@@ -1,4 +1,4 @@
-FROM local/u18-seed
+FROM local/u18-developer
 
 RUN sudo apt-get update
 ### DOCKER ###
@@ -34,4 +34,4 @@ cyan "Docker Compose:"; docker-compose --version' >> /home/poweruser/.bashrc
 
 #https://www.vagrantup.com/docs/providers/virtualbox/boxes
 #apt-get install linux-headers-$(uname -r) build-essential dkms
-ENV DOCKER_ENV=docker
+ENV DOCKER_ENV=developer
