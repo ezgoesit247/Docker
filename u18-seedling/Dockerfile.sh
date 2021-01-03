@@ -8,14 +8,14 @@ RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers   && useradd -rm -s /bin/
 
 
 RUN   echo '\n\
-export export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
+export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
 if [ -d _assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_history/history.${DOCKER_ENV}" && echo "Shared bash history at: ${HISTFILE}"; else echo "bash history not persisted, check the -v mapping: ${HISTFILE}"; fi\n \
 export HISTTIMEFORMAT="%F	%T	"\n \
 alias ls="ls -Altr --color=auto"\n' >> /root/.bashrc
 USER poweruser
 WORKDIR /home/poweruser
 RUN   echo '\n\
-export export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n'\
+export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n'\
  >> /home/poweruser/.bashrc
 
 ENV DOCKER_ENV=default
