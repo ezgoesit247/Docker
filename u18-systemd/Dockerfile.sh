@@ -24,18 +24,13 @@ RUN apt-get -qq update \
  rm -f /lib/systemd/system/anaconda.target.wants/*;
 
 
-#RUN cd /lib/systemd/system/sysinit.target.wants/ \
-#    && ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1
-
-#RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
-#    /etc/systemd/system/*.wants/* \
-#    /lib/systemd/system/local-fs.target.wants/* \
-#    /lib/systemd/system/sockets.target.wants/*udev* \
-#    /lib/systemd/system/sockets.target.wants/*initctl* \
-#    /lib/systemd/system/basic.target.wants/* \
-#    /lib/systemd/system/anaconda.target.wants/* \
-#    /lib/systemd/system/plymouth* \
-#    /lib/systemd/system/systemd-update-utmp*
+RUN echo '\n\
+function getservices { systemctl list-units --type=service; }\n\
+function getactive { systemctl list-units --type=service --state=active; }\n\
+function getinactive { systemctl list-units --type=service --state=inactive; }\n\
+function getdead { getinactive|grep dead; }\n\
+function getrunning { systemctl list-units --type=service --state=running; }\n'\
+>> /etc/bash.bashrc
 
 
 VOLUME [ "/sys/fs/cgroup" ]

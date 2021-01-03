@@ -2,9 +2,19 @@
 
 debug=0
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$IMAGE:\t${NAME}\n\t\$USER:\t${USER}${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
-function println
-{
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$NAME:\t${NAME}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
+
+PWD=$(pwd)
+NAME="--rm"
+USER="" && PRIV=""
+DASH_N=false
+MYSQLD_DETACHED=false
+DETACHED=
+BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
+BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
+DEBUG "${LINENO} STARTING..." && VARS
+
+function println {
    printf "$1\n" "${@:2}"
 }
 function error {
@@ -14,14 +24,33 @@ function error {
 function info {
    println '\e[33m%s\e[m' "$*"
 }
-NAME="--rm"
-USER="" && PRIV=""
-DASH_N=false
-MYSQLD_DETACHED=false
-DETACHED=
-BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
-BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
-DEBUG "${LINENO} STARTING..." && VARS
+function green {
+   println '\e[32m%s\e[m' "$*"
+}
+function green1 {
+   println '\e[32m(%s): %s\e[m' "$1" "${*:2}"
+}
+function do_it {
+   VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
+   #green1 do_it ${CMD} ${IMAGE}
+   #if [ ${debug} -ne 1 ]; then
+   #print_bindings
+   eval ${*} 2>/dev/null;
+   #fi
+}
+function set_hostname {
+   DEBUG ${LINENO} start set_hostname && VARS
+   if [[ ${NAME} == "--rm" ]]; then NAME="--hostname `basename ${IMAGE}` ${NAME}";
+   else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}";
+   fi;
+   DEBUG ${LINENO} end set_hostname && VARS
+}
+function print_bindings {
+   info VIRTUAL BINDINGS
+   v="${BNDGNS} ${BINDINGS}"
+   for x in ${v}; do if [[ ${x} != -v ]]; then info ${x}; fi; done
+}
+
 function driver {
    DEBUG ${LINENO} FUNCTION driver && VARS
 ###
@@ -32,79 +61,63 @@ function driver {
       if [[ ${PWD##*/} == "c7-docker" ]]; then c7-docker; else
       DEBUG ${LINENO}-B; echo "Looking for container image: ${PWD##*/}"
       BNDGNS=" \
-        -v ${PWD}:/home/poweruser/_assets.local \
+        -v ${PWD}/assets.docker:/home/poweruser/_assets.local \
         -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
         -v ${HOME}/.m2:/home/poweruser/.m2 \
         -v ${HOME}/.aws:/home/poweruser/.aws \
         -v ${HOME}/.ssh:/home/poweruser/.ssh"
       IMAGE="local/${PWD##*/}"
-      CMD="docker run ${PRIV} ${DETACHED} -it -P --hostname ${PWD##*/} ${USER} ${NAME}"
-      DEBUG ${LINENO} Case \#1 calling do_it
-      if ! do_it ${CMD} ${BNDGNS} ${IMAGE}; then error ${LINENO} Something did not work; fi;
+      CMD="docker run ${PRIV} ${DETACHED} -it -P --hostname ${PWD##*/}"
+      DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} --rm ${IMAGE}"
+      print_bindings
+      if ! do_it "${CMD} --rm ${BNDGNS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
       fi; fi
 ###
 ### CASE 2
 ###
    else DEBUG ${LINENO} && VARS
-   CMD="docker run ${PRIV} ${DETACHED} -it -P ${USER} --name ${IMAGE}"
+   CMD="docker run ${PRIV} ${DETACHED} -it -P ${USER} --name"
    LCL_IMAGE_VAR="local/${PWD##*/}"
    #   if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
-   DEBUG ${LINENO} Case \#2 calling do_it && if ! do_it ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR}
+   DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
+   if ! do_it "${CMD} ${IMAGE} ${BNDGNS} ${LCL_IMAGE_VAR}"
 ###
 ### CASE 3
 ###
    then CMD="docker start ${IMAGE}"
-      DEBUG ${LINENO} Case \#3a calling do_it
+      DEBUG ${LINENO} Case \#3a calling do_it && green1 "Case #3a" "${CMD}"
       if do_it ${CMD}; then
          CMD="docker exec -it ${IMAGE} /bin/bash"
-         DEBUG ${LINENO} Case \#3b calling do_it
+         DEBUG ${LINENO} Case \#3b calling do_it && green1 "Case #3b" "${CMD}"
          do_it ${CMD}
 ###
 ### CASE 4
 ###
       else
+         BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/_assets.local"
          CMD="docker run ${PRIV} ${DETACHED} -it -P ${NAME}";
-         DEBUG ${LINENO} Case \#4 alling do_it && do_it ${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE};
+         DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
+         do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}";
       fi
 ###
 ### CASE 5
 ###
       else
-         echo "can't start, running container: docker run ${PRIV} -it -P ${IMAGE}"
-         BNDGNS="-v ${PWD}:/home/poweruser/_assets.local"
+         BNDGNS=" -v ${PWD}/assets.docker:/home/poweruser/_assets.local"
          BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
          BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2"
          BNDGNS="${BNDGNS} -v ${HOME}/.aws:/home/poweruser/.aws"
          BNDGNS="${BNDGNS} -v ${HOME}/.ssh:/home/poweruser/.ssh"
-         set_hostname && CMD="docker run ${PRIV} -it -P ${USER} ${NAME}"
-         DEBUG ${LINENO} Case \#5 calling do_it && do_it ${CMD} ${BNDGNS} ${IMAGE}
+         CMD="docker run ${PRIV} -it -P ${USER} ${NAME}"
+         info "(${LINENO}) can't start, running container: ${CMD} ${BNDGNS} ${IMAGE}"
+         DEBUG ${LINENO} Case \#5 calling do_it && green1 "Case #5" "${CMD} ${IMAGE}"
+         do_it "${CMD} ${BNDGNS} ${IMAGE}"
       fi
    fi
 
 }
 ### END DRIVER
 
-function run_it {
-   VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
-   print_bindings
-   if [ ${debug} -ne 1 ]; then GUID=`${*}`; fi
-}
-function do_it {
-   VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
-   print_bindings
-   if [ ${debug} -ne 1 ]; then print_bindings && ${*} 2>/dev/null; fi
-}
-function set_hostname {
-   DEBUG ${LINENO} start set_hostname && VARS
-   if [[ ${NAME} == "--rm" ]]; then NAME="--hostname `basename ${IMAGE}` ${NAME}";
-   else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}"; fi;
-   DEBUG ${LINENO} end set_hostname && VARS
-}
-function print_bindings {
-   info VIRTUAL BINDINGS
-   v="${BNDGNS} ${BINDINGS}"
-   for x in ${v}; do if [[ ${x} != -v ]]; then info ${x}; fi; done
-}
 
 ### MYSQL-SERVER ###
 function mysql-server {
@@ -179,7 +192,7 @@ function u18-crio {
    eval ${CMD}
 }
 
-### THIS STARTS MAIN NORE OR LESS ###
+### THIS STARTS MAIN MORE OR LESS ###
 ### GET PARAMETERS ###
 for i in "$@"
 do
@@ -229,7 +242,7 @@ done
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
 MYSQLVOL=mysql-server-volume
-IMAGE=${1} #&& set_hostname
+IMAGE=${1} && set_hostname
 case $1 in
 mysql-server|local/mysql-server)
    DEBUG "${LINENO} calling function: mysql-server"
@@ -290,7 +303,7 @@ developer)
    if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
    if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
    #BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
-   BNDGNS="${BNDGNS} -v ${PWD}/assets:/home/poweruser/_assets.local"
+   BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/_assets.local"
    DEBUG "Calling driver with ${@}" && VARS
    driver ${@}
    ;;
