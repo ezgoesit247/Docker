@@ -8,9 +8,15 @@ function init { #
   for path in ~/Docker/root_docker/node_r_admin ~/Docker/root_docker/awsdev_r_admin ~/Docker/root_docker/terraform_r_admin ~/Docker/root_docker/kubernetes_r_admin ~/Docker/root_docker/docker_r_admin ~/Docker/root_docker/development_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin
   do pushd ${path} > /dev/null; done
 }
-function init_all {
-   for path in ~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-developer ~/Docker/u18-seedling ~/Docker/u18-seed
-   do pushd ${path} > /dev/null; done
+function build_all {
+#   for path in ~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-developer ~/Docker/u18-seedling ~/Docker/u18-seed
+#   do pushd ${path} > /dev/null; done
+   for d in "${build_list[@]}"; do
+      pushd ${d} > /dev/null; done
+   for d in "${build_list[@]}"; do
+#      popd ${d} > /dev/null; done
+      build ${PWD##*/} && popd > /dev/null; done
+#   exit 2
 }
 function do_build {
    if [[ -n ${TAG} ]]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
@@ -93,15 +99,9 @@ done
 ###
 # - main
 ###
-if [ ${BUILDALL} ]; then init_all
-   build ${PWD##*/} && popd
-   build ${PWD##*/} && popd
-   build ${PWD##*/} && popd
-   build ${PWD##*/} && popd
-   build ${PWD##*/} && popd
+build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-developer ~/Docker/u18-seedling ~/Docker/u18-seed)
+if [ ${BUILDALL} ]; then build_all && exit 0; fi
 
-   exit 0
-fi
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   pushd ${docker_dir}/${1} > /dev/null
   build ${1}
