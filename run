@@ -6,7 +6,7 @@ function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\
 
 PWD=$(pwd)
 NAME="--rm"
-USER="" && PRIV=""
+USER="" && PRIV="" && PORT="-P"
 DASH_N=false
 MYSQLD_DETACHED=false
 DETACHED=
@@ -29,6 +29,9 @@ function green {
 }
 function green1 {
    println '\e[32m(%s): %s\e[m' "$1" "${*:2}"
+}
+function green2 {
+   println '\t(%s)\e[32m %s\e[m' "$1" "${*:2}"
 }
 function do_it {
    VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
@@ -67,7 +70,7 @@ function driver {
         -v ${HOME}/.aws:/home/poweruser/.aws \
         -v ${HOME}/.ssh:/home/poweruser/.ssh"
       IMAGE="local/${PWD##*/}"
-      CMD="docker run ${PRIV} ${DETACHED} -it -P --hostname ${PWD##*/}"
+      CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} --hostname ${PWD##*/}"
       DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} --rm ${IMAGE}"
       print_bindings
       if ! do_it "${CMD} --rm ${BNDGNS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
@@ -76,7 +79,7 @@ function driver {
 ### CASE 2
 ###
    else DEBUG ${LINENO} && VARS
-   CMD="docker run ${PRIV} ${DETACHED} -it -P ${USER} --name"
+   CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} ${USER} --name"
    LCL_IMAGE_VAR="local/${PWD##*/}"
    #   if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
    DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
@@ -95,7 +98,7 @@ function driver {
 ###
       else
          BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/_assets.local"
-         CMD="docker run ${PRIV} ${DETACHED} -it -P ${NAME}";
+         CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER}";
          DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
          do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}";
       fi
@@ -108,7 +111,7 @@ function driver {
          BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2"
          BNDGNS="${BNDGNS} -v ${HOME}/.aws:/home/poweruser/.aws"
          BNDGNS="${BNDGNS} -v ${HOME}/.ssh:/home/poweruser/.ssh"
-         CMD="docker run ${PRIV} -it -P ${USER} ${NAME}"
+         CMD="docker run ${PRIV} -it ${PORT} ${USER} ${NAME}"
          info "(${LINENO}) can't start, running container: ${CMD} ${BNDGNS} ${IMAGE}"
          DEBUG ${LINENO} Case \#5 calling do_it && green1 "Case #5" "${CMD} ${IMAGE}"
          do_it "${CMD} ${BNDGNS} ${IMAGE}"
@@ -219,7 +222,7 @@ case $i in
    DASH_N=true
    shift # past argument=value
    ;;
--p|--priv)
+--priv)
    PRIV="--privileged"
    shift # past argument=value
    ;;
@@ -228,7 +231,8 @@ case $i in
    DETACHED="-d"
    shift # past argument=value
    ;;
---port=*)
+-p=*|--port=*)
+   if [[ ${PORT} == "-P" ]]; then PORT=; fi
    PORT="${PORT} -p ${i#*=}"
    shift # past argument=value
    ;;
@@ -254,6 +258,7 @@ mysqld|local/mysqld)
    ;;
 local/u18-docker)
    DEBUG "${LINENO} calling function: driver"
+   print_bindings
    BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"
    PRIV="--privileged"
    driver ${@}
