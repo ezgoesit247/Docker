@@ -2,7 +2,7 @@
 
 docker_dir=${HOME}/Docker
 function msg {
-  echo "  build::${1} says, ${2}"
+  green2 "build::${1}" "${2}"
 }
 function init { #
   for path in ~/Docker/root_docker/node_r_admin ~/Docker/root_docker/awsdev_r_admin ~/Docker/root_docker/terraform_r_admin ~/Docker/root_docker/kubernetes_r_admin ~/Docker/root_docker/docker_r_admin ~/Docker/root_docker/development_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin
@@ -38,8 +38,7 @@ function build {
 function usage {
    echo -e "\n Usage:\tbuild [NAME] looks for Dockerfile ${docker_dir}/NAME/\n\tbuild NOARGS looks for Dockerfile in PWD"; echo
 }
-function error
-{
+function error {
     # Send the first element as one argument, and the rest of the elements as a combined argument.
     # Arguments to println:
     #   1 -> '\e[31mError (%d): %s\e[m'
@@ -49,19 +48,14 @@ function error
     println '\e[31mError (%d): %s\e[m' "$1" "${*:2}"
     exit "$1"
 }
-function success
-{
-    # Send the first element as one argument, and the rest of the elements as a combined argument.
-    # Arguments to println:
-    #   1 -> '\e[31mError (%d): %s\e[m'
-    #   2 -> "$1"
-    #   3 -> "${*:2}"
-
+function success {
     println '\e[32mComplete: %s\e[m' "${*:1}"
 }
-function println
-{
+function println {
    printf "$1\n" "${@:2}"
+}
+function green2 {
+   println '\t(%s)\e[32m %s\e[m' "$1" "${*:2}"
 }
 RM=""
 REMOTE="local/"
