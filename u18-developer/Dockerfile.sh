@@ -1,21 +1,25 @@
 FROM local/u18-seed
+ARG JAVA_HOME=/jdk1.8
+ARG M2_HOME=/maven
+ARG DOCKER_ENV=developer
+USER root
+RUN echo 'export JAVA_HOME=${JAVA_HOME}' >> /etc/bash.bashrc \
+   && echo 'export M2_HOME=${M2_HOME}' >> /etc/bash.bashrc \
+   && echo 'export PATH=${PATH}:${JAVA_HOME}/bin:${M2_HOME}/bin' >> /etc/bash.bashrc
+USER poweruser
 
-ENV JAVA_HOME=/jdk1.8
-ENV M2_HOME=/maven
+ENV JAVA_HOME=${JAVA_HOME}
+ENV M2_HOME=${M2_HOME}
 ###  JAVA & DEV ###
 COPY assets/jdk-8u271-linux-x64.tar.gz jdk-8u271-linux-x64.tar.gz
 RUN sudo tar -zxf jdk-8u271-linux-x64.tar.gz \
-   && sudo mv jdk1.8.0_271 $JAVA_HOME \
+   && sudo mv jdk1.8.0_271 ${JAVA_HOME} \
    && sudo rm -rf jdk-8u271-linux-x64.tar.gz
 
 COPY assets/apache-maven-3.6.3-bin.tar.gz apache-maven-3.6.3-bin.tar.gz
 RUN sudo tar -zxf apache-maven-3.6.3-bin.tar.gz \
-   && sudo mv apache-maven-3.6.3 $M2_HOME \
+   && sudo mv apache-maven-3.6.3 ${M2_HOME} \
    && sudo rm -rf apache-maven-3.6.3-bin.tar.gz
-
-#ENV JAVA_HOME=/usr/share/jdk1.8
-#ENV M2_HOME=/usr/share/maven/
-#ENV PATH="$PATH:$JAVA_HOME/bin:${M2_HOME}/bin"
 
 RUN sudo apt-get -qq update \
    && sudo apt-get -qq install \
@@ -53,6 +57,3 @@ RUN   echo '### NODE ###\n \
    ' >> /home/poweruser/.bashrc
 
 RUN sudo apt-get -qq clean
-
-ENV PATH=${PATH}:${JAVA_HOME}/bin:${M2_HOME}/bin
-ENV DOCKER_ENV=developer
