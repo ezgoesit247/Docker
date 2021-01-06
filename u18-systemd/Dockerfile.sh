@@ -5,7 +5,6 @@ ENV DEBIAN_FRONTEND noninteractive
 
 USER root
 WORKDIR /root
-ENV DOCKER_ENV=default
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get -qq update \

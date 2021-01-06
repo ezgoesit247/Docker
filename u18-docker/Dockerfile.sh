@@ -1,6 +1,6 @@
 FROM local/u18-developer
 
-RUN sudo apt-get update
+RUN sudo apt-get -qq update
 ### DOCKER ###
 RUN sudo apt-get install -qq \
       apt-transport-https \
@@ -10,7 +10,7 @@ RUN sudo apt-get install -qq \
    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
    && sudo apt-key fingerprint 0EBFCD88 \
    && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-   && sudo apt-get update \
+   && sudo apt-get -qq update \
    && sudo apt-get install -qq \
       docker-ce \
       docker-ce-cli \

@@ -20,7 +20,7 @@ function build_all {
 }
 function do_build {
    if [[ -n ${TAG} ]]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
-   CMD="docker build ${NOCACHE} --rm -t ${REMOTE}${1} ${TG} ."
+   CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ."
    msg "do_build:${LINENO}" "executing: ${CMD}"
 #   while ! docker build ${RM} -t ${REMOTE}${1} . | grep -i SUCCESSFULLY; do
    while ! ${CMD} | grep -i SUCCESSFULLY; do
@@ -90,6 +90,10 @@ case $i in
    REMOTE="${i#*=}/"
    shift
    ;;
+--arg=*)
+   ARGS="${ARGS} --build-arg ${i#*=}"
+   shift # past argument=value
+   ;;
 -a)
    BUILDALL=1
    shift
@@ -99,7 +103,7 @@ done
 ###
 # - main
 ###
-build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-developer ~/Docker/u18-seedling ~/Docker/u18-seed)
+build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-developer ~/Docker/u18-seed ~/Docker/u18-seedling)
 if [ ${BUILDALL} ]; then build_all && exit 0; fi
 
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then

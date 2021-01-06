@@ -64,7 +64,7 @@ function driver {
       if [[ ${PWD##*/} == "c7-docker" ]]; then c7-docker; else
       DEBUG ${LINENO}-B; echo "Looking for container image: ${PWD##*/}"
       BNDGNS=" \
-        -v ${PWD}/assets.docker:/home/poweruser/_assets.local \
+        -v ${PWD}/assets.docker:/home/poweruser/local_assets \
         -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
         -v ${HOME}/.m2:/home/poweruser/.m2 \
         -v ${HOME}/.aws:/home/poweruser/.aws \
@@ -97,7 +97,7 @@ function driver {
 ### CASE 4
 ###
       else
-         BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/_assets.local"
+         BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local_assets"
          CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER}";
          DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
          do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}";
@@ -106,7 +106,7 @@ function driver {
 ### CASE 5
 ###
       else
-         BNDGNS=" -v ${PWD}/assets.docker:/home/poweruser/_assets.local"
+         BNDGNS=" -v ${PWD}/assets.docker:/home/poweruser/local_assets"
          BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
          BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2"
          BNDGNS="${BNDGNS} -v ${HOME}/.aws:/home/poweruser/.aws"
@@ -308,7 +308,7 @@ developer)
    if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
    if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
    #BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
-   BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/_assets.local"
+   BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local_assets"
    DEBUG "Calling driver with ${@}" && VARS
    driver ${@}
    ;;
