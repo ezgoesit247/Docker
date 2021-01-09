@@ -45,6 +45,17 @@ RUN   echo '\n \
    function fail   { echo; echo "$(red FAIL: ${*})"; echo; }\n \
    function info   { echo; echo "$(grey INFO: ${*})"; echo; }\n \
    blue "python:"; python --version\n \
-   blue "pip: "; pip --version' >> /home/poweruser/.bashrc
+   blue "pip: "; pip --version'\
+>> /home/poweruser/.bashrc
+
+RUN   echo 'export HISTTIMEFORMAT="%F	%T	"\n'\
+>> /home/poweruser/.bashrc
+
+
+ARG DOCKER_ENV=default
+ENV DOCKER_ENV=$DOCKER_ENV
+RUN echo 'if [ -d ${HOME}/_assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_history/history.'$DOCKER_ENV'"; fi'\
+>> /home/poweruser/.bashrc
+
 
 RUN sudo apt-get -qq clean

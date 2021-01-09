@@ -34,4 +34,3 @@ cyan "Docker Compose:"; docker-compose --version' >> /home/poweruser/.bashrc
 
 #https://www.vagrantup.com/docs/providers/virtualbox/boxes
 #apt-get install linux-headers-$(uname -r) build-essential dkms
-ENV DOCKER_ENV=developer
