@@ -1,13 +1,17 @@
-FROM local/u18-seed
+FROM local/u18-developer
+
+
+RUN sudo apt-get -qq update
 ### DOCKER ###
 RUN sudo apt-get install -qq \
       apt-transport-https \
       ca-certificates \
       gnupg-agent \
+      software-properties-common \
    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
    && sudo apt-key fingerprint 0EBFCD88 \
    && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-   && sudo apt-get update \
+   && sudo apt-get -qq update \
    && sudo apt-get install -qq \
       docker-ce \
       docker-ce-cli \
@@ -25,6 +29,8 @@ RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/doc
    && sudo chmod +x /usr/local/bin/docker-compose
 RUN    echo '### DOCKER ###\n \
 cyan "Docker Compose:"; docker-compose --version' >> /home/poweruser/.bashrc
+
+
 
 
 ### AWS CLI ###
@@ -70,14 +76,4 @@ RUN echo '#NORUN . $f1' >> /home/poweruser/.bashrc \
  &&  echo '#NORUN . $f4' >> /home/poweruser/.bashrc
 
 
-### COMPOSE
-RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose \
-   && sudo chmod +x /usr/local/bin/docker-compose
-
-ENV DOCKER_ENV=terraform
-
-#RUN sudo apt-get -y -qq update \
-#   && sudo apt-get -y install build-essential dkms
-
-#https://www.vagrantup.com/docs/providers/virtualbox/boxes
-#apt-get install linux-headers-$(uname -r) build-essential dkms
+RUN sudo apt-get -qq clean

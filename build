@@ -103,7 +103,7 @@ done
 ###
 # - main
 ###
-build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-developer ~/Docker/u18-seed ~/Docker/u18-seedling)
+build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-terraform ~/Docker/u18-developer ~/Docker/u18-seed ~/Docker/u18-seedling)
 if [ ${BUILDALL} ]; then build_all && exit 0; fi
 
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
