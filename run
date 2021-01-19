@@ -1,8 +1,8 @@
 #!/bin/bash
 
-debug=0
+debug=1
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$NAME:\t${NAME}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
 
 PWD=$(pwd)
 NAME="--rm"
@@ -282,6 +282,7 @@ local/u18-docker)
    driver ${@}
    ;;
 c7-docker|local/c7-docker)
+  if [[ ${NAME} = "--hostname c7-docker --rm" ]]; then RM="--rm"; fi
    DEBUG "${LINENO} calling function: c7-docker" && VARS
    c7-docker
    ;;
