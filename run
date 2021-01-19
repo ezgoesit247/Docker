@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=1
+debug=0
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$NAME:\t${NAME}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
 
@@ -142,6 +142,8 @@ function mysql-server {
       if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
    fi
 }
+
+
 ### MYSQLD ###
 function mysqld {
    local CONTAINER=mysqld
@@ -154,33 +156,42 @@ function mysqld {
       DEBUG "${LINENO}-A"; docker start ${CONTAINER} && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-B"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
    fi
 }
-### C7-DOCKER
+
+
+### C7-DOCKER ###
 function c7-docker {
   DEBUG ${LINENO} top of c7-docker && VARS
-   EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
-   DEBUG ${LINENO} EMBED ${EMBED}
-   GUID=$(${EMBED})
-   DEBUG ${LINENO} GUID ${GUID}
-   CMD="docker exec -it ${GUID} /bin/bash"
-   DEBUG ${LINENO} CMD ${CMD}
-   if [[ ${NAME} = "--rm" ]] || [[ ${RM} = "--rm" ]]; then DEBUG ${LINENO}; CMD="${CMD}; docker rm -f ${GUID} >/dev/null"; fi
-   DEBUG ${LINENO} NAME ${NAME}
-   DEBUG ${LINENO} Executing:${CMD}
-   eval ${CMD}
+  EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
+  DEBUG ${LINENO} EMBED ${EMBED}
+  GUID=$(${EMBED})
+  DEBUG ${LINENO} GUID ${GUID}
+  CMD="docker exec -it ${GUID} /bin/bash"
+  DEBUG ${LINENO} CMD ${CMD}
+  if [[ ${NAME} = "--rm" ]] || [[ ${RM} = "--rm" ]]; then DEBUG ${LINENO}; CMD="${CMD}; docker rm -f ${GUID} >/dev/null"; fi
+  DEBUG ${LINENO} NAME ${NAME}
+  DEBUG ${LINENO} Executing:${CMD}
+  eval ${CMD}
+  #$(${CMD})
 }
-### C7-SYSTEMD
+
+
+### C7-SYSTEMD ###
 function c7-systemd {
    CMD="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} --name c7-systemd --rm local/c7-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID} > /dev/null"
    eval ${CMD}
 }
-### C7
+
+
+### C7 ###
 function c7 {
    CMD="docker run --privileged -it ${PORT} ${BNDGNS} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
-### U18-SYSTEMD
+
+
+### U18-SYSTEMD ###
 function u18-systemd {
    print_bindings
    CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --hostname=u18-systemd --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
@@ -188,7 +199,9 @@ function u18-systemd {
    CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
-### U18-CRIO
+
+
+### U18-CRIO ###
 function u18-crio {
    print_bindings
    CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --name u18-crio --rm local/u18-crio" && DEBUG "${LINENO} Executing:${CMD}"
@@ -248,8 +261,9 @@ done
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
 MYSQLVOL=mysql-server-volume
+IMAGE=${1}
 DEBUG ${LINENO} top of special cases && VARS
-IMAGE=${1} && set_hostname
+set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
 mysql-server|local/mysql-server)
