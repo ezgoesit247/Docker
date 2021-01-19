@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=0
+debug=1
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$NAME:\t${NAME}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
 
@@ -57,12 +57,13 @@ function print_bindings {
 function driver {
    DEBUG ${LINENO} FUNCTION driver && VARS
 ###
-### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD
+### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD #
 ###
-   if [ -z $1 ]; then DEBUG ${LINENO}-A;
-      if [[ ${PWD##*/} == "u18-systemd" ]]; then u18-systemd; else
-      if [[ ${PWD##*/} == "c7-docker" ]]; then c7-docker; else
-      DEBUG ${LINENO}-B; echo "Looking for container image: ${PWD##*/}"
+   if [ -z $1 ]; then DEBUG ${LINENO};
+      if [[ ${PWD##*/} == "u18-systemd" ]]; then DEBUG ${LINENO} calling u18-systemd && VARS && u18-systemd; else
+      if [[ ${PWD##*/} == "c7-docker" ]]; then NAME="--hostname c7-docker --rm" && RM="--rm" && IMAGE="local/c7-docker" \
+                                                && DEBUG ${LINENO} calling c7-docker && VARS && c7-docker; else
+      DEBUG ${LINENO}; echo "Looking for container image: ${PWD##*/}"
       BNDGNS=" \
         -v ${PWD}/assets.docker:/home/poweruser/local_assets \
         -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
@@ -155,15 +156,16 @@ function mysqld {
 }
 ### C7-DOCKER
 function c7-docker {
+  DEBUG ${LINENO} top of c7-docker && VARS
    EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
-   DEBUG "${LINENO} EMBED ${EMBED}"
-   GUID=`eval ${EMBED}`
-   DEBUG "${LINENO} GUID ${GUID}"
+   DEBUG ${LINENO} EMBED ${EMBED}
+   GUID=$(${EMBED})
+   DEBUG ${LINENO} GUID ${GUID}
    CMD="docker exec -it ${GUID} /bin/bash"
-   DEBUG "${LINENO} CMD ${CMD}"
-   if [[ ${NAME} = "--rm" ]]; then DEBUG "106"; CMD="${CMD}; docker rm -f ${GUID}"; fi
-   DEBUG "${LINENO} NAME ${NAME}"
-   DEBUG "${LINENO} Executing:${CMD}"
+   DEBUG ${LINENO} CMD ${CMD}
+   if [[ ${NAME} = "--rm" ]] || [[ ${RM} = "--rm" ]]; then DEBUG ${LINENO}; CMD="${CMD}; docker rm -f ${GUID} >/dev/null"; fi
+   DEBUG ${LINENO} NAME ${NAME}
+   DEBUG ${LINENO} Executing:${CMD}
    eval ${CMD}
 }
 ### C7-SYSTEMD
@@ -246,7 +248,9 @@ done
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
 MYSQLVOL=mysql-server-volume
+DEBUG ${LINENO} top of special cases && VARS
 IMAGE=${1} && set_hostname
+DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
 mysql-server|local/mysql-server)
    DEBUG "${LINENO} calling function: mysql-server"
@@ -264,7 +268,7 @@ local/u18-docker)
    driver ${@}
    ;;
 c7-docker|local/c7-docker)
-   DEBUG "${LINENO} calling function: c7-docker"
+   DEBUG "${LINENO} calling function: c7-docker" && VARS
    c7-docker
    ;;
 c7-systemd|local/c7-systemd)
