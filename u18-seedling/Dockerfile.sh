@@ -19,7 +19,7 @@ RUN   echo 'if [ -d ${HOME}/_assets/bash_history/ ]; then export HISTFILE="${HOM
 
 
 RUN   echo 'alias ls="ls -Altr --color=auto"\n\
-export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n'\
+export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n'\
 >> /root/.bashrc
 
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 debug=1
+
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
 
@@ -46,6 +47,9 @@ function set_hostname {
    if [[ ${NAME} == "--rm" ]]; then NAME="--hostname `basename ${IMAGE}` ${NAME}";
    else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}";
    fi;
+
+#   if [ -n ${IMAGE} ]; then local base="`basename ${IMAGE}`"; fi
+#   BINDINGS="${BINDINGS} -v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
    DEBUG ${LINENO} end set_hostname && VARS
 }
 function print_bindings {
@@ -65,7 +69,7 @@ function driver {
                                                 && DEBUG ${LINENO} calling c7-docker && VARS && c7-docker; else
       DEBUG ${LINENO}; echo "Looking for container image: ${PWD##*/}"
       BNDGNS=" \
-        -v ${PWD}/assets.docker:/home/poweruser/local_assets \
+        -v ${PWD}/assets.docker:/home/poweruser/local.assets \
         -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets \
         -v ${HOME}/.m2:/home/poweruser/.m2 \
         -v ${HOME}/.aws:/home/poweruser/.aws \
@@ -73,8 +77,10 @@ function driver {
       IMAGE="local/${PWD##*/}"
       CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} --hostname ${PWD##*/}"
       DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} --rm ${IMAGE}"
+
+      base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
       print_bindings
-      if ! do_it "${CMD} --rm ${BNDGNS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
+      if ! do_it "${CMD} --rm ${BNDGNS} ${BINDINGS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
       fi; fi
 ###
 ### CASE 2
@@ -84,7 +90,8 @@ function driver {
    LCL_IMAGE_VAR="local/${PWD##*/}"
    #   if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
    DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
-   if ! do_it "${CMD} ${IMAGE} ${BNDGNS} ${LCL_IMAGE_VAR}"
+   base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
+   if ! do_it "${CMD} ${IMAGE} ${BINDINGS} ${BNDGNS} ${LCL_IMAGE_VAR}"
 ###
 ### CASE 3
 ###
@@ -98,16 +105,17 @@ function driver {
 ### CASE 4
 ###
       else
-         BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local_assets"
+         BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local.assets"
          CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER}";
          DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
+         base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
          do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}";
       fi
 ###
 ### CASE 5
 ###
       else
-         BNDGNS=" -v ${PWD}/assets.docker:/home/poweruser/local_assets"
+         BNDGNS=" -v ${PWD}/assets.docker:/home/poweruser/local.assets"
          BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
          BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2"
          BNDGNS="${BNDGNS} -v ${HOME}/.aws:/home/poweruser/.aws"
@@ -161,6 +169,7 @@ function mysqld {
 ### C7-DOCKER ###
 function c7-docker {
   DEBUG ${LINENO} top of c7-docker && VARS
+  base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
   EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
   DEBUG ${LINENO} EMBED ${EMBED}
   GUID=$(${EMBED})
@@ -177,6 +186,7 @@ function c7-docker {
 
 ### C7-SYSTEMD ###
 function c7-systemd {
+   base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
    CMD="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} --name c7-systemd --rm local/c7-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID} > /dev/null"
@@ -186,6 +196,7 @@ function c7-systemd {
 
 ### C7 ###
 function c7 {
+   base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
    CMD="docker run --privileged -it ${PORT} ${BNDGNS} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
@@ -194,6 +205,7 @@ function c7 {
 ### U18-SYSTEMD ###
 function u18-systemd {
    print_bindings
+   base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
    CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --hostname=u18-systemd --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
@@ -327,7 +339,7 @@ developer)
    if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
    if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
    #BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
-   BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local_assets"
+   BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local.assets"
    DEBUG "Calling driver with ${@}" && VARS
    driver ${@}
    ;;
