@@ -1,4 +1,4 @@
-FROM local/u18-developer
+FROM local/u18-seed
 
 RUN sudo apt-get -qq update
 ### DOCKER ###

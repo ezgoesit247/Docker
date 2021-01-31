@@ -4,17 +4,19 @@ docker_dir=${HOME}/Docker
 function msg {
   green2 "build::${1}" "${2}"
 }
+function err {
+  red2 "build::${1}" "${2}"
+}
 function init { #
   for path in ~/Docker/root_docker/node_r_admin ~/Docker/root_docker/awsdev_r_admin ~/Docker/root_docker/terraform_r_admin ~/Docker/root_docker/kubernetes_r_admin ~/Docker/root_docker/docker_r_admin ~/Docker/root_docker/development_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin
   do pushd ${path} > /dev/null; done
 }
 function build_all {
-#   for path in ~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-developer ~/Docker/u18-seedling ~/Docker/u18-seed
-#   do pushd ${path} > /dev/null; done
+   build_list=${1}
    for d in "${build_list[@]}"; do
       pushd ${d} > /dev/null; done
    for d in "${build_list[@]}"; do
-#      popd ${d} > /dev/null; done
+#      popd ${d}; done
       build ${PWD##*/} && popd > /dev/null; done
 #   exit 2
 }
@@ -29,7 +31,7 @@ function do_build {
             && ln -s ./Dockerfile.sh ./Dockerfile \
             && msg "do_build" "Retrying..." && continue
       fi
-      msg "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry"; usage;
+      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
       read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
    done
 }
@@ -63,6 +65,9 @@ function println {
 function green2 {
    println '\t(%s)\e[32m %s\e[m' "$1" "${*:2}"
 }
+function red2 {
+   println '\t(%s)\e[31m %s\e[m' "$1" "${*:2}"
+}
 RM=""
 REMOTE="local/"
 TAG=""
@@ -78,7 +83,7 @@ case $i in
    shift
    ;;
 -n|--nc)
-   NOCACHE="--no-cache"
+   NOCACHE=--no-cache
    shift
    ;;
 ### THIS IS THE DEFAULT why is this even here? ###
@@ -98,17 +103,21 @@ case $i in
    BUILDALL=1
    shift
    ;;
+--all)
+   BUILDALL=1 && NOCACHE=--no-cache
+   shift
+   ;;
 esac
 done
 ###
 # - main
 ###
-build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-terraform ~/Docker/u18-developer ~/Docker/u18-seed ~/Docker/u18-seedling)
-if [ ${BUILDALL} ]; then build_all && exit 0; fi
+build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-terraform ~/Docker/u18-node ~/Docker/u18-scala ~/Docker/u18-java ~/Docker/u18-seed ~/Docker/u18-seedling)
+if [ ${BUILDALL} ]; then time build_all ${build_list} && exit 0; fi
 
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   pushd ${docker_dir}/${1} > /dev/null
-  build ${1}
+  time build ${1}
   popd
-  else build ${PWD##*/}
+  else time build ${PWD##*/}
 fi

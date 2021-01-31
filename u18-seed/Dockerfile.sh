@@ -4,12 +4,11 @@ FROM local/u18-seedling
 USER poweruser
 WORKDIR /home/poweruser
 RUN   echo 'alias ls="ls -Altr --color=auto"\n\
-export PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n'\
+export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n'\
  >> /home/poweruser/.bashrc
 
 
 ### GEN EDS- yarrgh ###
-RUN sudo apt-get -qq purge openjdk-\*
 RUN sudo apt-get -qq update \
    && sudo apt-get -qq install -y \
    curl \
