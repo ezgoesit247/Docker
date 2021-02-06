@@ -135,6 +135,9 @@ function mysqld-mysqlserver {
   if [ ${CONX_MYSQL} ]; then echo connecting... && sleep 1 \
     && while ! mysqld_connect ${CONTAINER} ${SECRET}; do sleep 1; done
   fi
+  if [ ${CONX_CLI} ]; then echo connecting... && sleep 1 \
+    && while ! connect_cli ${CONTAINER}; do sleep 1; done
+  fi
 }
 function mysqld_create_database {
   local DATABASE=${1} && local CONTAINER=${2} && local DBADMIN=${3}
@@ -183,6 +186,11 @@ function mysqld_connect {
 function container_start {
   local CONTAINER=${1}
   docker start ${CONTAINER} >/dev/null 2>&1
+}
+function connect_cli {
+  local CONTAINER=${1}
+  CMD="docker exec -it ${CONTAINER} /bin/bash"
+  ${CMD} 2>/dev/null
 }
 function docker_volume_check {
   DOCKER_VOLUME=${1}
@@ -329,6 +337,10 @@ case $i in
   ;;
 -connect)
   CONX_MYSQL=1
+  shift
+  ;;
+-cli)
+  CONX_CLI=1
   shift
   ;;
 -p=*|--port=*)
