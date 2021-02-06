@@ -158,11 +158,11 @@ function mysqld_create_database {
     else ${CMD} "${CREATE_DATABASE}"; fi
 
     DEBUG ${CMD} "${ROOT_REMOTE_ACCESS}"
-    if [ ${debug} -eq 0 ]; then ${CMD} ${CMD} "${ROOT_REMOTE_ACCESS}" 2>/dev/null
+    if [ ${debug} -eq 0 ]; then ${CMD} "${ROOT_REMOTE_ACCESS}" 2>/dev/null
     else ${CMD} "${ROOT_REMOTE_ACCESS}"; fi
 
     DEBUG ${CMD} "${DB_USER}"
-    if [ ${debug} -eq 0 ]; then ${CMD} ${CMD} "${DB_USER}" 2>/dev/null
+    if [ ${debug} -eq 0 ]; then ${CMD} "${DB_USER}" 2>/dev/null
     else ${CMD} "${DB_USER}"; fi
 
     echo "created database ${DATABASE}, ${DBADMIN} / ${SECRET}"
