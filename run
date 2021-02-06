@@ -1,9 +1,9 @@
 #!/bin/bash
 
-debug=1
+debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$CONTAINER:\t${CONTAINER}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
 function MYSQLVARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$IMAGE:\t${IMAGE}\n\t\$CONTAINER:\t${CONTAINER}\n\t\$DATABASEVOL:\t${DATABASEVOL}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 PWD=$(pwd)
@@ -127,55 +127,60 @@ function driver {
 
 ##### MYSQL SERVER ######SELECT * FROM aifmda.workorder;
 function mysqld-mysqlserver {
+  CONTAINER=${DATABASEVOL}
   if docker_volume_check ${DATABASEVOL};
-    then DEBUG "${LINENO}-mysqlserver-5.7-a" && mysqld_new ${DATABASEVOL}
-    else DEBUG "${LINENO}-mysqlserver-5.7-b" && container_start ${DATABASEVOL} && sleep 1
-      if ! mysqld_connect ${DATABASEVOL} ${SECRET}; then
-          DEBUG "${LINENO}-mysqlserver-5.7-c" && run_mysqld_container ${DATABASEVOL} && \
-          sleep 1 && mysqld_connect ${DATABASEVOL} ${SECRET}
-
+    then DEBUG "${LINENO}-mysqlserver-5.7-a" && mysqld_create_database ${DATABASEVOL}
+    else DEBUG "${LINENO}-mysqlserver-5.7-b" && container_start ${CONTAINER} && sleep 1
+      if ! mysqld_connect ${CONTAINER} ${SECRET}; then
+          DEBUG "${LINENO}-mysqlserver-5.7-c" && run_mysqld_container ${CONTAINER} && \
+          sleep 1 && mysqld_connect ${CONTAINER} ${SECRET}
       fi
-  fi;
+  fi
 }
-function mysqld_new {
-  local CONTAINER=${1} && DATABASEVOL=${1}
-  DEBUG ${LINENO} "Database volume: ${DATABASEVOL}"
-  #CMD="docker run -v ${DATABASEVOL}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
-  #DEBUG ${LINENO} ${CMD} && VARS
-  #if ! ${CMD} >/dev/null 2>&1; then return 1; else
+function mysqld_create_database {
+  local CONTAINER=${1} && local DATABASEVOL=${1} && local DBADMIN=${DATABASEVOL}_admin
+  DEBUG ${LINENO} "Database volume: ${DATABASEVOL}" && MYSQLVARS
   if ! run_mysqld_container ${DATABASEVOL}; then return 1; else
-    UPDATE_ROOT="ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';"
-    echo "Connecting..." && i=0 && \
-      pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
-    until docker exec ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "${UPDATE_ROOT}" > /dev/null 2>&1; do
+    UPDATE_ROOT_PASSWORD="ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';"
+    echo "Connecting..." && i=0 \
+    && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
+    until docker exec ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "${UPDATE_ROOT_PASSWORD}" > /dev/null 2>&1; do
       sleep 1;
     done
-    echo "Root password is: ${SECRET}"
+
     ALTER_ROOT="UPDATE mysql.user SET host='%' WHERE USER='root';FLUSH PRIVILEGES"
+    ROOT_REMOTE_ACCESS="GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${SECRET}' WITH GRANT OPTION;FLUSH PRIVILEGES;"
     CREATE_DATABASE="CREATE DATABASE ${DATABASEVOL};"
-  #  MDA_USER="CREATE USER IF NOT EXISTS mda IDENTIFIED BY '${SECRET}'; GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER ON `aifmda` TO 'mda'@'%';"
+    DB_USER="CREATE USER IF NOT EXISTS ${DBADMIN} IDENTIFIED BY '${SECRET}'; GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX, REFERENCES ON ${DATABASEVOL}.* TO '${DBADMIN}'@'%';"
     CMD="docker exec ${DATABASEVOL} mysql -uroot -p`echo ${SECRET}` -e"
-    DEBUG "${LINENO} ${CMD}"
-    ${CMD} "$(echo ${CREATE_DATABASE})"
-    ${CMD} "$(echo ${ALTER_ROOT})"
-  #  ${CMD} "$(echo ${MDA_USER})"
+
+    DEBUG ${CMD} "${CREATE_DATABASE}"
+    ${CMD} "${CREATE_DATABASE}" 2>/dev/null
+
+    DEBUG ${CMD} "${ROOT_REMOTE_ACCESS}"
+    ${CMD} "${ROOT_REMOTE_ACCESS}" 2>/dev/null
+
+    DEBUG ${CMD} "${DB_USER}"
+    ${CMD} "${DB_USER}" 2>/dev/null
+
+    echo "created database ${DATABASEVOL}, ${DBADMIN} / ${SECRET}"
+    echo "root password is: ${SECRET}"
   fi
 }
 function run_mysqld_container {
-  local CONTAINER=${1} && DATABASEVOL=${1}
+  local CONTAINER=${1} && local DATABASEVOL=${1}
   CMD="docker run -v ${DATABASEVOL}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
   DEBUG ${LINENO} ${CMD} && VARS
   ${CMD} >/dev/null 2>&1
 }
 function mysqld_connect {
-  local DATABASEVOL=${1}
-  local PSWD=${2}
+  local DATABASEVOL=${1} && local PSWD=${2}
   CMD="docker exec -it ${DATABASEVOL} mysql -uroot -p`echo ${PSWD}`"
   ${CMD} 2>/dev/null
 }
 function container_start {
-  local DATABASEVOL=${1}
-  docker start ${DATABASEVOL} >/dev/null 2>&1
+  local CONTAINER=${1}
+  docker start ${CONTAINER} >/dev/null 2>&1
 }
 function docker_volume_check {
   DOCKER_VOLUME=${1}
@@ -340,14 +345,14 @@ DEBUG ${LINENO} top of special cases && VARS
 set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
+local/mysqld-mysqlserver5.7)
+  DEBUG "${LINENO} calling function: mysqld-mysqlserver" && MYSQLVARS
+  mysqld-mysqlserver
+  ;;
 local/mysql-server)
    DEBUG "${LINENO} calling function: mysql-server"
    mysql-server
    ;;
-local/mysqld-mysqlserver5.7)
-  DEBUG "${LINENO} calling function: mysqld-mysqlserver" && VARS && exit 2
-  mysqld-mysqlserver
-  ;;
 local/mysqld)
    DEBUG "${LINENO} calling function: mysqld"
    mysqld
@@ -404,7 +409,6 @@ developer)
    DEBUG "*** ${LINENO} NOTHING IS SPECIAL ANYMORE ***"
    if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
    if [[ ${1##*/} == "u18-developer" ]]; then BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2 -v ${HOME}/.aws:/home/poweruser/.aws -v ${HOME}/.ssh:/home/poweruser/.ssh"; fi
-   #BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
    BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local.assets"
    DEBUG "Calling driver with ${@}" && VARS
    driver ${@}
