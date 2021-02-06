@@ -3,7 +3,8 @@
 debug=1
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "********\n\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n\t\$NAME:\t\n********\n$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$CONTAINER:\t${CONTAINER}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function MYSQLVARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$IMAGE:\t${IMAGE}\n\t\$CONTAINER:\t${CONTAINER}\n\t\$DATABASEVOL:\t${DATABASEVOL}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 PWD=$(pwd)
 NAME="--rm"
@@ -36,21 +37,14 @@ function green2 {
 }
 function do_it {
    VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
-   #green1 do_it ${CMD} ${IMAGE}
-   #if [ ${debug} -ne 1 ]; then
-   #print_bindings
    eval ${*} 2>/dev/null;
-   #fi
 }
 function set_hostname {
-   DEBUG ${LINENO} start set_hostname && VARS
-   if [[ ${NAME} == "--rm" ]]; then NAME="--hostname `basename ${IMAGE}` ${NAME}";
-   else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}";
-   fi;
-
-#   if [ -n ${IMAGE} ]; then local base="`basename ${IMAGE}`"; fi
-#   BINDINGS="${BINDINGS} -v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
-   DEBUG ${LINENO} end set_hostname && VARS
+  DEBUG ${LINENO} start set_hostname && VARS
+  if [[ ${NAME} == "--rm" ]]; then NAME="--hostname `basename ${IMAGE}` ${NAME}";
+    else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}";
+  fi;
+  DEBUG ${LINENO} end set_hostname && VARS
 }
 function print_bindings {
    info VIRTUAL BINDINGS
@@ -131,6 +125,69 @@ function driver {
 ### END DRIVER
 
 
+##### MYSQL SERVER ######SELECT * FROM aifmda.workorder;
+function mysqld-mysqlserver {
+  if docker_volume_check ${DATABASEVOL};
+    then DEBUG "${LINENO}-mysqlserver-5.7-a" && mysqld_new ${DATABASEVOL}
+    else DEBUG "${LINENO}-mysqlserver-5.7-b" && container_start ${DATABASEVOL} && sleep 1
+      if ! mysqld_connect ${DATABASEVOL} ${SECRET}; then
+          DEBUG "${LINENO}-mysqlserver-5.7-c" && run_mysqld_container ${DATABASEVOL} && \
+          sleep 1 && mysqld_connect ${DATABASEVOL} ${SECRET}
+
+      fi
+  fi;
+}
+function mysqld_new {
+  local CONTAINER=${1} && DATABASEVOL=${1}
+  DEBUG ${LINENO} "Database volume: ${DATABASEVOL}"
+  #CMD="docker run -v ${DATABASEVOL}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
+  #DEBUG ${LINENO} ${CMD} && VARS
+  #if ! ${CMD} >/dev/null 2>&1; then return 1; else
+  if ! run_mysqld_container ${DATABASEVOL}; then return 1; else
+    UPDATE_ROOT="ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';"
+    echo "Connecting..." && i=0 && \
+      pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
+    until docker exec ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "${UPDATE_ROOT}" > /dev/null 2>&1; do
+      sleep 1;
+    done
+    echo "Root password is: ${SECRET}"
+    ALTER_ROOT="UPDATE mysql.user SET host='%' WHERE USER='root';FLUSH PRIVILEGES"
+    CREATE_DATABASE="CREATE DATABASE ${DATABASEVOL};"
+  #  MDA_USER="CREATE USER IF NOT EXISTS mda IDENTIFIED BY '${SECRET}'; GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER ON `aifmda` TO 'mda'@'%';"
+    CMD="docker exec ${DATABASEVOL} mysql -uroot -p`echo ${SECRET}` -e"
+    DEBUG "${LINENO} ${CMD}"
+    ${CMD} "$(echo ${CREATE_DATABASE})"
+    ${CMD} "$(echo ${ALTER_ROOT})"
+  #  ${CMD} "$(echo ${MDA_USER})"
+  fi
+}
+function run_mysqld_container {
+  local CONTAINER=${1} && DATABASEVOL=${1}
+  CMD="docker run -v ${DATABASEVOL}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
+  DEBUG ${LINENO} ${CMD} && VARS
+  ${CMD} >/dev/null 2>&1
+}
+function mysqld_connect {
+  local DATABASEVOL=${1}
+  local PSWD=${2}
+  CMD="docker exec -it ${DATABASEVOL} mysql -uroot -p`echo ${PSWD}`"
+  ${CMD} 2>/dev/null
+}
+function container_start {
+  local DATABASEVOL=${1}
+  docker start ${DATABASEVOL} >/dev/null 2>&1
+}
+function docker_volume_check {
+  DOCKER_VOLUME=${1}
+  DEBUG "${LINENO} docker_volume_check: ${DOCKER_VOLUME}"
+  if ! docker volume ls|grep -q ${DOCKER_VOLUME}
+    then if docker volume create ${DOCKER_VOLUME} >/dev/null
+      then echo "New Docker Volume: ${DOCKER_VOLUME}" && return 0; fi
+    else local _ARY_=($(docker volume ls|grep ${DOCKER_VOLUME}))
+      DEBUG "${LINENO} Docker Volume: ${_ARY_[@]}" \
+      && return 1; fi
+}
+
 ### MYSQL-SERVER ###
 function mysql-server {
    local CONTAINER=mysql-server
@@ -164,6 +221,7 @@ function mysqld {
       DEBUG "${LINENO}-A"; docker start ${CONTAINER} && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-B"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
    fi
 }
+
 
 
 ### C7-DOCKER ###
@@ -258,6 +316,10 @@ case $i in
    DETACHED="-d"
    shift # past argument=value
    ;;
+--dbname=*)
+  DATABASEVOL="${i#*=}"
+  shift # past argument=value
+  ;;
 -p=*|--port=*)
    if [[ ${PORT} == "-P" ]]; then PORT=; fi
    PORT="${PORT} -p ${i#*=}"
@@ -278,11 +340,15 @@ DEBUG ${LINENO} top of special cases && VARS
 set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
-mysql-server|local/mysql-server)
+local/mysql-server)
    DEBUG "${LINENO} calling function: mysql-server"
    mysql-server
    ;;
-mysqld|local/mysqld)
+local/mysqld-mysqlserver5.7)
+  DEBUG "${LINENO} calling function: mysqld-mysqlserver" && VARS && exit 2
+  mysqld-mysqlserver
+  ;;
+local/mysqld)
    DEBUG "${LINENO} calling function: mysqld"
    mysqld
    ;;
