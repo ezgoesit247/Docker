@@ -1,10 +1,9 @@
 #!/bin/bash
 
-debug=0
+debug=1
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
-function MYSQLVARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$IMAGE:\t${IMAGE}\n\t\$CONTAINER:\t${CONTAINER}\n\t\$DATABASEVOL:\t${DATABASEVOL}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 PWD=$(pwd)
 NAME="--rm"
@@ -125,22 +124,19 @@ function driver {
 ### END DRIVER
 
 
-##### MYSQL SERVER ######SELECT * FROM aifmda.workorder;
+##### MYSQL SERVER ######
 function mysqld-mysqlserver {
-  CONTAINER=${DATABASEVOL}
-  if docker_volume_check ${DATABASEVOL};
-    then DEBUG "${LINENO}-mysqlserver-5.7-a" && mysqld_create_database ${DATABASEVOL}
-    else DEBUG "${LINENO}-mysqlserver-5.7-b" && container_start ${CONTAINER} && sleep 1
-      if ! mysqld_connect ${CONTAINER} ${SECRET}; then
-          DEBUG "${LINENO}-mysqlserver-5.7-c" && run_mysqld_container ${CONTAINER} && \
-          sleep 1 && mysqld_connect ${CONTAINER} ${SECRET}
-      fi
+  local CONTAINER=${APPVOLUME}_database && local DBADMIN=${APPVOLUME}_admin
+  if docker_volume_check ${APPVOLUME};
+  then DEBUG "${LINENO}-mysqlserver-a-create-new-database" && mysqld_create_database ${APPVOLUME} ${CONTAINER} ${DBADMIN}
+    else DEBUG "${LINENO}-mysqlserver-b-start-container" && if ! container_start ${CONTAINER}
+      then DEBUG "${LINENO}-mysqlserver-c-run-container" && run_mysqld_container ${APPVOLUME} ${CONTAINER}; fi
   fi
 }
 function mysqld_create_database {
-  local CONTAINER=${1} && local DATABASEVOL=${1} && local DBADMIN=${DATABASEVOL}_admin
-  DEBUG ${LINENO} "Database volume: ${DATABASEVOL}" && MYSQLVARS
-  if ! run_mysqld_container ${DATABASEVOL}; then return 1; else
+  local DATABASE=${1} && local CONTAINER=${2} && local DBADMIN=${3}
+  DEBUG ${LINENO} "DATABASE: ${DATABASE} | CONTAINER: ${CONTAINER} | DBADMIN: ${DBADMIN}"
+  if ! run_mysqld_container ${APPVOLUME} ${CONTAINER}; then return 1; else
     UPDATE_ROOT_PASSWORD="ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';"
     echo "Connecting..." && i=0 \
     && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
@@ -150,32 +146,35 @@ function mysqld_create_database {
 
     ALTER_ROOT="UPDATE mysql.user SET host='%' WHERE USER='root';FLUSH PRIVILEGES"
     ROOT_REMOTE_ACCESS="GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${SECRET}' WITH GRANT OPTION;FLUSH PRIVILEGES;"
-    CREATE_DATABASE="CREATE DATABASE ${DATABASEVOL};"
-    DB_USER="CREATE USER IF NOT EXISTS ${DBADMIN} IDENTIFIED BY '${SECRET}'; GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX, REFERENCES ON ${DATABASEVOL}.* TO '${DBADMIN}'@'%';"
-    CMD="docker exec ${DATABASEVOL} mysql -uroot -p`echo ${SECRET}` -e"
+    CREATE_DATABASE="CREATE DATABASE ${DATABASE};"
+    DB_USER="CREATE USER IF NOT EXISTS ${DBADMIN} IDENTIFIED BY '${SECRET}'; GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX, REFERENCES ON ${DATABASE}.* TO '${DBADMIN}'@'%';"
+    CMD="docker exec ${CONTAINER} mysql -uroot -p`echo ${SECRET}` -e"
 
     DEBUG ${CMD} "${CREATE_DATABASE}"
-    ${CMD} "${CREATE_DATABASE}" 2>/dev/null
+    if [ ${debug} -eq 0 ]; then ${CMD} "${CREATE_DATABASE}" 2>/dev/null
+    else ${CMD} "${CREATE_DATABASE}"; fi
 
     DEBUG ${CMD} "${ROOT_REMOTE_ACCESS}"
-    ${CMD} "${ROOT_REMOTE_ACCESS}" 2>/dev/null
+    if [ ${debug} -eq 0 ]; then ${CMD} ${CMD} "${ROOT_REMOTE_ACCESS}" 2>/dev/null
+    else ${CMD} "${ROOT_REMOTE_ACCESS}"; fi
 
     DEBUG ${CMD} "${DB_USER}"
-    ${CMD} "${DB_USER}" 2>/dev/null
+    if [ ${debug} -eq 0 ]; then ${CMD} ${CMD} "${DB_USER}" 2>/dev/null
+    else ${CMD} "${DB_USER}"; fi
 
-    echo "created database ${DATABASEVOL}, ${DBADMIN} / ${SECRET}"
+    echo "created database ${DATABASE}, ${DBADMIN} / ${SECRET}"
     echo "root password is: ${SECRET}"
   fi
 }
 function run_mysqld_container {
-  local CONTAINER=${1} && local DATABASEVOL=${1}
-  CMD="docker run -v ${DATABASEVOL}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
+  local APPVOLUME=${1} && local CONTAINER=${2}
+  CMD="docker run -v ${APPVOLUME}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
   DEBUG ${LINENO} ${CMD} && VARS
   ${CMD} >/dev/null 2>&1
 }
 function mysqld_connect {
-  local DATABASEVOL=${1} && local PSWD=${2}
-  CMD="docker exec -it ${DATABASEVOL} mysql -uroot -p`echo ${PSWD}`"
+  local APPVOLUME=${1} && local PSWD=${2}
+  CMD="docker exec -it ${APPVOLUME} mysql -uroot -p`echo ${PSWD}`"
   ${CMD} 2>/dev/null
 }
 function container_start {
@@ -321,9 +320,13 @@ case $i in
    DETACHED="-d"
    shift # past argument=value
    ;;
---dbname=*)
-  DATABASEVOL="${i#*=}"
+--app=*)
+  APPVOLUME="${i#*=}"
   shift # past argument=value
+  ;;
+-connect)
+  CONX_MYSQL=1
+  shift
   ;;
 -p=*|--port=*)
    if [[ ${PORT} == "-P" ]]; then PORT=; fi
@@ -346,7 +349,7 @@ set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
 local/mysqld-mysqlserver5.7)
-  DEBUG "${LINENO} calling function: mysqld-mysqlserver" && MYSQLVARS
+  DEBUG "${LINENO} calling function: mysqld-mysqlserver"
   mysqld-mysqlserver
   ;;
 local/mysql-server)
