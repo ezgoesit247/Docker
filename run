@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=1
+debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
@@ -132,13 +132,16 @@ function mysqld-mysqlserver {
     else DEBUG "${LINENO}-mysqlserver-b-start-container" && if ! container_start ${CONTAINER}
       then DEBUG "${LINENO}-mysqlserver-c-run-container" && run_mysqld_container ${APPVOLUME} ${CONTAINER}; fi
   fi
+  if [ ${CONX_MYSQL} ]; then echo connecting... && sleep 1 \
+    && while ! mysqld_connect ${CONTAINER} ${SECRET}; do sleep 1; done
+  fi
 }
 function mysqld_create_database {
   local DATABASE=${1} && local CONTAINER=${2} && local DBADMIN=${3}
   DEBUG ${LINENO} "DATABASE: ${DATABASE} | CONTAINER: ${CONTAINER} | DBADMIN: ${DBADMIN}"
   if ! run_mysqld_container ${APPVOLUME} ${CONTAINER}; then return 1; else
     UPDATE_ROOT_PASSWORD="ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';"
-    echo "Connecting..." && i=0 \
+    echo "building database..." \
     && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
     until docker exec ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "${UPDATE_ROOT_PASSWORD}" > /dev/null 2>&1; do
       sleep 1;
@@ -173,8 +176,8 @@ function run_mysqld_container {
   ${CMD} >/dev/null 2>&1
 }
 function mysqld_connect {
-  local APPVOLUME=${1} && local PSWD=${2}
-  CMD="docker exec -it ${APPVOLUME} mysql -uroot -p`echo ${PSWD}`"
+  local CONTAINER=${1} && local PSWD=${2}
+  CMD="docker exec -it ${CONTAINER} mysql -uroot -p`echo ${PSWD}`"
   ${CMD} 2>/dev/null
 }
 function container_start {
