@@ -24,10 +24,10 @@ function run_inspect_container {
 function get_size {
   local s=$(docker volume inspect ${VOL} 2>/dev/null)
   local ARY=($(echo -e "${s}"|grep -i mountpoint|sed 's/"//g; s/,//g;';))
-  if [ ${#ARY[@]} > 0 ]; then
+  if [ ${#ARY[@]} -gt 0 ]; then
     echo -e "${s}\ngetting size..."
     docker run --privileged --pid=host debian nsenter -t 1 -m -u -n -i /usr/bin/du -d 0 -h ${ARY[1]}
-  else usage; fi
+  else usage volume not found: ${VOL}; fi
   exit 0
 }
 
