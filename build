@@ -25,7 +25,8 @@ function do_build {
    CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ."
    msg "do_build:${LINENO}" "executing: ${CMD}"
 #   while ! docker build ${RM} -t ${REMOTE}${1} . | grep -i SUCCESSFULLY; do
-   while ! ${CMD} | grep -i SUCCESSFULLY; do
+   #while ! ${CMD} | grep -i SUCCESSFULLY; do
+   while ! ${CMD}; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
          msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
             && ln -s ./Dockerfile.sh ./Dockerfile \
@@ -82,7 +83,7 @@ case $i in
    TAG="${i#*=}"
    shift
    ;;
--n|--nc)
+-n|--nc|--no-cache)
    NOCACHE=--no-cache
    shift
    ;;
