@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# THIS RUNS FIRST
+if [ $# -eq 0 ]; then docker volume ls|grep -v -E '[a-z0-9]{64}'; exit 0; fi
+# DON'T MOVE THIS... THAT?
+
+
+function usage {
+  echo ${*} && exit 1
+}
+function do_remove_vol {
+  if docker volume rm ${VOL} 2>/dev/null; then echo "removed volume ${VOL}" && return 0; fi;
+  usage can\'t remove volume ${VOL};
+}
+function do_create_vol {
+  local s=$(docker volume create ${VOL}) && echo "volume ${s} exists" && return 0
+}
+function run_inspect_container {
+  local ARY=($(docker volume inspect ${VOL}|grep -i mountpoint|sed 's/"//g; s/,//g;'))
+  echo -e "\t"running Debian container, run: du -d 1 -h ${ARY[1]}
+  docker run -it --privileged --pid=host debian nsenter -t 1 -m -u -n -i bash
+  exit 0
+}
+function get_size {
+  local s=$(docker volume inspect ${VOL} 2>/dev/null)
+  local ARY=($(echo -e "${s}"|grep -i mountpoint|sed 's/"//g; s/,//g;';))
+  if [ ${#ARY[@]} > 0 ]; then
+    echo -e "${s}\ngetting size..."
+    docker run --privileged --pid=host debian nsenter -t 1 -m -u -n -i /usr/bin/du -d 0 -h ${ARY[1]}
+  else usage; fi
+  exit 0
+}
+
+for i in "$@"
+do
+case $i in
+-i|-inspect)
+  shift
+  VOL="${1}" && INSPECT=1
+  shift
+  if [ ! ${VOL} ]; then usage need volume arg; fi
+  ;;
+-s|-size)
+  shift
+  VOL="${1}" && SIZE=1
+  shift
+  if [ ! ${VOL} ]; then usage need volume arg; fi
+  ;;
+-r|-rm)
+  shift
+  VOL="${1}" && RVOL=1
+  shift
+  if [ ! ${VOL} ]; then usage need volume arg; fi
+  ;;
+-c|-create)
+  shift
+  VOL="${1}" && CVOL=1
+  shift
+  if [ ! ${VOL} ]; then usage need volume arg; fi
+  ;;
+esac
+done
+
+
+if [ ${INSPECT} ]; then run_inspect_container; fi
+if [ ${SIZE} ]; then get_size; fi
+if [ ${RVOL} ]; then do_remove_vol; fi
+if [ ${CVOL} ]; then do_create_vol; fi
+
+unset VOL
+unset RVOL
+unset CVOL
+unset INSPECT
+unset SIZE
