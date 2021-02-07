@@ -3,7 +3,7 @@
 debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 PWD=$(pwd)
 NAME="--rm"
@@ -35,12 +35,15 @@ function green2 {
    println '\t(%s)\e[32m %s\e[m' "$1" "${*:2}"
 }
 function do_it {
-   VARS && DEBUG "${LINENO} Executing \$CMD:${CMD} ${IMAGE}"
+   VARS && DEBUG "${LINENO} Executing: ${*}"
    eval ${*} 2>/dev/null;
 }
 function set_hostname {
   DEBUG ${LINENO} start set_hostname && VARS
-  if [[ ${NAME} == "--rm" ]]; then NAME="--hostname `basename ${IMAGE}` ${NAME}";
+  if [[ ${NAME} == "--rm" ]]; then
+    if [[ ${IMAGE} == "" ]]; then
+      NAME="--hostname ${PWD##*/} ${NAME}";
+      else NAME="--hostname `basename ${IMAGE}` ${NAME}"; fi;
     else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}";
   fi;
   DEBUG ${LINENO} end set_hostname && VARS
@@ -68,13 +71,16 @@ function driver {
         -v ${HOME}/.aws:/home/poweruser/.aws \
         -v ${HOME}/.ssh:/home/poweruser/.ssh"
       IMAGE="local/${PWD##*/}"
-      CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} --hostname ${PWD##*/}"
-      DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} --rm ${IMAGE}"
+      CMD="docker run ${PRIV} ${DETACHED} -it ${PORT}"
+      local DO_IT="${CMD} ${NAME}"
+      DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${DO_IT} ${IMAGE}"
 
       base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
       print_bindings
-      if ! do_it "${CMD} --rm ${BNDGNS} ${BINDINGS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
-      fi; fi
+#      if ! do_it "${CMD} --hostname ${PWD##*/} --rm ${BNDGNS} ${BINDINGS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
+      if ! do_it "${DO_IT} ${BNDGNS} ${BINDINGS} ${IMAGE}"; then
+        docker start ${NAMEDCONTAINER} && if ! docker exec -it ${NAMEDCONTAINER} bash; then error ${LINENO} Something did not work; fi;
+      fi; fi; fi
 ###
 ### CASE 2
 ###
@@ -301,12 +307,14 @@ for i in "$@"
 do
 case $i in
 -n=*|--name=*)
-   NAME="--name ${i#*=}"
+   NAMEDCONTAINER="${i#*=}"
+   NAME="--name ${NAMEDCONTAINER}"
    DEBUG "${LINENO} SET \$NAME:${NAME}"
-   shift # past argument=value
+   shift
    ;;
 -n)
-   NAME="--name ${PWD##*/}"
+   NAMEDCONTAINER="${PWD##*/}"
+   NAME="--name ${NAMEDCONTAINER}"
    DEBUG "${LINENO} SET \$NAME:${NAME}"
    shift
   ;;
@@ -320,20 +328,20 @@ case $i in
   ;;
 --new)
    DASH_N=true
-   shift # past argument=value
+   shift
    ;;
 --priv)
    PRIV="--privileged"
-   shift # past argument=value
+   shift
    ;;
 -d)
    MYSQLD_DETACHED=true
    DETACHED="-d"
-   shift # past argument=value
+   shift
    ;;
 --app=*)
   APPVOLUME="${i#*=}"
-  shift # past argument=value
+  shift
   ;;
 -connect)
   CONX_MYSQL=1
@@ -346,11 +354,11 @@ case $i in
 -p=*|--port=*)
    if [[ ${PORT} == "-P" ]]; then PORT=; fi
    PORT="${PORT} -p ${i#*=}"
-   shift # past argument=value
+   shift
    ;;
 -v=*)
    BINDINGS="${BINDINGS} -v ${i#*=}"
-   shift # past argument=value
+   shift
    ;;
 esac
 done
