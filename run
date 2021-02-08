@@ -71,7 +71,7 @@ function driver {
         -v ${HOME}/.aws:/home/poweruser/.aws \
         -v ${HOME}/.ssh:/home/poweruser/.ssh"
       IMAGE="local/${PWD##*/}"
-      CMD="docker run ${PRIV} ${DETACHED} -it ${PORT}"
+      CMD="docker run ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT}"
       local DO_IT="${CMD} ${NAME}"
       DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${DO_IT} ${IMAGE}"
 
@@ -85,7 +85,7 @@ function driver {
 ### CASE 2
 ###
    else DEBUG ${LINENO} && VARS
-   CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} ${USER} --name"
+   CMD="docker run ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${USER} --name"
    LCL_IMAGE_VAR="local/${PWD##*/}"
    #   if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
    DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
@@ -105,7 +105,7 @@ function driver {
 ###
       else
          BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local.assets"
-         CMD="docker run ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER}";
+         CMD="docker run ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER}";
          DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
          base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
          do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}";
@@ -119,7 +119,7 @@ function driver {
          BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2"
          BNDGNS="${BNDGNS} -v ${HOME}/.aws:/home/poweruser/.aws"
          BNDGNS="${BNDGNS} -v ${HOME}/.ssh:/home/poweruser/.ssh"
-         CMD="docker run ${PRIV} -it ${PORT} ${USER} ${NAME}"
+         CMD="docker run ${NETWORK}  ${PRIV} -it ${PORT} ${USER} ${NAME}"
          info "(${LINENO}) can't start, running container: ${CMD} ${BNDGNS} ${IMAGE}"
          DEBUG ${LINENO} Case \#5 calling do_it && green1 "Case #5" "${CMD} ${IMAGE}"
          do_it "${CMD} ${BNDGNS} ${IMAGE}"
@@ -180,7 +180,7 @@ function mysqld_create_database {
 }
 function run_mysqld_container {
   local APPVOLUME=${1} && local CONTAINER=${2}
-  CMD="docker run -v ${APPVOLUME}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
+  CMD="docker run ${NETWORK}  -v ${APPVOLUME}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
   DEBUG ${LINENO} ${CMD} && VARS
   ${CMD} >/dev/null 2>&1
 }
@@ -216,13 +216,13 @@ function mysql-server {
    if ! docker ps -a|grep -q ${CONTAINER}; then DEBUG "${LINENO}-A"; if ! docker volume list|grep -q ${MYSQLVOL}; then DEBUG "${LINENO}-B";
          ALTER="ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
          echo "Connecting..."
-         docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+         docker run ${NETWORK}  -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
          echo "Connecting..." && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
          #echo "root pwd is ${pswd}"
          until docker exec -it ${CONTAINER} mysql -uroot -p`echo ${pswd}` --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';" > /dev/null 2>&1; do sleep 2; done
          #docker rm -f mysql-server
          echo "Root password is: ${SECRET}"
-         else DEBUG "${LINENO}"; docker run -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
+         else DEBUG "${LINENO}"; docker run ${NETWORK}  -p3306:3306 --name=${CONTAINER} -v ${MYSQLVOL}:/var/lib/mysql -d ${CONTAINER} > /dev/null 2>&1
       fi; if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
    else if ! docker ps|grep -q ${CONTAINER}; DEBUG "${LINENO}"; then docker start ${CONTAINER}; fi
       if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}"; sleep 2; docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
@@ -235,10 +235,10 @@ function mysqld {
    local CONTAINER=mysqld
    DEBUG "Local container variable: ${CONTAINER}" && DEBUG "Local data volume variable: ${MYSQLVOL}"
    if ${DASH_N}; then DEBUG "${LINENO}"
-      docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
+      docker run ${NETWORK}  -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d -e MYSQL_ROOT_PASSWORD=${SECRET} --name ${CONTAINER} ${CONTAINER} \
       && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-A" && echo "Connecting..." && sleep 15; while ! docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}` 2>&1; do DEBUG "${LINENO}-B" && echo "Connecting..." && sleep 2; continue; done; fi
    else  DEBUG "${LINENO}"
-      docker run -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
+      docker run ${NETWORK}  -p3306:3306 -v ${MYSQLVOL}:/var/lib/mysql -d --name ${CONTAINER} ${CONTAINER} > /dev/null 2>&1
       DEBUG "${LINENO}-A"; docker start ${CONTAINER} && if ! ${MYSQLD_DETACHED}; then DEBUG "${LINENO}-B"; sleep 2 && docker exec -it ${CONTAINER} mysql -uroot -p`echo ${SECRET}`; fi
    fi
 }
@@ -249,7 +249,7 @@ function mysqld {
 function c7-docker {
   DEBUG ${LINENO} top of c7-docker && VARS
   base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
-  EMBED="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
+  EMBED="docker run ${NETWORK}  --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} ${NAME} c7-docker"
   DEBUG ${LINENO} EMBED ${EMBED}
   GUID=$(${EMBED})
   DEBUG ${LINENO} GUID ${GUID}
@@ -266,7 +266,7 @@ function c7-docker {
 ### C7-SYSTEMD ###
 function c7-systemd {
    base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
-   CMD="docker run --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} --name c7-systemd --rm local/c7-systemd" && DEBUG "${LINENO} Executing:${CMD}"
+   CMD="docker run ${NETWORK}  --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${BNDGNS} ${BINDINGS} --name c7-systemd --rm local/c7-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID} > /dev/null"
    eval ${CMD}
@@ -276,7 +276,7 @@ function c7-systemd {
 ### C7 ###
 function c7 {
    base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
-   CMD="docker run --privileged -it ${PORT} ${BNDGNS} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
+   CMD="docker run ${NETWORK}  --privileged -it ${PORT} ${BNDGNS} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
 
@@ -285,7 +285,7 @@ function c7 {
 function u18-systemd {
    print_bindings
    base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
-   CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --hostname=u18-systemd --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
+   CMD="docker run ${NETWORK}  --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --hostname=u18-systemd --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
@@ -295,7 +295,7 @@ function u18-systemd {
 ### U18-CRIO ###
 function u18-crio {
    print_bindings
-   CMD="docker run --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --name u18-crio --rm local/u18-crio" && DEBUG "${LINENO} Executing:${CMD}"
+   CMD="docker run ${NETWORK}  --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${BNDGNS} ${BINDINGS} --name u18-crio --rm local/u18-crio" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
@@ -341,7 +341,16 @@ case $i in
    ;;
 --app=*)
   APPVOLUME="${i#*=}"
+  NETWORKNAME="${APPVOLUME}_network"
+  NETWORK="--network ${NETWORKNAME}"
+  docker network create ${NETWORKNAME} >/dev/null 2>&1
   shift
+  ;;
+--network=*|--net=*)
+   NETWORKNAME="${i#*=}_network"
+   NETWORK="--network ${NETWORKNAME}"
+   docker network create ${NETWORKNAME} >/dev/null 2>&1
+   shift
   ;;
 -connect)
   CONX_MYSQL=1
@@ -415,7 +424,7 @@ local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-sca
    DEBUG ${LINENO} spark-scala-submit
    IMAGE="local/spark-scala-submit sbt console"
    BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/_assets"
-   CMD="docker run -it --rm"
+   CMD="docker run ${NETWORK}  -it --rm"
    DEBUG ${LINENO} calling do_it
    do_it ${CMD} ${BNDGNS} ${IMAGE}
    ;;
