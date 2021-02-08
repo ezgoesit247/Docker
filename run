@@ -306,7 +306,7 @@ function u18-crio {
 for i in "$@"
 do
 case $i in
--n=*|--name=*)
+-n=*|--container=*|--name=*)
    NAMEDCONTAINER="${i#*=}"
    NAME="--name ${NAMEDCONTAINER}"
    DEBUG "${LINENO} SET \$NAME:${NAME}"
