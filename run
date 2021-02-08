@@ -11,6 +11,7 @@ USER="" && PRIV="" && PORT="-P"
 DASH_N=false
 MYSQLD_DETACHED=false
 DETACHED=
+ENV=dev
 BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
 BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
 DEBUG "${LINENO} STARTING..." && VARS
@@ -71,14 +72,15 @@ function driver {
       -v ${HOME}/.aws:/home/poweruser/.aws \
       -v ${HOME}/.ssh:/home/poweruser/.ssh"
     IMAGE="local/${PWD##*/}"
-    CMD="docker run ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT}"
+    CMD="docker run ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT}"
     local DO_IT="${CMD} ${NAME}"
     DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${DO_IT} ${IMAGE}"
     base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
     print_bindings
 #      if ! do_it "${CMD} --hostname ${PWD##*/} --rm ${BNDGNS} ${BINDINGS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
     if ! do_it "${DO_IT} ${BNDGNS} ${BINDINGS} ${IMAGE}"; then
-      docker start ${NAMEDCONTAINER} >/dev/null && if ! docker exec -it ${NAMEDCONTAINER} bash; then error ${LINENO} Something did not work; fi;
+      docker start ${NAMEDCONTAINER} >/dev/null \
+      && if ! docker exec -it ${NAMEDCONTAINER} bash; then error ${LINENO} Something did not work; fi;
     fi; fi; fi
 ###
 ### CASE 2
@@ -107,7 +109,10 @@ function driver {
         CMD="docker run ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER}";
         DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
         base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
-        do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}";
+        if ! do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}"; then
+          docker start ${NAMEDCONTAINER} >/dev/null \
+          && if ! docker exec -it ${NAMEDCONTAINER} bash; then error ${LINENO} Something did not work; fi;
+        fi
       fi
 ###
 ### CASE 5
@@ -305,12 +310,6 @@ function u18-crio {
 for i in "$@"
 do
 case $i in
--n=*|--container=*|--name=*)
-  NAMEDCONTAINER="${i#*=}"
-  NAME="--name ${NAMEDCONTAINER}"
-  DEBUG "${LINENO} SET \$NAME:${NAME}"
-  shift
-  ;;
 -n)
   NAMEDCONTAINER="${PWD##*/}"
   NAME="--name ${NAMEDCONTAINER}"
@@ -336,6 +335,16 @@ case $i in
 -d)
   MYSQLD_DETACHED=true
   DETACHED="-d"
+  shift
+  ;;
+-n=*|--container=*|--name=*)
+  NAMEDCONTAINER="${i#*=}"
+  NAME="--name ${NAMEDCONTAINER}"
+  DEBUG "${LINENO} SET \$NAME:${NAME}"
+  shift
+  ;;
+--env=*)
+  ENV="${i#*=}"
   shift
   ;;
 --app=*)
