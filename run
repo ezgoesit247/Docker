@@ -3,7 +3,7 @@
 debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}${ENV}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 PWD=$(pwd)
 NAME="--rm"
@@ -11,7 +11,7 @@ USER="" && PRIV="" && PORT="-P"
 DASH_N=false
 MYSQLD_DETACHED=false
 DETACHED=
-ENV=dev
+#ENV=dev
 BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
 BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
 DEBUG "${LINENO} STARTING..." && VARS
@@ -43,9 +43,9 @@ function set_hostname {
   DEBUG ${LINENO} start set_hostname && VARS
   if [[ ${NAME} == "--rm" ]]; then
     if [[ ${IMAGE} == "" ]]; then
-      NAME="--hostname ${PWD##*/} ${NAME}";
-      else NAME="--hostname `basename ${IMAGE}` ${NAME}"; fi;
-    else h=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${h} ${NAME}";
+      NAME="--hostname ${PWD##*/}${ENV} ${NAME}${ENV}";
+      else NAME="--hostname `basename ${IMAGE}` ${NAME}${ENV}"; fi;
+    else H=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${H}${ENV} ${NAME}${ENV}";
   fi;
   DEBUG ${LINENO} end set_hostname && VARS
 }
@@ -79,8 +79,8 @@ function driver {
     print_bindings
 #      if ! do_it "${CMD} --hostname ${PWD##*/} --rm ${BNDGNS} ${BINDINGS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
     if ! do_it "${DO_IT} ${BNDGNS} ${BINDINGS} ${IMAGE}"; then
-      docker start ${NAMEDCONTAINER} >/dev/null \
-      && if ! docker exec -it ${NAMEDCONTAINER} bash; then error ${LINENO} Something did not work; fi;
+      docker start ${NAMEDCONTAINER}${ENV} >/dev/null \
+      && if ! docker exec -it ${NAMEDCONTAINER}${ENV} bash; then error ${LINENO} Something did not work; fi;
     fi; fi; fi
 ###
 ### CASE 2
@@ -110,8 +110,8 @@ function driver {
         DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
         base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
         if ! do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}"; then
-          docker start ${NAMEDCONTAINER} >/dev/null \
-          && if ! docker exec -it ${NAMEDCONTAINER} bash; then error ${LINENO} Something did not work; fi;
+          docker start ${NAMEDCONTAINER}${ENV} >/dev/null \
+          && if ! docker exec -it ${NAMEDCONTAINER}${ENV} bash; then error ${LINENO} Something did not work; fi;
         fi
       fi
 ###
@@ -312,7 +312,7 @@ do
 case $i in
 -n)
   NAMEDCONTAINER="${PWD##*/}"
-  NAME="--name ${NAMEDCONTAINER}"
+  NAME="--name ${NAMEDCONTAINER}${ENV}"
   DEBUG "${LINENO} SET \$NAME:${NAME}"
   shift
   ;;
@@ -339,12 +339,12 @@ case $i in
   ;;
 -n=*|--container=*|--name=*)
   NAMEDCONTAINER="${i#*=}"
-  NAME="--name ${NAMEDCONTAINER}"
+  NAME="--name ${NAMEDCONTAINER}${ENV}"
   DEBUG "${LINENO} SET \$NAME:${NAME}"
   shift
   ;;
 --env=*)
-  ENV="${i#*=}"
+  ENV="_${i#*=}"
   shift
   ;;
 --app=*)
