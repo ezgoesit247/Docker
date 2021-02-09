@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=0
+debug=1
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}${ENV}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
@@ -11,7 +11,7 @@ USER="" && PRIV="" && PORT="-P"
 DASH_N=false
 MYSQLD_DETACHED=false
 DETACHED=
-#ENV=dev
+#ENV=_noenv
 BNDGNS="-v ${HOME}/Docker/_shared_assets:/home/poweruser/_assets"
 BNDGNS="${BNDGNS} -v ${HOME}/Docker/_shared_assets:/root/_assets"
 DEBUG "${LINENO} STARTING..." && VARS
@@ -36,7 +36,7 @@ function green2 {
   println '\t(%s)\e[32m %s\e[m' "$1" "${*:2}"
 }
 function do_it {
-  VARS && DEBUG "${LINENO} Executing: ${*}"
+  DEBUG "${LINENO} Executing: ${*}" && VARS
   eval ${*} 2>/dev/null;
 }
 function set_hostname {
@@ -72,13 +72,13 @@ function driver {
       -v ${HOME}/.aws:/home/poweruser/.aws \
       -v ${HOME}/.ssh:/home/poweruser/.ssh"
     IMAGE="local/${PWD##*/}"
-    CMD="docker run ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT}"
-    local DO_IT="${CMD} ${NAME}"
-    DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${DO_IT} ${IMAGE}"
-    base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
-    print_bindings
-#      if ! do_it "${CMD} --hostname ${PWD##*/} --rm ${BNDGNS} ${BINDINGS} ${IMAGE}"; then error ${LINENO} Something did not work; fi;
-    if ! do_it "${DO_IT} ${BNDGNS} ${BINDINGS} ${IMAGE}"; then
+    CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}"
+    #local DO_IT="${CMD}"
+    DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} ${IMAGE}"
+    local base="`basename ${IMAGE}`" \
+    && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-} ${BINDINGS}"
+    if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${BNDGNS} ${BINDINGS}" ;fi
+    if ! do_it "${CMD} ${IMAGE}"; then
       docker start ${NAMEDCONTAINER}${ENV} >/dev/null \
       && if ! docker exec -it ${NAMEDCONTAINER}${ENV} bash; then error ${LINENO} Something did not work; fi;
     fi; fi; fi
@@ -86,11 +86,10 @@ function driver {
 ### CASE 2
 ###
   else DEBUG ${LINENO} && VARS
-    CMD="docker run ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${USER} --name"
+    CMD="docker run ${RM} ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${USER} --name"
     LCL_IMAGE_VAR="local/${PWD##*/}"
-    #   if ! ${CMD} ${BNDGNS} ${LCL_IMAGE_VAR} 2> /dev/null
     DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
-    base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
+    base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-} ${BINDINGS}"
     if ! do_it "${CMD} ${IMAGE} ${BINDINGS} ${BNDGNS} ${LCL_IMAGE_VAR}"
 ###
 ### CASE 3
@@ -106,10 +105,11 @@ function driver {
 ###
       else
         BNDGNS="${BNDGNS} -v ${PWD}/assets.docker:/home/poweruser/local.assets"
-        CMD="docker run ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER}";
+        CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}";
         DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
-        base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-}"
-        if ! do_it "${CMD} ${BNDGNS} ${BINDINGS} ${IMAGE}"; then
+        base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-} ${BINDINGS}"
+        if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${BNDGNS} ${BINDINGS}" ;fi
+        if ! do_it "${CMD} ${IMAGE}"; then
           docker start ${NAMEDCONTAINER}${ENV} >/dev/null \
           && if ! docker exec -it ${NAMEDCONTAINER}${ENV} bash; then error ${LINENO} Something did not work; fi;
         fi
@@ -123,7 +123,7 @@ function driver {
       BNDGNS="${BNDGNS} -v ${HOME}/.m2:/home/poweruser/.m2"
       BNDGNS="${BNDGNS} -v ${HOME}/.aws:/home/poweruser/.aws"
       BNDGNS="${BNDGNS} -v ${HOME}/.ssh:/home/poweruser/.ssh"
-      CMD="docker run ${NETWORK}  ${PRIV} -it ${PORT} ${USER} ${NAME}"
+      CMD="docker run ${RM} ${NETWORK}  ${PRIV} -it ${PORT} ${USER} ${NAME}"
       info "(${LINENO}) can't start, running container: ${CMD} ${BNDGNS} ${IMAGE}"
       DEBUG ${LINENO} Case \#5 calling do_it && green1 "Case #5" "${CMD} ${IMAGE}"
       do_it "${CMD} ${BNDGNS} ${IMAGE}"
@@ -138,9 +138,9 @@ function driver {
 function mysqld-mysqlserver {
   local CONTAINER=${APPVOLUME}_database && local DBADMIN=${APPVOLUME}_admin
   if docker_volume_check ${APPVOLUME};
-  then DEBUG "${LINENO}-mysqlserver-a-create-new-database" && mysqld_create_database ${APPVOLUME} ${CONTAINER} ${DBADMIN}
-    else DEBUG "${LINENO}-mysqlserver-b-start-container" && if ! container_start ${CONTAINER}
-      then DEBUG "${LINENO}-mysqlserver-c-run-container" && run_mysqld_container ${APPVOLUME} ${CONTAINER}; fi
+  then DEBUG "${LINENO} mysqlserver-a-create-new-database" && mysqld_create_database ${APPVOLUME} ${CONTAINER} ${DBADMIN}
+    else DEBUG "${LINENO} mysqlserver-b-start-container" && if ! container_start ${CONTAINER}
+      then DEBUG "${LINENO} mysqlserver-c-run-container" && run_mysqld_container ${APPVOLUME} ${CONTAINER}; fi
   fi
   if [ ${CONX_MYSQL} ]; then echo connecting... && sleep 1 \
     && while ! mysqld_connect ${CONTAINER} ${SECRET}; do sleep 1; done
@@ -317,11 +317,21 @@ case $i in
   shift
   ;;
 -u)
-  USER="--user poweruser"
+  shift
+  USER="--user ${1}"
   shift
   ;;
 --user=*)
   USER="--user ${i#*=}"
+  shift
+  ;;
+-w)
+  shift
+  WORKDIR="--workdir ${1}"
+  shift
+  ;;
+--workdir=*)
+  WORKDIR="--workdir ${i#*=}"
   shift
   ;;
 --new)
@@ -375,6 +385,16 @@ case $i in
   ;;
 -v=*)
   BINDINGS="${BINDINGS} -v ${i#*=}"
+  DEBUG ${LINENO} binding set ${BINDINGS}
+  shift
+  ;;
+-nobind|-int)
+  ### THIS STOP ANY BINDINGS OR VOL MAPPING, NO SHARED BASH HISTORY
+  NOBIND=NOBIND
+  shift
+  ;;
+--rm)
+  RM="--rm"
   shift
   ;;
 esac
@@ -388,8 +408,9 @@ DEBUG ${LINENO} top of special cases && VARS
 set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
-local/mysqld-mysqlserver5.7)
+local/mysqld-mysqlserver5.7|mysql-server:5.7)
   DEBUG "${LINENO} calling function: mysqld-mysqlserver"
+  IMAGE="mysql/mysql-server:5.7"
   mysqld-mysqlserver
   ;;
 local/mysql-server)
