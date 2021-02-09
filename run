@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=1
+debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}${ENV}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
@@ -73,7 +73,6 @@ function driver {
       -v ${HOME}/.ssh:/home/poweruser/.ssh"
     IMAGE="local/${PWD##*/}"
     CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}"
-    #local DO_IT="${CMD}"
     DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} ${IMAGE}"
     local base="`basename ${IMAGE}`" \
     && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-} ${BINDINGS}"
