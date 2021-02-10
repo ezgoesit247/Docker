@@ -36,10 +36,6 @@ RUN chmod 700 $RDIRPATH/.ssh \
 #&& echo "${SSH_PRIVATE_KEY_STREAM}" > $SSH_PRIVATE_KEY \
 && chmod 600 $SSH_PRIVATE_KEY
 
-
-
-
-
 ARG U=poweruser
 ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$U
@@ -49,6 +45,18 @@ ARG UDIR_SAFE_PATH=\\/home\\/poweruser
 RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && useradd -ms /bin/bash -d $UDIRPATH -U $U \
 && mkdir $UDIRPATH/bin
+
+
+VOLUME /mda
+RUN git clone git@github.com:***REMOVED***/MDA /mda \
+&& chown -R $U:$U /mda /mda/.git \
+&& rm -rf $GIT_CONFIG $RDIRPATH/.ssh $RDIRPATH/bin
+
+
+
+#FROM local/u18-java8
+#VOLUME /code
+#COPY --from=intermediate /mda /code
 
 
 ENV GIT_SSH=$UDIRPATH/bin/git-ssh
@@ -75,20 +83,7 @@ RUN chmod 700 $UDIRPATH/.ssh \
 && chmod 600 $SSH_PRIVATE_KEY \
 && chown -R $U:$U $UDIR/*
 
-VOLUME /mda
-RUN git clone git@github.com:***REMOVED***/MDA /mda \
-&& chown -R poweruser:poweruser /mda /mda/.git
 
-
-RUN echo 'alias ls="ls -Altr --color=auto"\n\
-export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
-'\
->> /home/poweruser/.bashrc
-
-
-RUN echo 'export HISTTIMEFORMAT="%F	%T	"\n\
-'\
->> /home/poweruser/.bashrc
 
 RUN apt-get -qq clean
 
@@ -97,7 +92,11 @@ WORKDIR $UDIRPATH
 ENV DOCKER_ENV=aifmda
 ENV DOCKER_ENV=$DOCKER_ENV
 
-
-RUN echo 'if [ -d ${HOME}/_assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_history/history.'$DOCKER_ENV'"; fi && green "Shared bash history at: " && echo ${HISTFILE}\n\
+RUN echo '\
+alias ls="ls -Altr --color=auto"\n\
+export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
+export HISTTIMEFORMAT="%F	%T	"\n\
+if [ -d ${HOME}/_assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_history/history.'$DOCKER_ENV'"; fi && green "Shared bash history at: " && echo ${HISTFILE}\n\
+pushd /mda >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 '\
 >> /home/poweruser/.bashrc
