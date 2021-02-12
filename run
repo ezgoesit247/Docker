@@ -3,7 +3,7 @@
 debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t${NAME}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}${ENV}\n\t\$RM:\t${RM}\n\t\$IMAGE:\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t\t\t${NAME}\n\t\$CONTAINER:\t\t${CONTAINER}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}${EXT}${ENV}\\n\t\$RM:\t\t\t${RM}\n\t\$IMAGE:\t\t\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t\t\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$BNDGNS:\t${BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 PWD=$(pwd)
 NAME="--rm"
@@ -37,15 +37,15 @@ function green2 {
 }
 function do_it {
   DEBUG "${LINENO} Executing: ${*}" && VARS
-  eval ${*} 2>/dev/null;
+  eval ${*};
 }
 function set_hostname {
   DEBUG ${LINENO} start set_hostname && VARS
   if [[ ${NAME} == "--rm" ]]; then
     if [[ ${IMAGE} == "" ]]; then
-      NAME="--hostname ${PWD##*/}${ENV} ${NAME}${ENV}";
-      else NAME="--hostname `basename ${IMAGE}` ${NAME}${ENV}"; fi;
-    else H=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${H}${ENV} ${NAME}${ENV}";
+      NAME="--hostname ${PWD##*/}${EXT}${ENV} ${NAME}${EXT}${ENV}";
+      else NAME="--hostname `basename ${IMAGE}` ${NAME}${EXT}${ENV}"; fi;
+    else H=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${H}${EXT}${ENV} ${NAME}${EXT}${ENV}";
   fi;
   DEBUG ${LINENO} end set_hostname && VARS
 }
@@ -77,9 +77,9 @@ function driver {
     local base="`basename ${IMAGE}`" \
     && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-} ${BINDINGS}"
     if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${BNDGNS} ${BINDINGS}" ;fi
-    if ! do_it "${CMD} ${IMAGE}"; then
-      docker start ${NAMEDCONTAINER}${ENV} >/dev/null \
-      && if ! docker exec -it ${NAMEDCONTAINER}${ENV} bash; then error ${LINENO} Something did not work; fi;
+    if ! do_it "${CMD} ${IMAGE}"; then green Connecting to ${NAMEDCONTAINER}${EXT}${ENV}...
+      docker start ${NAMEDCONTAINER}${EXT}${ENV} >/dev/null \
+      && if ! docker exec -it ${NAMEDCONTAINER}${EXT}${ENV} bash; then error ${LINENO} Something did not work; fi;
     fi; fi; fi
 ###
 ### CASE 2
@@ -109,8 +109,8 @@ function driver {
         base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/home/poweruser/assets.${base##*-} ${BINDINGS}"
         if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${BNDGNS} ${BINDINGS}" ;fi
         if ! do_it "${CMD} ${IMAGE}"; then
-          docker start ${NAMEDCONTAINER}${ENV} >/dev/null \
-          && if ! docker exec -it ${NAMEDCONTAINER}${ENV} bash; then error ${LINENO} Something did not work; fi;
+          docker start ${NAMEDCONTAINER}${EXT}${ENV} >/dev/null \
+          && if ! docker exec -it ${NAMEDCONTAINER}${EXT}${ENV} bash; then error ${LINENO} Something did not work; fi;
         fi
       fi
 ###
@@ -135,11 +135,13 @@ function driver {
 
 ##### MYSQL SERVER ######
 function mysqld-mysqlserver {
-  local CONTAINER=${APPVOLUME}_database && local DBADMIN=${APPVOLUME}_admin
-  if docker_volume_check ${APPVOLUME};
-  then DEBUG "${LINENO} mysqlserver-a-create-new-database" && mysqld_create_database ${APPVOLUME} ${CONTAINER} ${DBADMIN}
+  local CONTAINER=${APPVOLUME}${EXT}${ENV} \
+  && local DBADMIN=${APPVOLUME}_admin \
+  && local VOL=${APPVOLUME}${ENV}${EXT}
+  if docker_volume_check ${VOL}
+  then DEBUG "${LINENO} mysqlserver-a-create-new-database" && mysqld_create_database ${VOL} ${APPVOLUME} ${CONTAINER} ${DBADMIN}
     else DEBUG "${LINENO} mysqlserver-b-start-container" && if ! container_start ${CONTAINER}
-      then DEBUG "${LINENO} mysqlserver-c-run-container" && run_mysqld_container ${APPVOLUME} ${CONTAINER}; fi
+      then DEBUG "${LINENO} mysqlserver-c-run-container" && run_mysqld_container ${VOL} ${CONTAINER}; fi
   fi
   if [ ${CONX_MYSQL} ]; then echo connecting... && sleep 1 \
     && while ! mysqld_connect ${CONTAINER} ${SECRET}; do sleep 1; done
@@ -149,9 +151,9 @@ function mysqld-mysqlserver {
   fi
 }
 function mysqld_create_database {
-  local DATABASE=${1} && local CONTAINER=${2} && local DBADMIN=${3}
+  local VOL=${1} && local DATABASE=${2} && local CONTAINER=${3} && local DBADMIN=${4}
   DEBUG ${LINENO} "DATABASE: ${DATABASE} | CONTAINER: ${CONTAINER} | DBADMIN: ${DBADMIN}"
-  if ! run_mysqld_container ${APPVOLUME} ${CONTAINER}; then return 1; else
+  if ! run_mysqld_container ${VOL} ${CONTAINER}; then return 1; else
     UPDATE_ROOT_PASSWORD="ALTER USER 'root'@'localhost' IDENTIFIED BY '${SECRET}';"
     echo "building database..." \
     && pswd=`until docker logs ${CONTAINER} 2>&1 | grep -q GENERATED; do sleep 2; done; docker logs ${CONTAINER} 2>&1 | grep GENERATED | awk '{ print $5 }'`
@@ -182,10 +184,10 @@ function mysqld_create_database {
   fi
 }
 function run_mysqld_container {
-  local APPVOLUME=${1} && local CONTAINER=${2}
-  CMD="docker run ${NETWORK}  -v ${APPVOLUME}:/var/lib/mysql -p3306:3306 --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
+  local VOL=${1} && local CONTAINER=${2} && if [[ ${PORT} == "-P" ]]; then PORT="-p 3306:3306"; fi
+  CMD="docker run ${NETWORK}  -v ${VOL}:/var/lib/mysql ${PORT} --name=${CONTAINER} --hostname=${CONTAINER} -d ${IMAGE}"
   DEBUG ${LINENO} ${CMD} && VARS
-  ${CMD} >/dev/null 2>&1
+  ${CMD} >/dev/null
 }
 function mysqld_connect {
   local CONTAINER=${1} && local PSWD=${2}
@@ -194,7 +196,7 @@ function mysqld_connect {
 }
 function container_start {
   local CONTAINER=${1}
-  docker start ${CONTAINER} >/dev/null 2>&1
+  docker start ${CONTAINER} >/dev/null 2>&1 && green ${CONTAINER} is running
 }
 function connect_cli {
   local CONTAINER=${1}
@@ -202,7 +204,7 @@ function connect_cli {
   ${CMD} 2>/dev/null
 }
 function docker_volume_check {
-  DOCKER_VOLUME=${1}
+  local DOCKER_VOLUME=${1}
   DEBUG "${LINENO} docker_volume_check: ${DOCKER_VOLUME}"
   if ! docker volume ls|grep -q ${DOCKER_VOLUME}
     then if docker volume create ${DOCKER_VOLUME} >/dev/null
@@ -301,8 +303,35 @@ do
 case $i in
 -n)
   NAMEDCONTAINER="${PWD##*/}"
-  NAME="--name ${NAMEDCONTAINER}${ENV}"
+  NAME="--name ${NAMEDCONTAINER}"
   DEBUG "${LINENO} SET \$NAME:${NAME}"
+  shift
+  ;;
+-n=*|--container=*|--name=*)
+  NAMEDCONTAINER="${i#*=}"
+  NAME="--name ${NAMEDCONTAINER}"
+  DEBUG "${LINENO} SET \$NAME:${NAME}"
+  shift
+  ;;
+--env=*)
+  ENV="_${i#*=}"
+  shift
+  ;;
+--ext=*|--appext=*|--purpose=*)
+  EXT="_${i#*=}"
+  shift
+  ;;
+--app=*)
+  APPVOLUME="${i#*=}"
+  NETWORKNAME="${APPVOLUME}_network${ENV}"
+  NETWORK="--network ${NETWORKNAME}"
+  docker network create ${NETWORKNAME} >/dev/null 2>&1
+  shift
+  ;;
+--network=*|--net=*)
+  NETWORKNAME="${i#*=}_network"
+  NETWORK="--network ${NETWORKNAME}"
+  docker network create ${NETWORKNAME} >/dev/null 2>&1
   shift
   ;;
 -u)
@@ -335,30 +364,7 @@ case $i in
   MYSQLD_DETACHED=true
   DETACHED="-d"
   shift
-  ;;
--n=*|--container=*|--name=*)
-  NAMEDCONTAINER="${i#*=}"
-  NAME="--name ${NAMEDCONTAINER}${ENV}"
-  DEBUG "${LINENO} SET \$NAME:${NAME}"
-  shift
-  ;;
---env=*)
-  ENV="_${i#*=}"
-  shift
-  ;;
---app=*)
-  APPVOLUME="${i#*=}"
-  NETWORKNAME="${APPVOLUME}_network"
-  NETWORK="--network ${NETWORKNAME}"
-  docker network create ${NETWORKNAME} >/dev/null 2>&1
-  shift
-  ;;
---network=*|--net=*)
-  NETWORKNAME="${i#*=}_network"
-  NETWORK="--network ${NETWORKNAME}"
-  docker network create ${NETWORKNAME} >/dev/null 2>&1
-  shift
-  ;;
+    ;;
 -connect)
   CONX_MYSQL=1
   shift
@@ -391,13 +397,13 @@ done
 
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
-MYSQLVOL=mysql-server-volume
+MYSQLVOL=mysql-RUN-server-RUN-volume
 IMAGE=${1}
 DEBUG ${LINENO} top of special cases && VARS
 set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
-local/mysqld-mysqlserver5.7|mysql-server:5.7)
+local/mysqld-mysqlserver5.7|mysql-server:5.7|mysql/mysql-server:5.7)
   DEBUG "${LINENO} calling function: mysqld-mysqlserver"
   IMAGE="mysql/mysql-server:5.7"
   mysqld-mysqlserver
