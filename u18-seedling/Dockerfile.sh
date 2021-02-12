@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 as intermediate
+FROM ubuntu:18.04
 CMD ["/bin/bash"]
 
 RUN apt-get -qq update \
