@@ -1,6 +1,8 @@
 FROM local/u18-java8
 
-#####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda_app:/usr/local/aifmda local/aifmda
+#####   build --arg=app=retailsales_datagenerator
+#####   run --rm --env=dev --purpose=sandbox --container=retailsales --app=retailsales -v=retailsales_app:/usr/local/retailsales local/retailsales
+
 
 RUN apt-get -qq update \
 && apt-get install -qq \
@@ -45,44 +47,35 @@ ARG UDIR_SAFE_PATH=\\/home\\/poweruser
 
 
 RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
-&& useradd -ms /bin/bash -d $UDIRPATH -U $U \
-&& mkdir $UDIRPATH/bin
+&& useradd -ms /bin/bash -d $UDIRPATH -U $U
 
+ARG app
 
-VOLUME /mda
-RUN git clone git@github.com:***REMOVED***/MDA /mda \
-&& chown -R $U:$U /mda /mda/.git \
+VOLUME /$app
+RUN git clone git@github.com:***REMOVED***/$app /$app \
+&& chown -R $U:$U /$app /$app/.git \
 && rm -rf $GIT_CONFIG $RDIRPATH/.ssh $RDIRPATH/bin
 
 
 
 #FROM local/u18-java8
 #VOLUME /code
-#COPY --from=intermediate /mda /code
+#COPY --from=intermediate /$app /code
 
 
-ENV GIT_SSH=$UDIRPATH/bin/git-ssh
+ENV GIT_SSH=$UDIRPATH/local.assets/git-ssh
 ARG GIT_CONFIG=$UDIRPATH/.gitconfig
 ARG KNOWN_HOSTS=$UDIRPATH/.ssh/known_hosts
-ARG SSH_PRIVATE_KEY=$UDIRPATH/.ssh/***REMOVED***
 ARG SSH_PRIVATE_KEY_STREAM
 
 
 
-COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
-COPY assets.docker/known_hosts $KNOWN_HOSTS
-COPY assets.docker/***REMOVED*** $SSH_PRIVATE_KEY
 
-RUN chmod 700 $UDIRPATH/.ssh \
-&& chmod 755 $UDIRPATH/bin \
-&& chmod 755 $GIT_SSH \
-&& chmod 600 $KNOWN_HOSTS \
-&& chmod 644 $GIT_CONFIG \
+RUN chmod 644 $GIT_CONFIG \
 && sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 \
 #&& echo "${SSH_PRIVATE_KEY_STREAM}" > $SSH_PRIVATE_KEY \
-&& chmod 600 $SSH_PRIVATE_KEY \
 && chown -R $U:$U $UDIR/*
 
 
@@ -91,26 +84,26 @@ RUN apt-get -qq clean
 
 USER $U
 WORKDIR $UDIRPATH
-ENV DOCKER_ENV=aifmda
+ENV DOCKER_ENV=$app
 ENV DOCKER_ENV=$DOCKER_ENV
 
-VOLUME aifmda
+VOLUME $app
 
 
 RUN \
-sudo ln -fsn /aifmda /usr/local/aifmda \
-&& sudo ln -fsn /usr/local/aifmda ${UDIRPATH}/Application
+sudo ln -fsn /$app /usr/local/$app \
+&& sudo ln -fsn /usr/local/$app ${UDIRPATH}/Application
 
 RUN \
-ln -fsn /mda $UDIRPATH \
+ln -fsn /$app $UDIRPATH \
 && sudo chown -R $U:$U $UDIRPATH \
 && echo '\
 for d in $(ls -A1 ~'$U'); do sudo chown '$U':'$U' ~'$U'/${d}; done \n\
-sudo chown '$U':root /usr/local/aifmda \n\
+sudo chown '$U':root /usr/local/'$app' \n\
 alias ls="ls -Altr --color=auto" \n\
 export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
 export HISTTIMEFORMAT="%F	%T	"\n\
 if [ -d ${HOME}/public_assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_history/history.'$DOCKER_ENV'"; fi && green "Shared bash history at: " && echo ${HISTFILE}\n\
-pushd /mda >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
+pushd /'$app' >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 '\
 >> /home/poweruser/.bashrc
