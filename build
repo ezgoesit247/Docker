@@ -113,7 +113,7 @@ done
 ###
 # - main
 ###
-build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-terraform ~/Docker/u18-scala ~/Docker/u18-node ~/Docker/Applications/aifmda ~/Docker/u18-java8 ~/Docker/u18-jdk8header ~/Docker/u18-seed ~/Docker/u18-seedling)
+build_list=(~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-terraform ~/Docker/u18-scala ~/Docker/u18-node ~/Docker/u18-java8 ~/Docker/u18-jdk8header ~/Docker/u18-seed ~/Docker/u18-seedling)
 if [ ${BUILDALL} ]; then time build_all ${build_list} && exit 0; fi
 
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
