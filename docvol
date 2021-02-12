@@ -16,8 +16,9 @@ function do_create_vol {
   local s=$(docker volume create ${VOL}) && echo "volume ${s} exists" && return 0
 }
 function run_inspect_container {
-  local ARY=($(docker volume inspect ${VOL}|grep -i mountpoint|sed 's/"//g; s/,//g;'))
-  echo -e "\t"running Debian container, run: du -d 1 -h ${ARY[1]}
+  if [ ${VOL} ]; then local ARY=($(docker volume inspect ${VOL}|grep -i mountpoint|sed 's/"//g; s/,//g;')); fi
+  local VOLPATH=${ARY[1]} && if [ ! ${VOLPATH} ];then VOLPATH=/var/lib/docker/volumes; fi
+  echo -e running Debian container, fid volume by running:"\n\t"du -d 1 -h ${VOLPATH}
   docker run -it --rm --privileged --pid=host debian nsenter -t 1 -m -u -n -i bash
   exit 0
 }
@@ -38,7 +39,7 @@ case $i in
   shift
   VOL="${1}" && INSPECT=1
   shift
-  if [ ! ${VOL} ]; then usage need volume arg; fi
+#  if [ ! ${VOL} ]; then usage need volume arg; fi
   ;;
 -s|-size)
   shift
