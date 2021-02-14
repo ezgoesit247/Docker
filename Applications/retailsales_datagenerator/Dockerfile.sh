@@ -1,7 +1,12 @@
 FROM local/u18-java8
 
-#####   build --arg=app=retailsales_datagenerator
-#####   run --rm --env=dev --purpose=sandbox --container=retailsales --app=retailsales -v=retailsales_app:/usr/local/retailsales local/retailsales
+#####   USER=poweruser && APP=retailsales_datagenerator && \
+#####     build --arg=localuser=${USER} --arg=app=${APP}
+
+#####   run --rm --env=dev --purpose=sandbox --container=retailsales_datagenerator --app=retailsales_datagenerator -v=retailsales_datagenerators_app:/usr/local/retailsales_datagenerator local/retailsales_datagenerator
+
+#####   APP=retailsales_datagenerator && \
+#####     run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/usr/local/${APP} local/${APP}
 
 
 RUN apt-get -qq update \
@@ -40,7 +45,10 @@ RUN chmod 700 $RDIRPATH/.ssh \
 #&& echo "${SSH_PRIVATE_KEY_STREAM}" > $SSH_PRIVATE_KEY \
 && chmod 600 $SSH_PRIVATE_KEY
 
-ARG U=poweruser
+ARG app
+ARG localuser
+
+ARG U=$localuser
 ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$U
 ARG UDIR_SAFE_PATH=\\/home\\/poweruser
@@ -48,8 +56,6 @@ ARG UDIR_SAFE_PATH=\\/home\\/poweruser
 
 RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && useradd -ms /bin/bash -d $UDIRPATH -U $U
-
-ARG app
 
 VOLUME /$app
 RUN git clone git@github.com:***REMOVED***/$app /$app \
@@ -90,13 +96,13 @@ ENV DOCKER_ENV=$DOCKER_ENV
 VOLUME $app
 
 
-RUN \
-sudo ln -fsn /$app /usr/local/$app \
-&& sudo ln -fsn /usr/local/$app ${UDIRPATH}/Application
+RUN sudo ln -fsn /$app /usr/local/$app
+RUN sudo ln -fsn /usr/local/$app ${UDIRPATH}/Application
+#RUN ln -fsn /$app $UDIRPATH
+
 
 RUN \
-ln -fsn /$app $UDIRPATH \
-&& sudo chown -R $U:$U $UDIRPATH \
+sudo chown -R $U:$U $UDIRPATH \
 && echo '\
 for d in $(ls -A1 ~'$U'); do sudo chown '$U':'$U' ~'$U'/${d}; done \n\
 sudo chown '$U':root /usr/local/'$app' \n\
