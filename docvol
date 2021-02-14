@@ -33,6 +33,9 @@ function get_size {
   else usage volume not found: ${VOL}; fi
   exit 0
 }
+function do_network {
+  docker network ls
+}
 
 for i in "$@"
 do
@@ -42,6 +45,12 @@ case $i in
   VOL="${1}" && INSPECT=1
   shift
 #  if [ ! ${VOL} ]; then usage need volume arg; fi
+  ;;
+-n|--network)
+  #shift
+  NETWORK=$@ && NET=1
+  shift
+  if [ ! $# -eq 0 ]; then usage no args for network; fi
   ;;
 -s|-size)
   shift
@@ -69,6 +78,7 @@ if [ ${INSPECT} ]; then run_inspect_container; fi
 if [ ${SIZE} ]; then get_size; fi
 if [ ${RVOL} ]; then do_remove_vol; fi
 if [ ${CVOL} ]; then do_create_vol; fi
+if [ ${NET} ]; then do_network; fi
 
 unset VOL
 unset RVOL
