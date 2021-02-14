@@ -9,7 +9,9 @@ function usage {
   echo ${*} && exit 1
 }
 function do_remove_vol {
-  if docker volume rm ${VOL} >/dev/null 2>&1; then echo "removed volume ${VOL}" && return 0; fi;
+#  if docker volume rm ${VOL} >/dev/null 2>&1; then echo "removed volume ${VOL}" && return 0; fi;
+  for v in "${VOL}";
+    do docker volume rm ${v} >/dev/null 2>&1 && echo removed volume $v; done && return 0;
   usage can\'t remove volume ${VOL};
 }
 function do_create_vol {
@@ -35,7 +37,7 @@ function get_size {
 for i in "$@"
 do
 case $i in
--i|-inspect)
+-i|--inspect)
   shift
   VOL="${1}" && INSPECT=1
   shift
@@ -47,11 +49,11 @@ case $i in
   shift
   if [ ! ${VOL} ]; then usage need volume arg; fi
   ;;
--r|-rm)
+-r|--rm)
   shift
-  VOL="${1}" && RVOL=1
+  VOL=$@ && RVOL=1
   shift
-  if [ ! ${VOL} ]; then usage need volume arg; fi
+  if [ ! $# -gt 0 ]; then usage need volume arg; fi
   ;;
 -c|-create)
   shift
