@@ -1,10 +1,8 @@
-FROM local/u18-seed
+FROM local/u18-seed as top
 ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-USER root
-WORKDIR /root
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get -qq update \
@@ -22,6 +20,7 @@ RUN apt-get -qq update \
  rm -f /lib/systemd/system/basic.target.wants/*;\
  rm -f /lib/systemd/system/anaconda.target.wants/*;
 
+FROM top
 
 RUN echo '\n\
 function getservices { systemctl list-units --type=service; }\n\
@@ -29,8 +28,10 @@ function getactive { systemctl list-units --type=service --state=active; }\n\
 function getinactive { systemctl list-units --type=service --state=inactive; }\n\
 function getdead { getinactive|grep dead; }\n\
 function getrunning { systemctl list-units --type=service --state=running; }\n'\
->> /etc/bash.bashrc
+>> /root/.bashrx
 
 
 VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/sbin/init"]
+
+RUN apt-get -qq clean

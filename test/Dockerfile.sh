@@ -159,3 +159,5 @@ RUN   echo '### NODE ###\n \
    if command -v nvm > /dev/null  && ! command -v node; then blue "nvm:";nvm install --lts\n \
    else blue "Node:"; node -v \n \
    fi' >> /home/poweruser/.bashrc
+
+ RUN sudo apt-get -qq clean

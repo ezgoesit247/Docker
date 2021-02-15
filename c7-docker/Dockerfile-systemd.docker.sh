@@ -59,3 +59,5 @@ docker login -u bindia9187 -p "ik+;hyd8f,s9:TK"' >> /etc/bashrc
 
 
 CMD ["/sbin/init"]
+
+RUN yum clean all

@@ -213,6 +213,7 @@ RUN echo '#NORUN . $f1' >> /home/poweruser/.bashrc \
  RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose \
    && sudo chmod +x /usr/local/bin/docker-compose
 
+RUN sudo apt-get -qq clean
 
 
 ### ANSIBLE ###
