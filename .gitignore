@@ -18,3 +18,5 @@ assets.docker
 _bash_history/*
 linuxkit
 github-repo.cmd.sh
+c7-ruby/
+ora-sqlplus/

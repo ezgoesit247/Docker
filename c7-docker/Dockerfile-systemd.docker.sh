@@ -59,3 +59,5 @@ docker login -u ***REMOVED*** -p "***REMOVED***"' >> /etc/bashrc
 
 
 CMD ["/sbin/init"]
+
+RUN yum clean all

@@ -1,10 +1,9 @@
-FROM local/u18-java8
+FROM local/u18-java8 as top
 
 #####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda_app:/usr/local/aifmda local/aifmda
 
 RUN apt-get -qq update \
 && apt-get install -qq \
-sudo \
 git \
 mysql-client \
 && apt-get -qq clean
@@ -44,8 +43,9 @@ ARG UDIRPATH=$UDIR/$U
 ARG UDIR_SAFE_PATH=\\/home\\/poweruser
 
 
-RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+RUN apt-get -qq install sudo \
 && useradd -ms /bin/bash -d $UDIRPATH -U $U \
+&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && mkdir $UDIRPATH/bin
 
 
@@ -54,6 +54,8 @@ RUN git clone git@github.com:***REMOVED***/MDA /mda \
 && chown -R $U:$U /mda /mda/.git \
 && rm -rf $GIT_CONFIG $RDIRPATH/.ssh $RDIRPATH/bin
 
+
+FROM top
 
 
 #FROM local/u18-java8

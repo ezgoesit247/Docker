@@ -11,7 +11,6 @@ FROM local/u18-java8
 
 RUN apt-get -qq update \
 && apt-get install -qq \
-sudo \
 git \
 mysql-client \
 && apt-get -qq clean
@@ -54,8 +53,10 @@ ARG UDIRPATH=$UDIR/$U
 ARG UDIR_SAFE_PATH=\\/home\\/poweruser
 
 
-RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
-&& useradd -ms /bin/bash -d $UDIRPATH -U $U
+RUN apt-get -qq install sudo \
+&& useradd -ms /bin/bash -d $UDIRPATH -U $U \
+&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
 
 VOLUME /$app
 RUN git clone git@github.com:***REMOVED***/$app /$app \
