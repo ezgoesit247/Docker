@@ -1,0 +1,68 @@
+#!/bin/bash
+
+function usage {
+  echo "bad args: appbuild [-t TYPE] [-a APP] <-u USER>" && exit 1
+}
+function usage2 {
+  echo "bad type" && exit 2
+}
+
+if [ $# -lt 2 ]; then echo usage; fi
+
+for i in "$@"
+do
+case $i in
+-t)
+  shift
+  TYPE=${1}
+  shift
+  ;;
+--type=*)
+  TYPE=${i#*=}
+  ;;
+-u)
+  shift
+  USER=${1}
+  shift
+  ;;
+--user=*)
+  USER=${i#*=}
+  ;;
+-a)
+  shift
+  APP=${1}
+  shift
+  ;;
+--app=*)
+  APP=${i#*=}
+  ;;
+esac
+done
+
+
+if [[ ${TYPE} == "db" ]]; then
+run \
+--env=dev  \
+--purpose=database  \
+--app=${APP}  \
+mysql/mysql-server:5.7
+
+elif [[ ${TYPE} == "dev" ]]; then
+
+CREATE_VOL_OPTIONAL=-v=${APP}:/usr/local/${APP} && \
+run \
+--rm \
+--env=dev \
+--purpose=sandbox \
+--container=${APP} \
+--app=${APP} \
+${CREATE_VOL_OPTIONAL} \
+local/${APP}
+
+else usage2
+fi
+
+unset APP
+unset USER
+unset TYPE
+unset CREATE_VOL_OPTIONAL

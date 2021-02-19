@@ -1,0 +1,21 @@
+#!/bin/bash
+
+function usage {
+  echo "bad args: appbuild [APP] [USER] <APP_DIR>"
+}
+if [ $# -lt 2 ]; then usage && exit 1; fi
+
+
+APP=${1} && \
+USER=${2} && \
+DIR=${3} && \
+pushd ${DIR} > /dev/null 2>&1
+
+build \
+--arg=localuser=${USER} \
+--arg=app=${APP}
+popd > /dev/null 2>&1
+
+unset APP
+unset DIR
+unset USER
