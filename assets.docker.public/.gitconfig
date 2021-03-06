@@ -1,0 +1,20 @@
+# This is Git's per-user configuration file.
+[user]
+# Please adapt and uncomment the following lines:
+	name = EZ
+	email = ezgoesit247@gmail.com
+[advice]
+	addIgnoredFile = false
+[core]
+	excludesfile = /Users/brandonindia/.gitignore_global
+	editor = vim
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[ssh]
+	identity = /Users/brandonindia/.ssh/id_ed25519.ezgoesit247.github
+[commit]
+	template = /Users/brandonindia/.stCommitMsg
