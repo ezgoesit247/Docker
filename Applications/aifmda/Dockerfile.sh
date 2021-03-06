@@ -1,6 +1,6 @@
 FROM local/u18-java8 as top
 
-#####   KY=***** && build --arg=KY=${KY}
+#####   KY=${GIT_KEY_NAME} && build --arg=KY=${KY}
 #####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda_app:/usr/local/aifmda local/aifmda
 
 RUN apt-get -qq update \
