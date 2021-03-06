@@ -1,5 +1,6 @@
 FROM local/u18-java8 as top
 
+#####   KY=***** && build --arg=KY=${KY}
 #####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda_app:/usr/local/aifmda local/aifmda
 
 RUN apt-get -qq update \
@@ -26,7 +27,7 @@ RUN mkdir $RDIRPATH/bin \
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
-COPY assets.docker/***REMOVED*** $SSH_PRIVATE_KEY
+COPY assets.docker/$KY $SSH_PRIVATE_KEY
 
 RUN chmod 700 $RDIRPATH/.ssh \
 && chmod 755 $RDIRPATH/bin \
@@ -67,7 +68,7 @@ FROM top
 ENV GIT_SSH=$UDIRPATH/bin/git-ssh
 ARG GIT_CONFIG=$UDIRPATH/.gitconfig
 ARG KNOWN_HOSTS=$UDIRPATH/.ssh/known_hosts
-ARG SSH_PRIVATE_KEY=$UDIRPATH/.ssh/***REMOVED***
+ARG SSH_PRIVATE_KEY=$UDIRPATH/.ssh/$KY
 ARG SSH_PRIVATE_KEY_STREAM
 
 
@@ -75,7 +76,7 @@ ARG SSH_PRIVATE_KEY_STREAM
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
-COPY assets.docker/***REMOVED*** $SSH_PRIVATE_KEY
+COPY assets.docker/$KY $SSH_PRIVATE_KEY
 
 RUN chmod 700 $UDIRPATH/.ssh \
 && chmod 755 $UDIRPATH/bin \

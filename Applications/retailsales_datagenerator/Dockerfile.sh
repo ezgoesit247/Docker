@@ -1,7 +1,7 @@
 FROM local/u18-java8
 
-#####   USER=poweruser && APP=retailsales_datagenerator && \
-#####     build --arg=localuser=${USER} --arg=app=${APP}
+#####   USER=poweruser && APP=retailsales_datagenerator && KY=****** \
+#####     build --arg=localuser=${USER} --arg=app=${APP} --arg=KY=${KY}
 
 #####   run --rm --env=dev --purpose=sandbox --container=retailsales_datagenerator --app=retailsales_datagenerator -v=retailsales_datagenerators_app:/usr/local/retailsales_datagenerator local/retailsales_datagenerator
 
@@ -33,7 +33,7 @@ RUN mkdir $RDIRPATH/bin \
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
-COPY assets.docker/***REMOVED*** $SSH_PRIVATE_KEY
+COPY assets.docker/$KY $SSH_PRIVATE_KEY
 
 RUN chmod 700 $RDIRPATH/.ssh \
 && chmod 755 $RDIRPATH/bin \

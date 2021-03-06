@@ -1,11 +1,13 @@
 FROM local/u18-java8
 
 ##### BUILD
+#####   KY=***** && \
 #####   APP=generic && \
 #####   USER=generic && \
 #####   build \
 #####   --arg=localuser=${USER} \
-#####   --arg=app=${APP}
+#####   --arg=app=${APP} \
+#####   --arg=KY=${KY}
 
 ##### DATABASE
 #####   APP=generic && \
@@ -52,7 +54,7 @@ RUN mkdir $RDIRPATH/bin \
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
-COPY assets.docker/***REMOVED*** $SSH_PRIVATE_KEY
+COPY assets.docker/$KY $SSH_PRIVATE_KEY
 
 RUN chmod 700 $RDIRPATH/.ssh \
 && chmod 755 $RDIRPATH/bin \
