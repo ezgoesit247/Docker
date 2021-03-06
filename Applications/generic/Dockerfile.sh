@@ -1,7 +1,7 @@
 FROM local/u18-java8
 
 ##### BUILD
-#####   KY=***** && \
+#####   KY=${GIT_KEY_NAME} && \
 #####   APP=generic && \
 #####   USER=generic && \
 #####   build \
@@ -19,10 +19,11 @@ FROM local/u18-java8
 
 ##### APPDEV
 #####   APP=generic && \
+#####   USER=generic && \
 #####   CREATE_VOL_OPTIONAL=-v=${APP}:/usr/local/${APP} && \
-#####   APP=generic && \
 #####   run \
 #####   --rm \
+#####   --user=${USER} \
 #####   --env=dev \
 #####   --purpose=sandbox \
 #####   --container=${APP} \
