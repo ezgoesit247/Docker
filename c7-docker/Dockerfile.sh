@@ -1,23 +1,25 @@
-FROM local/c7-systemd
+FROM local/c7-systemd as tmp1
 ### RUN CONTAINER WITH THIS COMMAND:
-#  docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --rm c7-systemd
+#  docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --rm local/c7-docker
 # THEN CONNECT WITH THIS COMMAND:
 #  docker exec -it <GUID_RETURNED_ABOVE> sh
 #
 ### WRAPPED INTO A ONE-LINER:
-#  docker exec -it `docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name systemd c7-systemd` /bin/bash
+#  docker exec -it `docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name centos7-docker local/c7-docker` /bin/bash
 
 RUN yum -y update \
-   && yum install -y -q yum-utils \
-   && yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo \
-   && yum install -y -q docker-ce docker-ce-cli containerd.io
+&& yum install -y -q yum-utils \
+&& yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo \
+&& yum install -y -q docker-ce docker-ce-cli containerd.io
 RUN curl -sL "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
-   && chmod +x /usr/local/bin/docker-compose
+&& chmod +x /usr/local/bin/docker-compose
+
+FROM tmp1 as tmp2
 
 RUN yum install -y -q git which sudo python3
 
 ### DO YUMS BEFORE CHANGING PYTHON ###
-#RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 
 RUN echo 'if ! systemctl start docker.service; then echo "docker.service not started"; fi; \
@@ -54,7 +56,8 @@ blue "pip: "; pip --version; \
 cyan "Docker:"; docker --version; \
 cyan "Docker Compose:"; docker-compose --version; \
 hello_docker; \
-docker login -u ***REMOVED*** -p "***REMOVED***"' >> /etc/bashrc
+docker login -u ***REMOVED*** -p "***REMOVED***"' \
+>> /etc/bashrc
 
 
 
