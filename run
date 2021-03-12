@@ -389,7 +389,7 @@ esac
 done
 
 #ENV=_noenv
-if [ ! ${USERNAME} ]; then USERNAME=poweruser; fi
+if [ ! ${USERNAME} ]; then USERNAME=virtual_default; fi
 BINDINGS=" -v ${HOME}/Docker/assets.docker.public:/home/${USERNAME}/public.assets"
 ROOT_BIND=" -v ${HOME}/Docker/_shared_assets:/root/_assets"
 
