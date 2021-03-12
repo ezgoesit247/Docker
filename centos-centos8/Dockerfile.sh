@@ -1,5 +1,5 @@
-# docker build --rm -t local/centos-centos8 --build-arg SSH_PRIVATE_KEY_STREAM="$(cat ~/.ssh/***REMOVED***)" .
-# build --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --stream SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME}
+# docker build --rm -t local/centos-centos8 --build-arg=SSH_PRIVATE_KEY=${GITKEYNAME} --build-arg SSH_PRIVATE_KEY_STREAM="$(cat ~/.ssh/${GITKEYNAME})" .
+# build --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME}
 FROM centos:8 as tmp1
 COPY assets.docker/jdk-8.tar.gz jdk-8.tar.gz
 ARG JAVA_HOME=/usr/local/jdk1.8
