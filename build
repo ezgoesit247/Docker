@@ -22,19 +22,18 @@ function build_all {
 }
 function do_build {
    if [[ -n ${TAG} ]]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
-   CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ."
+   CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ${STREAM_ARG} ."
    msg "do_build:${LINENO}" "executing: ${CMD}"
-#   while ! docker build ${RM} -t ${REMOTE}${1} . | grep -i SUCCESSFULLY; do
-   #while ! ${CMD} | grep -i SUCCESSFULLY; do
-   while ! ${CMD}; do
+#   while ! ${CMD}; do
       if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
          msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
             && ln -s ./Dockerfile.sh ./Dockerfile \
             && msg "do_build" "Retrying..." && continue
       fi
-      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
-      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
-   done
+      eval $CMD
+#      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
+#      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
+#   done
 }
 function build {
   tag=$1
@@ -100,6 +99,16 @@ case $i in
    ARGS="${ARGS} --build-arg ${i#*=}"
    shift # past argument=value
    ;;
+--stream|--key|--pem)
+  shift
+  #ARGS="${ARGS} --build-arg ${1}=\"$(cat ${2})\""
+  BUILD_ARG=${1}
+  PEM_KEY_FILE=${2}
+  STREAM_ARG="--build-arg ${BUILD_ARG}=\"\$(cat ${PEM_KEY_FILE})\""
+#  echo ${STREAM_ARG} && echo ${1} && echo ${2} && exit 1
+  shift
+  shift
+  ;;
 -a)
    BUILDALL=1
    shift
