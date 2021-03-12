@@ -99,9 +99,10 @@ case $i in
    ARGS="${ARGS} --build-arg ${i#*=}"
    shift # past argument=value
    ;;
---stream|--key|--pem)
+--key|--pem)
   shift
   #ARGS="${ARGS} --build-arg ${1}=\"$(cat ${2})\""
+  #if [ $# -ne 2 ]; then error $LINENO "two(2) args for --pem or --key"; fi
   BUILD_ARG=${1}
   PEM_KEY_FILE=${2}
   STREAM_ARG="--build-arg ${BUILD_ARG}=\"\$(cat ${PEM_KEY_FILE})\""
