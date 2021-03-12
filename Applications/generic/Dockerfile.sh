@@ -1,16 +1,16 @@
 FROM local/u18-java8
 
-##### BUILD
+##### SETUP
 #####   KY=${GITKEYNAME} && \
-#####   APP=generic && \
-#####   USER=generic && \
+#####   USER=${GITUSER} && \
+#####   APP=generic
+##### BUILD
 #####   build \
 #####   --arg=localuser=${USER} \
 #####   --arg=app=${APP} \
 #####   --arg=KY=${KY}
 
 ##### DATABASE
-#####   APP=generic && \
 #####   run \
 #####   --env=dev  \
 #####   --purpose=database  \
@@ -18,8 +18,6 @@ FROM local/u18-java8
 #####   mysql/mysql-server:5.7
 
 ##### APPDEV
-#####   APP=generic && \
-#####   USER=generic && \
 #####   CREATE_VOL_OPTIONAL=-v=${APP}:/usr/local/${APP} && \
 #####   run \
 #####   --rm \
