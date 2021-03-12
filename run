@@ -3,7 +3,7 @@
 debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\$NAME:\t\t\t${NAME}\n\t\$CONTAINER:\t\t${CONTAINER}\n\t\$NAMEDCONTAINER:\t${NAMEDCONTAINER}${EXT}${ENV}\\n\t\$RM:\t\t\t${RM}\n\t\$IMAGE:\t\t\t${IMAGE}\n\t\$LCL_IMAGE_VAR:\t${LCL_IMAGE_VAR}\n\t\$USER:\t\t\t${USER}\n\t\$BINDINGS:\t${BINDINGS}\n\t\$DEV_BNDGNS:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}${EXT}${ENV}\\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${USER}:\t\t\t${USER}\n\t\${CONX_CLI}:\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 DEBUG "${LINENO} STARTING..." && VARS
 function println {
@@ -88,7 +88,7 @@ function driver {
 ###
       else
         CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}";
-        DEBUG ${LINENO} Case \#4 alling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
+        DEBUG ${LINENO} Case \#4 calling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
         if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${DEV_BNDGNS} ${BINDINGS}" ;fi
         if ! do_it "${CMD} ${IMAGE}"; then
           docker start ${NAMEDCONTAINER}${EXT}${ENV} >/dev/null \
@@ -231,7 +231,7 @@ function mysqld {
 function c7-docker {
   DEBUG ${LINENO} top of c7-docker && VARS
   base="`basename ${IMAGE}`" && BINDINGS="-v ${HOME}/Docker/${base}/assets.${base##*-}:/root/assets.${base##*-} ${BINDINGS}"
-  EMBED="docker run ${NETWORK}  --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${DEV_BNDGNS} ${BINDINGS} ${NAME} c7-docker"
+  EMBED="docker run ${NETWORK}  --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${DEV_BNDGNS} ${BINDINGS} ${NAME} local/c7-docker"
   DEBUG ${LINENO} EMBED ${EMBED}
   GUID=$(${EMBED})
   DEBUG ${LINENO} GUID ${GUID}
