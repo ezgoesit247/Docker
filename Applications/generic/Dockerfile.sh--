@@ -1,7 +1,7 @@
 FROM local/u18-java8
 
 ##### BUILD
-#####   KY=${GITKEYNAME} && \
+#####   KY=${GIT_KEY_NAME} && \
 #####   APP=generic && \
 #####   USER=generic && \
 #####   build \
