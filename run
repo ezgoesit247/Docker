@@ -283,7 +283,7 @@ DASH_N=false
 MYSQLD_DETACHED=false
 DETACHED=
 
-USERNAME=poweruser
+USERNAME=default_virtual
 ROOT_BIND=" -v ${HOME}/Docker/_shared_assets:/root/_assets"
 
 ### GET PARAMETERS ###
