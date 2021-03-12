@@ -19,7 +19,7 @@ FROM tmp1 as tmp2
 RUN yum install -y -q git which sudo python3
 
 ### DO YUMS BEFORE CHANGING PYTHON ###
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+#RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 
 RUN echo 'if ! systemctl start docker.service; then echo "docker.service not started"; fi; \
