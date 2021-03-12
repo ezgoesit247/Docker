@@ -376,7 +376,13 @@ case $i in
   DEBUG ${LINENO} binding set ${BINDINGS}
   shift
   ;;
--nobind|-int)
+--checkvol=*)
+  DOCKER_VOLUME="${i#*=}"
+  DEBUG ${LINENO} checkvol ${DOCKER_VOLUME}
+  docker_volume_check ${DOCKER_VOLUME}
+  shift
+  ;;
+--nobind|-int)
   ### THIS STOP ANY BINDINGS OR VOL MAPPING, NO SHARED BASH HISTORY
   NOBIND=NOBIND
   shift
