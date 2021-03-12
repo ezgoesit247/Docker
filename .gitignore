@@ -21,3 +21,7 @@ github-repo.cmd.sh
 c7-ruby/
 ora-sqlplus/
 Community-Edition-3.0.zip
+assets.docker.public/
+public.assets
+assets.docker.private/
+private.assets

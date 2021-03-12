@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.04 as tmp1
 CMD ["/bin/bash"]
 
 RUN apt-get -qq update \
@@ -18,7 +18,8 @@ RUN   echo 'if [ -d ${HOME}/_assets/bash_history/ ]; then export HISTFILE="${HOM
 >> /etc/bash.bashrc
 
 
-RUN   echo 'alias ls="ls -Altr --color=auto"\n\
+FROM tmp1 as tmp2
+RUN echo 'alias ls="ls -Altr --color=auto"\n\
 export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
 '\
 >> /root/.bashrc
