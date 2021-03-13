@@ -1,5 +1,7 @@
 FROM local/u18-java8
 
+obsolete keeping for history
+
 ##### SETUP
 #####   KY=${GITKEYNAME} && \
 #####   USER=${GITUSER} && \
