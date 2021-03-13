@@ -121,7 +121,7 @@ case $i in
    ;;
 -f)
   shift
-  doc ${1} && FILETAG="$(echo ${1#*.}|awk -F. '{print $1}')"
+  FNAME=${1} && FILETAG="$(echo ${1#*.}|awk -F. '{print $1}')"
   shift
   ;;
 esac
@@ -134,11 +134,12 @@ if [ ${BUILDALL} ]; then time build_all ${build_list} && exit 0; fi
 
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   pushd ${docker_dir}/${1} > /dev/null && DIR=$(basename ${1})
+  if [ -f ${FNAME} ]; then doc ${FNAME}; else doc; fi
   TAGS="-t ${REMOTE}${DIR}"
   if [ ${TAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}"; fi
   if [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${FILETAG}"; fi
-  if [ ${TAG} -a ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
+  if [ ${TAG} ] && [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
   time build "${TAGS}"
-  popd
+  popd > /dev/null 
   else time build ${PWD##*/}
 fi
