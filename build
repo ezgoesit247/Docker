@@ -27,11 +27,11 @@ function do_build {
    CMD="docker build ${NOCACHE} ${ARGS} --rm ${TAGS} ${STREAM_ARG} ."
    msg "do_build:${LINENO}" "executing: ${CMD}"
 #   while ! ${CMD}; do
-      if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
-         msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
-            && ln -s ./Dockerfile.sh ./Dockerfile \
-            && msg "do_build" "Retrying..." && continue
-      fi
+#      if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
+#         msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
+#            && ln -s ./Dockerfile.sh ./Dockerfile \
+#            && msg "do_build" "Retrying..." && continue
+#      fi
       eval $CMD
 #      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
 #      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
