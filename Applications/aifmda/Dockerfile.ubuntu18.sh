@@ -1,6 +1,6 @@
 FROM local/u18-java8 as top
 
-#####   build --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -f Dockerfile.ubuntu18.sh Applications/aifmda
+#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -f Dockerfile.ubuntu18.sh Applications/aifmda
 #####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda local/aifmda:ubuntu18
 
 RUN apt-get -qq update \
@@ -38,13 +38,16 @@ RUN apt-get -qq install sudo \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && mkdir $UDIRPATH/bin
 
-FROM top as setup
+FROM top as code
 
+ARG gituser
 ARG APP=aifmda
 VOLUME /$APP
-RUN git clone git@github.com:***REMOVED***/$APP /$APP \
+RUN git clone git@github.com:$gituser/$APP /$APP \
 && chown -R $UNAME:$UNAME /$APP /$APP/.git \
 && rm -rf $GIT_CONFIG /root/.ssh /root/bin
+
+FROM code as setup
 
 RUN apt-get install -qq \
 mysql-client \
@@ -66,8 +69,6 @@ RUN chmod 755 $UDIRPATH/bin \
 && chmod 644 $GIT_CONFIG \
 && sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 && chown -R $UNAME:$UNAME $UDIR/*
-
-RUN apt-get -qq clean
 
 USER $UNAME
 WORKDIR $UDIRPATH

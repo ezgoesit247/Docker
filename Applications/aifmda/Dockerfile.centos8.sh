@@ -1,11 +1,10 @@
-FROM local/u18-java8 as top
+FROM local/centos-centos8 as top
 
-#####   APP=<APP NAME>
-#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} --arg=app=${APP} -f Dockerfile.ubuntu18.sh -t=${APP} Applications/generic
-#####   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} local/${APP}:ubuntu18
+#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -f Dockerfile.centos8.sh Applications/aifmda
+#####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda local/aifmda:centos8
 
-RUN apt-get -qq update \
-&& apt-get install -qq \
+RUN yum update -y \
+&& yum install -y \
 git
 
 ENV GIT_SSH=/root/bin/git-ssh
@@ -34,7 +33,7 @@ ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$UNAME
 ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
 
-RUN apt-get -qq install sudo \
+RUN yum install -y sudo \
 && useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && mkdir $UDIRPATH/bin
@@ -42,14 +41,18 @@ RUN apt-get -qq install sudo \
 FROM top as code
 
 ARG gituser
-ARG app
-VOLUME /$app
-RUN git clone git@github.com:$gituser/$app /$app \
-&& chown -R $UNAME:$UNAME /$app /$app/.git \
+ARG APP=aifmda
+VOLUME /$APP
+RUN git clone git@github.com:$gituser/$APP /$APP \
+&& chown -R $UNAME:$UNAME /$APP /$APP/.git \
 && rm -rf $GIT_CONFIG /root/.ssh /root/bin
 
 FROM code as setup
-### DO BIG THINGS
+
+RUN yum install -y \
+mysql \
+&& yum clean all
+
 FROM setup
 
 ENV GIT_SSH=$UDIRPATH/bin/git-ssh
@@ -67,20 +70,17 @@ RUN chmod 755 $UDIRPATH/bin \
 && sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 && chown -R $UNAME:$UNAME $UDIR/*
 
-RUN apt-get -qq clean
-
 USER $UNAME
 WORKDIR $UDIRPATH
-ARG DOCKER_ENV=$app
+ARG DOCKER_ENV=$APP
 ENV DOCKER_ENV=$DOCKER_ENV
+ENV PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "
+ENV HISTTIMEFORMAT="%F	%T	"
 
-RUN sudo ln -fsn /$app ${UDIRPATH}/$app \
+RUN sudo ln -fsn /$APP ${UDIRPATH}/$APP \
 && sudo chown -R $UNAME:$UNAME $UDIRPATH \
-&& echo '\
-alias ls="ls -Altr --color=auto" \n\
-export PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "\n\
-export HISTTIMEFORMAT="%F	%T	"\n\
-if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.'$DOCKER_ENV'"; fi && green "Shared bash history at: " && echo ${HISTFILE}\n\
-pushd /'$app' >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
-'\
+&& echo -e "\
+alias ls=\"ls -Altr --color=auto\" \n\
+pushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
+"\
 >> /home/$UNAME/.bashrc
