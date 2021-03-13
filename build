@@ -135,9 +135,9 @@ if [ ${BUILDALL} ]; then time build_all ${build_list} && exit 0; fi
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   pushd ${docker_dir}/${1} > /dev/null && DIR=$(basename ${1})
   TAGS="-t ${REMOTE}${DIR}"
-  if [ ${TAG} ]; then TAGS="${TAGS} -t ${TAG}"; fi
+  if [ ${TAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}"; fi
   if [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${FILETAG}"; fi
-  if [ ${TAG} -a ${FILETAG} ]; then TAGS="${TAGS} -t ${TAG}:${FILETAG}"; fi
+  if [ ${TAG} -a ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
   time build "${TAGS}"
   popd
   else time build ${PWD##*/}
