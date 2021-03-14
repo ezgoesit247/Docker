@@ -25,17 +25,20 @@ function do_build {
 #   CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ${STREAM_ARG} ."
    local TAGS="${1}"
    CMD="docker build ${NOCACHE} ${ARGS} --rm ${TAGS} ${STREAM_ARG} ."
-   msg "do_build:${LINENO}" "executing: ${CMD}"
+   msg "do_build:${LINENO}" "trying: ${CMD}"
 #   while ! ${CMD}; do
 #      if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
 #         msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
 #            && ln -s ./Dockerfile.sh ./Dockerfile \
 #            && msg "do_build" "Retrying..." && continue
 #      fi
-      eval $CMD
+#      eval $CMD
 #      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
 #      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
 #   done
+  if ! ${CMD}; then msg "do_build:${LINENO}" "retrying: ${CMD}"
+    eval ${CMD}
+  fi
 }
 function build {
   local tag="${1}"
@@ -83,6 +86,11 @@ case $i in
    TAG="${i#*=}"
    shift
    ;;
+-t)
+  MYTAG="${2}"
+  shift
+  shift
+  ;;
 -n|--nc|--no-cache)
    NOCACHE=--no-cache
    shift
@@ -139,6 +147,7 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   if [ ${TAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}"; fi
   if [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${FILETAG}"; fi
   if [ ${TAG} ] && [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
+  if [ ${MYTAG} ] && [ ! ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${MYTAG}"; fi
   time build "${TAGS}"
   popd > /dev/null
 else
