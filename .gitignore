@@ -14,7 +14,7 @@ _shared_assets/bash_history/history.*
 _shared_assets/linuxkit/
 **/*assets*/*.tar.gz
 u18-node/assets.node/*
-assets.docker
+assets.docker/
 _bash_history/*
 linuxkit
 github-repo.cmd.sh
@@ -25,3 +25,4 @@ assets.docker.public/
 public.assets
 assets.docker.private/
 private.assets
+!nginx-tomcat/assets.docker/
