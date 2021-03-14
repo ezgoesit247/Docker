@@ -1,7 +1,7 @@
 FROM local/centos-centos8 as layer1
 
 # build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -t systemd centos8-developer
-# docker exec -it $(docker run --hostname centos8 -d --rm --privileged --name centos8-developer -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash
+# docker exec -it $(docker run --hostname centos8 -d --rm --privileged --name centos8-developer -v=docker_vol:/docker_vol -v=/sys/fscgroup:ro local/centos8-developer:systemd) /bin/bash
 
 RUN yum -y update \
 && yum install -y wget curl
@@ -56,11 +56,9 @@ rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/usr/sbin/init"]
-
 RUN yum clean all
 
 FROM layer5 as last
-
 
 RUN echo -e "\n\
 function showcolors { for bg in \$(seq 0 9); do for fg in \$(seq 0 9); do echo -n \"\$(expr \${fg}) \$(expr \${bg}): \" && color \$(expr \${fg}) \$(expr \${bg}) \"Tyler & Corey\"; echo; done; done }\n\
@@ -100,5 +98,6 @@ if systemctl start docker.service\n\
 "\
 >> /etc/bashrc
 
-VOLUME ["docker_vol"]
+VOLUME ["docker_vol/history"]
 WORKDIR /docker_vol
+ENV HISTFILE=/docker_vol/history/developer.bash_history
