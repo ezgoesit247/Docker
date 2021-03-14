@@ -141,5 +141,7 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   if [ ${TAG} ] && [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
   time build "${TAGS}"
   popd > /dev/null
-  else time echo ${PWD##*/} && build "-t ${REMOTE}${PWD##*/}"
+else
+  if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then doc; fi
+  time echo ${PWD##*/} && build "-t ${REMOTE}${PWD##*/}"
 fi
