@@ -56,7 +56,8 @@ blue "pip: "; pip --version; \
 cyan "Docker:"; docker --version; \
 cyan "Docker Compose:"; docker-compose --version; \
 hello_docker; \
-\' \
+docker login \
+' \
 >> /etc/bashrc
 
 
