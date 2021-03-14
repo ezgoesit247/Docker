@@ -3,33 +3,33 @@ FROM local/u18-java8
 obsolete keeping for history
 
 ##### SETUP
-#####   KY=${GITKEYNAME} && \
-#####   USER=${GITUSER} && \
-#####   APP=generic
+KY=${GITKEYNAME} && \
+USER=${GITUSER} && \
+APP=generic
 ##### BUILD
-#####   build \
-#####   --arg=localuser=${USER} \
-#####   --arg=app=${APP} \
-#####   --arg=KY=${KY}
+build \
+--arg=localuser=${USER} \
+--arg=app=${APP} \
+--arg=KY=${KY}
 
 ##### DATABASE
-#####   run \
-#####   --env=dev  \
-#####   --purpose=database  \
-#####   --app=${APP}  \
-#####   mysql/mysql-server:5.7
+run \
+--env=dev  \
+--purpose=database  \
+--app=${APP}  \
+mysql/mysql-server:5.7
 
 ##### APPDEV
-#####   CREATE_VOL_OPTIONAL=-v=${APP}:/usr/local/${APP} && \
-#####   run \
-#####   --rm \
-#####   --user=${USER} \
-#####   --env=dev \
-#####   --purpose=sandbox \
-#####   --container=${APP} \
-#####   --app=${APP} \
-#####   ${CREATE_VOL_OPTIONAL} \
-#####   local/${APP}
+CREATE_VOL_OPTIONAL=-v=${APP}:/usr/local/${APP} && \
+run \
+--rm \
+--user=${USER} \
+--env=dev \
+--purpose=sandbox \
+--container=${APP} \
+--app=${APP} \
+${CREATE_VOL_OPTIONAL} \
+local/${APP}
 
 RUN apt-get -qq update \
 && apt-get install -qq \
