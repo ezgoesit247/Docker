@@ -18,6 +18,8 @@ RUN yum install -y yum-utils python3 \
 
 
 FROM layer3 as layer4
+RUN alternatives --set python /usr/bin/python3 \
+&& yum install -y which vim
 
 ENV GIT_SSH=/root/bin/git-ssh
 ARG ROOT_SAFE_PATH=\\/root
@@ -41,7 +43,6 @@ RUN chmod 700 /root/.ssh \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
 FROM layer4 as layer5
-RUN yum install -y which vim
 
 ENV container docker
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
@@ -82,9 +83,6 @@ function getactive { systemctl list-units --type=service --state=active; }\n\
 function getinactive { systemctl list-units --type=service --state=inactive; }\n\
 function getdead { getinactive|grep dead; }\n\
 function getrunning { systemctl list-units --type=service --state=running; }\n\
-if systemctl start docker.service\n\
-  then cyan docker.service running:\n\
-  else red docker.service not started:; fi\n\
 function hello_docker {\n\
   if ! systemctl list-units --type=service --state=active|grep -q docker; then systemctl start docker; fi\n\
   if docker run --rm hello-world 2> /dev/null | grep -o \"Hello from Docker!\";\n\
@@ -92,7 +90,13 @@ function hello_docker {\n\
     else fail \"Docker Hello World\";\n\
   fi\n\
 }\n\
-hello_docker\n\
+blue \"python:\" && python --version\n\
+cyan \"Docker:\" && docker --version\n\
+cyan \"Docker Compose:\" && docker-compose --version\n\
+if systemctl start docker.service\n\
+  then cyan docker.service running: && hello_docker\n\
+  else red docker.service not started:; fi\n\
+\n\
 "\
 >> /etc/bashrc
 
