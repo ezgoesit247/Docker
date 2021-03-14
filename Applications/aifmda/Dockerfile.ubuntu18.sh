@@ -1,7 +1,8 @@
 FROM local/u18-java8 as top
 
 #####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -f Dockerfile.ubuntu18.sh Applications/aifmda
-#####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda local/aifmda:ubuntu18
+#####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda:/aifmda local/aifmda:ubuntu18
+#####   run --env=dev --purpose=database --app=aifmda mysql/mysql-server:5.7
 
 RUN apt-get -qq update \
 && apt-get install -qq \
@@ -77,11 +78,11 @@ ENV DOCKER_ENV=$DOCKER_ENV
 
 RUN sudo ln -fsn /$APP ${UDIRPATH}/$APP \
 && sudo chown -R $UNAME:$UNAME $UDIRPATH \
-&& echo '\
-alias ls="ls -Altr --color=auto" \n\
-export PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "\n\
-export HISTTIMEFORMAT="%F	%T	"\n\
-if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.'$DOCKER_ENV'"; fi && green "Shared bash history at: " && echo ${HISTFILE}\n\
-pushd /'$APP' >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
-'\
+&& echo "\
+export PS1=\"\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ \"\n\
+export HISTTIMEFORMAT=\"%F	%T	\"\n\
+alias ls=\"ls -Altr --color=auto\" \n\
+if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE=\"${HOME}/public.assets/bash_history/history.${DOCKER_ENV}\"; fi && green \"Shared bash history at: \" && echo \${HISTFILE}\n\
+pushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
+"\
 >> /home/$UNAME/.bashrc

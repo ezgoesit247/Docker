@@ -1,7 +1,8 @@
 FROM local/centos-centos8 as top
 
 #####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -f Dockerfile.centos8.sh Applications/aifmda
-#####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda local/aifmda:centos8
+#####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda:/aifmda local/aifmda:centos8
+#####   run --env=dev --purpose=database --app=aifmda mysql/mysql-server:5.7
 
 RUN yum update -y \
 && yum install -y \

@@ -1,12 +1,12 @@
-FROM local/u18-java8 as top
+FROM local/centos-centos8 as top
 
 #####   APP=<APP NAME>
-#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} --arg=app=${APP} -f Dockerfile.ubuntu18.sh -t=${APP} Applications/generic
-#####   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:ubuntu18
+#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} --arg=app=${APP} -f Dockerfile.centos8.sh -t=${APP} Applications/generic
+#####   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
 #####   run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
-RUN apt-get -qq update \
-&& apt-get install -qq \
+RUN yum update -y \
+&& yum install -y \
 git
 
 ENV GIT_SSH=/root/bin/git-ssh
@@ -35,7 +35,7 @@ ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$UNAME
 ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
 
-RUN apt-get -qq install sudo \
+RUN yum install -y sudo \
 && useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && mkdir $UDIRPATH/bin
@@ -52,9 +52,9 @@ RUN git clone git@github.com:$gituser/$app /$app \
 FROM code as setup
 ### DO BIG THINGS ###
 
-#RUN apt-get install -qq \
-#mysql-client \
-#&& apt-get -qq clean
+#RUN yum install -y \
+#mysql \
+#&& yum clean all
 
 FROM setup
 
@@ -77,14 +77,13 @@ USER $UNAME
 WORKDIR $UDIRPATH
 ARG DOCKER_ENV=$app
 ENV DOCKER_ENV=$DOCKER_ENV
+ENV PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "
+ENV HISTTIMEFORMAT="%F	%T	"
 
 RUN sudo ln -fsn /$app ${UDIRPATH}/$app \
 && sudo chown -R $UNAME:$UNAME $UDIRPATH \
-&& echo "\
-export PS1=\"\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ \"\n\
-export HISTTIMEFORMAT=\"%F	%T	\"\n\
+&& echo -e "\
 alias ls=\"ls -Altr --color=auto\" \n\
-if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE=\"${HOME}/public.assets/bash_history/history.${DOCKER_ENV}\"; fi && green \"Shared bash history at: \" && echo \${HISTFILE}\n\
-pushd /${app} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
+pushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 "\
 >> /home/$UNAME/.bashrc
