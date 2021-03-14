@@ -19,3 +19,8 @@ ENV JAVA_HOME=$JAVA_HOME
 ENV M2_HOME=$M2_HOME
 ENV PATH="$PATH:$JAVA_HOME/bin:$M2_HOME/bin"
 ENV PS1="\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "
+
+RUN echo -e "\
+alias ls=\"ls -Altr --color=auto\" \n\
+"\
+>> /etc/bashrc
