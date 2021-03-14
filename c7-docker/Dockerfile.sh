@@ -1,11 +1,10 @@
 FROM local/c7-systemd as tmp1
-### RUN CONTAINER WITH THIS COMMAND:
-#  docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --rm local/c7-docker
-# THEN CONNECT WITH THIS COMMAND:
+#  build --arg=DH=${DOCKERHUB_USER} --arg=DP=${DOCKERHUB_PWD} c7-docker
+#  docker run -d --rm --privileged -v=docker_vol:/docker_vol -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/c7-docker
 #  docker exec -it <GUID_RETURNED_ABOVE> sh
 #
 ### WRAPPED INTO A ONE-LINER:
-#  docker exec -it `docker run --privileged -d -v /sys/fs/cgroup:/sys/fs/cgroup:ro --name centos7-docker local/c7-docker` /bin/bash
+#  docker exec -it $(docker run -d --rm --privileged --name c7-docker -v=docker_vol:/docker_vol -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/c7-docker) /bin/bash
 
 RUN yum -y update \
 && yum install -y -q yum-utils \
@@ -21,7 +20,10 @@ RUN yum install -y -q git which sudo python3
 ### DO YUMS BEFORE CHANGING PYTHON ###
 #RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
-
+ARG DH
+ARG DP
+ENV DOCKERHUB_USER=$DH
+ENV DOCKERHUB_PWD=$DP
 RUN echo 'if ! systemctl start docker.service; then echo "docker.service not started"; fi; \
 ### FUNCTIONS ###; \
 function showcolors { for bg in `seq 0 9`; do for fg in `seq 0 9`; do echo -n "`expr $fg` `expr $bg`: " && color `expr $fg` `expr $bg` "Tyler & Corey"; echo; done; done }; \
@@ -56,12 +58,12 @@ blue "pip: "; pip --version; \
 cyan "Docker:"; docker --version; \
 cyan "Docker Compose:"; docker-compose --version; \
 hello_docker; \
-docker login \
+docker login -u ${DOCKERHUB_USER} --password-stdin <<<`echo ${DOCKERHUB_PWD}` \
 ' \
 >> /etc/bashrc
 
-
-
 CMD ["/sbin/init"]
+VOLUME ["docker_vol"]
+WORKDIR /docker_vol
 
 RUN yum clean all
