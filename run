@@ -399,7 +399,7 @@ esac
 done
 
 #ENV=_noenv
-BINDINGS=" -v ${HOME}/Docker/assets.docker.public:/home/${USERNAME}/public.assets"
+BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:/home/${USERNAME}/public.assets"
 
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
