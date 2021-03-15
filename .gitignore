@@ -25,4 +25,7 @@ assets.docker.public/
 public.assets
 assets.docker.private/
 private.assets
+Docker-Applications
+Docker-Main
+
 !nginx-tomcat/assets.docker/

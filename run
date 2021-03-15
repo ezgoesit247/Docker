@@ -450,6 +450,12 @@ c7|local/c7)
   DEBUG "${LINENO} calling function: c7"
   c7
   ;;
+centos-dev|centos8-developer:systemd|local/centos8-developer:systemd)
+  DEBUG "${LINENO} $1"
+  if ! docker exec -it $(docker run --hostname centos8 -d --rm --privileged --name centos8-developer -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash 2>/dev/null
+  then run centos8-developer 2>/dev/null; fi
+  exit 0
+  ;;
 local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-scala-template)
   DEBUG ${LINENO} spark-scala-submit
   IMAGE="local/spark-scala-submit sbt console"
