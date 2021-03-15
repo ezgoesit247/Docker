@@ -1,6 +1,8 @@
-# build --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} centos-centos8
-
 FROM centos:8 as tmp1
+# KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
+
+# build --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM $KEYPATH centos-centos8
+
 COPY assets.docker/jdk-8.tar.gz jdk-8.tar.gz
 ARG JAVA_HOME=/usr/local/jdk1.8
 RUN tar zxf jdk-8.tar.gz -C /tmp \
