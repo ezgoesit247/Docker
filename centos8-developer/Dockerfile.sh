@@ -126,4 +126,9 @@ ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
 RUN useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
 && usermod -aG docker $UNAME \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
-&& yum clean all
+&& yum clean all \
+&& echo -e "\
+alias ls=\"ls -Altr --color=auto\" \n\
+export PS1=\"\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ \" \n\
+"\
+>>/$UDIRPATH/.bashrc
