@@ -91,6 +91,11 @@ case $i in
   shift
   shift
   ;;
+--usertag)
+  USERTAG="${2}"
+  shift
+  shift
+  ;;
 -n|--nc|--no-cache)
    NOCACHE=--no-cache
    shift
@@ -148,6 +153,7 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   if [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${FILETAG}"; fi
   if [ ${TAG} ] && [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
   if [ ${MYTAG} ] && [ ! ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${MYTAG}"; fi
+  if [ ${USERTAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${USERTAG}"; fi
   time build "${TAGS}"
   popd > /dev/null
 else
