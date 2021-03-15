@@ -34,7 +34,11 @@ function set_hostname {
   if [[ ${NAME} == "--rm" ]]; then
     if [[ ${IMAGE} == "" ]]; then
       NAME="--hostname ${PWD##*/}${EXT}${ENV} ${NAME}${EXT}${ENV}";
-      else NAME="--hostname `basename ${IMAGE}` ${NAME}${EXT}${ENV}"; fi;
+    else
+      DEBUG ${LINENO} mid A set_hostname && VARS;
+      # NAME="--hostname `basename ${IMAGE}` ${NAME}${EXT}${ENV}";
+      NAME="--hostname `basename ${IMAGE}`";
+      DEBUG ${LINENO} mid B set_hostname && VARS;fi;
     else H=$(echo ${NAME}|cut -d" " -f2-); NAME="--hostname ${H}${EXT}${ENV} ${NAME}${EXT}${ENV}";
   fi;
   DEBUG ${LINENO} end set_hostname && VARS
