@@ -1,7 +1,9 @@
 FROM local/u18-java8 as top
 
 #####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -f Dockerfile.ubuntu18.sh Applications/aifmda
+
 #####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda:/aifmda local/aifmda:ubuntu18
+
 #####   run --env=dev --purpose=database --app=aifmda mysql/mysql-server:5.7
 
 RUN apt-get -qq update \

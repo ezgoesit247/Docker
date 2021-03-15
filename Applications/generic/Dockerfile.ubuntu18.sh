@@ -2,7 +2,9 @@ FROM local/u18-java8 as top
 
 #####   APP=<APP NAME>
 #####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} --arg=app=${APP} -f Dockerfile.ubuntu18.sh -t=${APP} Applications/generic
+
 #####   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:ubuntu18
+
 #####   run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
 RUN apt-get -qq update \

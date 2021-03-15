@@ -1,11 +1,13 @@
 FROM local/u18-java8
 
-#####   USER=${GITUSER} && APP=retailsales_datagenerator && KY=${GITKEYNAME} \
+#####   USER=${GITUSER} && APP=retailsales_datagenerator && KY=${GITKEYNAME}
+
 #####     build --arg=localuser=${USER} --arg=app=${APP} --arg=KY=${KY}
 
 #####   run --rm --env=dev --purpose=sandbox --container=retailsales_datagenerator --app=retailsales_datagenerator -v=retailsales_datagenerators_app:/usr/local/retailsales_datagenerator local/retailsales_datagenerator
 
-#####   APP=retailsales_datagenerator && \
+#####   APP=retailsales_datagenerator
+
 #####     run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/usr/local/${APP} local/${APP}
 
 
