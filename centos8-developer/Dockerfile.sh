@@ -1,6 +1,8 @@
 FROM local/centos-centos8 as root1
 
-# build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} --arg=DH=${DOCKERHUB_USER} --arg=DP=${DOCKERHUB_PWD} -t systemd centos8-developer
+# CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
+
+# build --rm --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DH=${DOCKERHUB_USER} --arg=DP=${DOCKERHUB_PWD} -t systemd centos8-developer
 
 # docker exec -it $(docker run --hostname centos8 -d --rm --privileged --name centos8-developer -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash
 
@@ -98,14 +100,16 @@ RUN echo -e "\n\
 if systemctl start docker.service\n\
   then cyan docker.service running: && hello_docker\n\
   else red docker.service not started:; fi\n\
+umask 0007\n\
 "\
 >>/root/.bashrc
 
-VOLUME ["docker_vol/history"]
+VOLUME /docker_vol
 WORKDIR /docker_vol
-ENV HISTFILE=/docker_vol/history/developer.bash_history
+RUN chgrp -R users /docker_vol
+ENV HISTFILE=/docker_vol/history/root.bash_history
 
-FROM root6 AS root
+FROM root6 AS endroot
 ARG DH
 ARG DP
 ENV DOCKERHUB_USER=$DH
@@ -115,20 +119,19 @@ docker login -u ${DOCKERHUB_USER} --password-stdin <<<$(echo "${DOCKERHUB_PWD}")
 "\
 >> /etc/bashrc
 
-FROM root as developer1
+FROM endroot as developer1
 RUN yum install -y sudo
 
 FROM developer1 as final
 ARG UNAME=default_virtual
-ARG UDIR=/home
-ARG UDIRPATH=$UDIR/$UNAME
-ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
-RUN useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
-&& usermod -aG docker $UNAME \
+ARG UPATH=/home/$UNAME
+ARG UPATH_SAFE=\\/home\\/$UNAME
+RUN useradd -ms /bin/bash -d $UPATH -U $UNAME \
+&& usermod -aG docker,users $UNAME \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
-&& yum clean all \
 && echo -e "\
 alias ls=\"ls -Altr --color=auto\" \n\
 export PS1=\"\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ \" \n\
+cd /docker_vol \n\
 "\
->>/$UDIRPATH/.bashrc
+>>/$UPATH/.bashrc
