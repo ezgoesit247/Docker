@@ -22,5 +22,5 @@ export HISTFILE=/docker_vol/history/$UNAME.bash_history \n\
 export PATH=$PATH:/docker_vol/ocbin \n\
 cd /docker_vol \n\
 "\
->>/$UPATH/.bashrc
+>>$UPATH/.bashrc
 EXPOSE 7878
