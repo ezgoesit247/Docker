@@ -5,12 +5,12 @@ ARG JAVA_HOME=/usr/local/jdk1.8
 ARG M2_HOME=/usr/local/maven
 
 ###  JAVA & DEV ###
-COPY assets.docker/jdk-8u271-linux-x64.tar.gz jdk-8.tar.gz
+COPY assets.docker/jdk-8-linux-x64.tar.gz jdk-8.tar.gz
 RUN tar -zxf jdk-8.tar.gz \
 && mv jdk1.8.0_271 $JAVA_HOME \
 && rm -rf jdk-8.tar.gz
 
-COPY assets.docker/apache-maven-3.6.3-bin.tar.gz apache-maven.tar.gz
+COPY assets.docker/apache-maven-3-bin.tar.gz apache-maven.tar.gz
 RUN tar -zxf apache-maven.tar.gz \
 && mv apache-maven-3.6.3 $M2_HOME \
 && rm -rf apache-maven.tar.gz

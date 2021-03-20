@@ -1,7 +1,10 @@
 FROM local/u18-java8 as top
 
 #####   APP=<APP NAME>
-#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} --arg=app=${APP} -f Dockerfile.ubuntu18.sh -t=${APP} Applications/generic
+
+##   CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
+
+#####   build --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=appvol=${APP} -f Dockerfile.ubuntu18.sh --arg=app=${APP} -t=${APP} Applications/generic
 
 #####   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:ubuntu18
 
@@ -39,8 +42,7 @@ ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
 
 RUN apt-get -qq install sudo \
 && useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
-&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
-&& mkdir $UDIRPATH/bin
+&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 FROM top as code
 

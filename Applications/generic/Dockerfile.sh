@@ -9,7 +9,7 @@ APP=generic
 ##### BUILD
 build \
 --arg=localuser=${USER} \
---arg=app=${APP} \
+--arg=appvol=${APP} \
 --arg=KY=${KY}
 
 ##### DATABASE

@@ -1,12 +1,12 @@
 FROM local/centos8-developer:systemd as developer1
 
-# CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
+# APP=currencyexchange_py && CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
 
-# build --rm --arg=UNAME=${CUSER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --usertag ${CUSER} -f Dockerfile.centos8.sh Applications/currencyexchange_py
+# build --rm --arg=UNAME=${CUSER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --usertag ${CUSER} -f Dockerfile.centos8.sh Applications/${APP}
 
-# NAME_CLAUSE="--name ${CUSER}-currencyexchange_py"
+# NAME_CLAUSE="--name ${CUSER}-${APP}"
 
-# docker exec -it $(docker run --hostname centos8 -d -p 7878:7878 --rm --privileged ${NAME_CLAUSE} -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/currencyexchange_py:${CUSER}) /bin/bash
+# docker exec -it $(docker run --hostname centos8 -d -p 7878:7878 --rm --privileged ${NAME_CLAUSE} -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/${APP}:${CUSER}) /bin/bash
 
 FROM developer1 as final
 ARG UNAME

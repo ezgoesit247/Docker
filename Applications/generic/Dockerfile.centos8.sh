@@ -1,11 +1,14 @@
 FROM local/centos-centos8 as top
 
-#####   APP=<APP NAME>
-#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} --arg=app=${APP} -f Dockerfile.centos8.sh -t=${APP} Applications/generic
+##   APP=<APP NAME>
 
-#####   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
+##   CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
 
-#####   run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
+##   build --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=app=${APP} -f Dockerfile.centos8.sh -t=${APP} Applications/generic
+
+##   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
+
+##   run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
 RUN yum update -y \
 && yum install -y \
