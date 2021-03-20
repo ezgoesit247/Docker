@@ -293,6 +293,7 @@ MYSQLD_DETACHED=false
 DETACHED=
 
 USERNAME=default_virtual
+USERDIR=/home/${USERNAME}
 ROOT_BIND=" -v ${HOME}/Docker/_shared_assets:/root/_assets"
 
 ### GET PARAMETERS ###
@@ -315,6 +316,7 @@ case $i in
   shift
   ;;
 --env=*)
+  ENV_ARG="${i#*=}"
   ENV="_${i#*=}"
   if [[ ${i#*=} == "dev" ]]; then
     DEV_BNDGNS="${DEV_BNDGNS} -v ${PWD}/assets.docker:${USERDIR}/local.assets"
@@ -322,15 +324,14 @@ case $i in
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.aws:${USERDIR}/.aws"
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
   fi
-  IS_ENV=YES
-  HITENV=$(expr ${HITENV} + 1)
   shift
   ;;
 --ext=*|--appext=*|--purpose=*)
   EXT="_${i#*=}"
   shift
   ;;
---app=*)
+--app=*|--appvol=*)
+  APPVOLUME_ARG="${i#*=}"
   APPVOLUME="${i#*=}"
   NETWORKNAME="${APPVOLUME}_network${ENV}"
   NETWORK="--network ${NETWORKNAME}"
@@ -338,6 +339,7 @@ case $i in
   shift
   ;;
 --network=*|--net=*)
+  NETWORK_ARG="${i#*=}"
   NETWORKNAME="${i#*=}_network"
   NETWORK="--network ${NETWORKNAME}"
   docker network create ${NETWORKNAME} >/dev/null 2>&1
@@ -345,19 +347,17 @@ case $i in
   ;;
 -u)
   shift
+  USER_ARG="${1}"
   USER="--user ${1}"
   USERNAME=${1}
   shift
-  IS_USER=YES
-  HITUSER=$(expr ${HITUSER} + 1)
   ;;
 --user=*)
+  USER_ARG="${i#*=}"
   USER="--user ${i#*=}"
   USERNAME=${i#*=}
-  shift
   if [[ ${USERNAME} == root ]]; then USERDIR=/${USERNAME} ; else USERDIR="/home/${USERNAME}"; fi
-  IS_USER=YES
-  HITUSER=$(expr ${HITUSER} + 1)
+  shift
   ;;
 -w)
   shift
@@ -416,6 +416,18 @@ case $i in
   ;;
 esac
 done
+
+
+if [ $ENV_ARG ] && [ $USER_ARG ]; then
+  if [[ ${USER_ARG} == root ]]; then USERDIR=/${USER_ARG} ; else USERDIR="/home/${USER_ARG}"; fi
+  if [[ ${ENV_ARG} == dev ]]; then DEV_BNDGNS=
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${PWD}/assets.docker:${USERDIR}/local.assets"
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.m2:${USERDIR}/.m2"
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.aws:${USERDIR}/.aws"
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
+  fi
+
+fi
 
 #ENV=_noenv
 BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:${USERDIR}/public.assets"
