@@ -3,7 +3,7 @@
 debug=0
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}${EXT}${ENV}\\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${USER}:\t\t\t${USER}\n\t\${CONX_CLI}:\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}${EXT}${ENV}\\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${USER}:\t\t\t${USER}\n\t\${USERNAME}:\t\t\t${USERNAME}\n\t\${CONX_CLI}:\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 DEBUG "${LINENO} STARTING..." && VARS
 function println {
@@ -51,6 +51,7 @@ function print_bindings {
 
 function driver {
   DEBUG ${LINENO} FUNCTION driver && VARS
+  if [ ${CONX_CLI} ]; then BINBASH=/bin/bash; fi
 ###
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD #
 ###
@@ -61,11 +62,13 @@ function driver {
     DEBUG ${LINENO}; echo "Looking for image-container: ${PWD##*/}"
     IMAGE="local/${PWD##*/}"
     CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}"
-    DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} ${IMAGE}"
+    RUN_COMMAND="${CMD} ${IMAGE} ${BINBASH}"
+    DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} ${IMAGE} ${BINBASH}"
     local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
-     BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/home/${USERNAME}/assets.${base##*-} ${BINDINGS}"
+     BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:${USERDIR}/assets.${base##*-} ${BINDINGS}"
     if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${DEV_BNDGNS} ${BINDINGS}" ;fi
-    if ! do_it "${CMD} ${IMAGE} ${CLI}"; then green Connecting to ${NAMEDCONTAINER}${EXT}${ENV}...
+    CMD="${CMD} ${IMAGE} ${BINBASH}"
+    if ! do_it "${CMD}"; then green Connecting to ${NAMEDCONTAINER}${EXT}${ENV}...
       docker start ${NAMEDCONTAINER}${EXT}${ENV} >/dev/null \
       && if ! docker exec -it ${NAMEDCONTAINER}${EXT}${ENV} bash; then error ${LINENO} Something did not work; fi;
     fi; fi; fi
@@ -77,7 +80,7 @@ function driver {
     LCL_IMAGE_VAR="local/${PWD##*/}"
     DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
     local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
-    BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/home/${USERNAME}/assets.${base##*-} ${BINDINGS}"
+    BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:${USERDIR}/assets.${base##*-} ${BINDINGS}"
     if ! do_it "${CMD} ${IMAGE} ${DEV_BNDGNS} ${BINDINGS} ${LCL_IMAGE_VAR}"
 ###
 ### CASE 3
@@ -93,9 +96,11 @@ function driver {
 ###
       else
         CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}";
-        DEBUG ${LINENO} Case \#4 calling do_it && green1 "Case #4" "${CMD} ${IMAGE}"
+#        RUN_CMD="${CMD} ${IMAGE} ${BINBASH}"
+        DEBUG ${LINENO} Case \#4 calling do_it && green1 "Case #4" "${CMD} ${IMAGE} ${BINBASH}"
         if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${DEV_BNDGNS} ${BINDINGS}" ;fi
-        if ! do_it "${CMD} ${IMAGE}"; then
+        CMD="${CMD} ${IMAGE} ${BINBASH}"
+        if ! do_it "${CMD}"; then
           docker start ${NAMEDCONTAINER}${EXT}${ENV} >/dev/null \
           && if ! docker exec -it ${NAMEDCONTAINER}${EXT}${ENV} bash; then error ${LINENO} Something did not work; fi;
         fi
@@ -291,6 +296,9 @@ USERNAME=default_virtual
 ROOT_BIND=" -v ${HOME}/Docker/_shared_assets:/root/_assets"
 
 ### GET PARAMETERS ###
+### INFINITY PREVENTION COUNTERS ###
+HITENV=0
+HITUSER=0
 for i in "$@"
 do
 case $i in
@@ -309,11 +317,13 @@ case $i in
 --env=*)
   ENV="_${i#*=}"
   if [[ ${i#*=} == "dev" ]]; then
-    DEV_BNDGNS="${DEV_BNDGNS} -v ${PWD}/assets.docker:/home/${USERNAME}/local.assets"
-    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.m2:/home/${USERNAME}/.m2"
-    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.aws:/home/${USERNAME}/.aws"
-    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:/home/${USERNAME}/.ssh"
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${PWD}/assets.docker:${USERDIR}/local.assets"
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.m2:${USERDIR}/.m2"
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.aws:${USERDIR}/.aws"
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
   fi
+  IS_ENV=YES
+  HITENV=$(expr ${HITENV} + 1)
   shift
   ;;
 --ext=*|--appext=*|--purpose=*)
@@ -338,11 +348,16 @@ case $i in
   USER="--user ${1}"
   USERNAME=${1}
   shift
+  IS_USER=YES
+  HITUSER=$(expr ${HITUSER} + 1)
   ;;
 --user=*)
   USER="--user ${i#*=}"
   USERNAME=${i#*=}
   shift
+  if [[ ${USERNAME} == root ]]; then USERDIR=/${USERNAME} ; else USERDIR="/home/${USERNAME}"; fi
+  IS_USER=YES
+  HITUSER=$(expr ${HITUSER} + 1)
   ;;
 -w)
   shift
@@ -403,7 +418,7 @@ esac
 done
 
 #ENV=_noenv
-BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:/home/${USERNAME}/public.assets"
+BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:${USERDIR}/public.assets"
 
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
 SECRET=***REMOVED***
