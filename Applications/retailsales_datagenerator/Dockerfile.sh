@@ -2,7 +2,7 @@ FROM local/u18-java8
 
 #####   USER=${GITUSER} && APP=retailsales_datagenerator && KY=${GITKEYNAME}
 
-#####     build --arg=localuser=${USER} --arg=app=${APP} --arg=KY=${KY}
+#####     build --arg=localuser=${USER} --arg=app=${APP} --arg=KY=${KY} Applications/retailsales_datagenerator
 
 #####   run --rm --env=dev --purpose=sandbox --container=retailsales_datagenerator --app=retailsales_datagenerator -v=retailsales_datagenerators_app:/usr/local/retailsales_datagenerator local/retailsales_datagenerator
 
@@ -116,4 +116,4 @@ export HISTTIMEFORMAT="%F	%T	"\n\
 if [ -d ${HOME}/public_assets/bash_history/ ]; then export HISTFILE="${HOME}/_assets/bash_history/history.'$DOCKER_ENV'"; fi && green "Shared bash history at: " && echo ${HISTFILE}\n\
 pushd /'$app' >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 '\
->> /home/poweruser/.bashrc
+>> /home/$U/.bashrc
