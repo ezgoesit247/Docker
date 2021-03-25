@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug=0
+if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ]; then debug=1; else debug=0; fi;
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}${EXT}${ENV}\\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${USER}:\t\t\t${USER}\n\t\${USERNAME}:\t\t\t${USERNAME}\n\t\${CONX_CLI}:\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
