@@ -143,7 +143,7 @@ done
 # - main
 ###
 build_list=(~/Docker/u18-terraform ~/Docker/Applications/aifmda ~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-scala ~/Docker/u18-node ~/Docker/u18-java8 ~/Docker/u18-jdk8header ~/Docker/u18-seed ~/Docker/u18-seedling)
-if [ ${BUILDALL} ]; then time build_all ${build_list} && exit 0; fi
+if [ ${BUILDALL} ]; then build_all ${build_list} && exit 0; fi
 
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   pushd ${docker_dir}/${1} > /dev/null && DIR=$(basename ${1})
@@ -154,9 +154,9 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   if [ ${TAG} ] && [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
   if [ ${MYTAG} ] && [ ! ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${MYTAG}"; fi
   if [ ${USERTAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${USERTAG}"; fi
-  time build "${TAGS}"
+  build "${TAGS}"
   popd > /dev/null
 else
   if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then doc; fi
-  time echo ${PWD##*/} && build "-t ${REMOTE}${PWD##*/}"
+  echo ${PWD##*/} && build "-t ${REMOTE}${PWD##*/}"
 fi
