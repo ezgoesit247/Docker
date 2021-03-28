@@ -25,5 +25,7 @@ ENV PS1="\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\
 
 RUN echo -e "\
 alias ls=\"ls -Altr --color=auto\" \n\
+grep PRETTY_NAME /etc/os-release|sed \"s/[\\\"=_PRETTYNAME]//g\" \n\
 "\
 >> /etc/bashrc
+# sudo su - -c "echo 'grep PRETTY_NAME /etc/os-release|sed \"s/[\\\"=_PRETTYNAME]//g\"' >>/etc/bashrc"
