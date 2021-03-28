@@ -1,10 +1,12 @@
 FROM local/u18-java8 as top
 
-#####   build --arg=gituser=${GITUSER} --arg=SSH_PRIVATE_KEY=${GITKEYNAME} --key SSH_PRIVATE_KEY_STREAM ~/.ssh/${GITKEYNAME} -f Dockerfile.ubuntu18.sh Applications/aifmda
+##  APP=aifmda && CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
 
-#####   run --rm --env=dev --purpose=sandbox --container=aifmda --app=aifmda -v=aifmda:/aifmda local/aifmda:ubuntu18
+##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
-#####   run --env=dev --purpose=database --app=aifmda mysql/mysql-server:5.7
+##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.ubuntu18.sh Applications/${APP}
+
+##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:ubuntu18
 
 RUN apt-get -qq update \
 && apt-get install -qq \

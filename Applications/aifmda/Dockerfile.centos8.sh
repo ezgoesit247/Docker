@@ -1,12 +1,12 @@
 FROM local/centos-centos8 as top
 
-##  APP=${PWD##*/} && CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
+##  APP=aifmda && CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
 
-##   build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
+##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
-##   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
+##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
 
-##   run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
+##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
 
 RUN yum update -y \
 && yum install -y \
@@ -16,9 +16,11 @@ ENV GIT_SSH=/root/bin/git-ssh
 ARG ROOT_SAFE_PATH=\\/root
 ARG GIT_CONFIG=/root/.gitconfig
 ARG KNOWN_HOSTS=/root/.ssh/known_hosts
+ARG GIT_IGNORE_GLOBAL=/root/.gitignore_global
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
+COPY assets.docker/.gitignore_global $GIT_IGNORE_GLOBAL
 
 ARG SSH_PRIVATE_KEY_PATH=/root/.ssh
 ARG SSH_PRIVATE_KEY
@@ -30,6 +32,7 @@ RUN chmod 700 /root/.ssh \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
+&& chmod 644 $GIT_IGNORE_GLOBAL \
 && sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
@@ -63,15 +66,18 @@ FROM setup
 ENV GIT_SSH=$UDIRPATH/bin/git-ssh
 ARG GIT_CONFIG=$UDIRPATH/.gitconfig
 ARG KNOWN_HOSTS=$UDIRPATH/.ssh/known_hosts
+ARG GIT_IGNORE_GLOBAL=$UDIRPATH/.gitignore_global
 
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
+COPY assets.docker/.gitignore_global $GIT_IGNORE_GLOBAL
 
 RUN chmod 755 $UDIRPATH/bin \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
+&& chmod 644 $GIT_IGNORE_GLOBAL \
 && sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 && chown -R $UNAME:$UNAME $UDIR/*
 
