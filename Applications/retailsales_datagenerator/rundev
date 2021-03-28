@@ -1,0 +1,21 @@
+#!/bin/bash
+###
+#
+# QUICK CALL SCRIPT TO START A WORKSTATION
+# CALL THIS SCRIPT FROM ~/sandbox/
+#   ./assets.docker/<APPLICATION>/this_script
+# DEFAULTS: CENTOS, DEV
+# CHANGE OS or ENV VARIABLE AS SUCH:
+#   OS=os ENV=env ./assets.docker/<APPLICATION>/this_script
+#
+#
+###
+
+scriptname=$(basename $0)
+DIR=$(echo ${0} | sed "s/\/${scriptname}//")
+
+. ${DIR}/setenv
+if [ ! ${ENV} ]; then ENV=dev; fi
+if [ ! ${OS} ]; then OS=centos8; fi
+
+run --rm --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:${OS}

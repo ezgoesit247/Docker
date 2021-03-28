@@ -1,0 +1,4 @@
+APP=retailsales_datagenerator
+CUSER=${GITUSER}
+KEYNAME=${GITKEYNAME}
+KEYPATH=${GITKEYPATH}
