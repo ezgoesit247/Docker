@@ -1,14 +1,12 @@
 FROM local/centos-centos8 as top
 
-##   APP=<APP NAME>
+##  . setenv
 
-##   CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
+##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
-##   build --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=app=${APP} -f Dockerfile.centos8.sh -t=${APP} Applications/generic
+##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
 
-##   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
-
-##   run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
+##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
 
 RUN yum update -y \
 && yum install -y \
@@ -18,9 +16,11 @@ ENV GIT_SSH=/root/bin/git-ssh
 ARG ROOT_SAFE_PATH=\\/root
 ARG GIT_CONFIG=/root/.gitconfig
 ARG KNOWN_HOSTS=/root/.ssh/known_hosts
+ARG GIT_IGNORE_GLOBAL=/root/.gitignore_global
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
+COPY assets.docker/.gitignore_global $GIT_IGNORE_GLOBAL
 
 ARG SSH_PRIVATE_KEY_PATH=/root/.ssh
 ARG SSH_PRIVATE_KEY
@@ -32,6 +32,7 @@ RUN chmod 700 /root/.ssh \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
+&& chmod 644 $GIT_IGNORE_GLOBAL \
 && sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
@@ -48,44 +49,46 @@ RUN yum install -y sudo \
 FROM top as code
 
 ARG gituser
-ARG app
-VOLUME /$app
-RUN git clone git@github.com:$gituser/$app /$app \
-&& chown -R $UNAME:$UNAME /$app /$app/.git \
+ARG APP
+VOLUME /$APP
+RUN git clone git@github.com:$gituser/$APP /$APP \
+&& chown -R $UNAME:$UNAME /$APP /$APP/.git \
 && rm -rf $GIT_CONFIG /root/.ssh /root/bin
 
 FROM code as setup
-### DO BIG THINGS ###
 
-#RUN yum install -y \
-#mysql \
-#&& yum clean all
+RUN yum install -y \
+mysql \
+&& yum clean all
 
 FROM setup
 
 ENV GIT_SSH=$UDIRPATH/bin/git-ssh
 ARG GIT_CONFIG=$UDIRPATH/.gitconfig
 ARG KNOWN_HOSTS=$UDIRPATH/.ssh/known_hosts
+ARG GIT_IGNORE_GLOBAL=$UDIRPATH/.gitignore_global
 
 COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
+COPY assets.docker/.gitignore_global $GIT_IGNORE_GLOBAL
 
 RUN chmod 755 $UDIRPATH/bin \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
+&& chmod 644 $GIT_IGNORE_GLOBAL \
 && sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 && chown -R $UNAME:$UNAME $UDIR/*
 
 USER $UNAME
 WORKDIR $UDIRPATH
-ARG DOCKER_ENV=$app
+ARG DOCKER_ENV=$APP
 ENV DOCKER_ENV=$DOCKER_ENV
 ENV PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "
 ENV HISTTIMEFORMAT="%F	%T	"
 
-RUN sudo ln -fsn /$app ${UDIRPATH}/$app \
+RUN sudo ln -fsn /$APP ${UDIRPATH}/$APP \
 && sudo chown -R $UNAME:$UNAME $UDIRPATH \
 && echo -e "\
 alias ls=\"ls -Altr --color=auto\" \n\
