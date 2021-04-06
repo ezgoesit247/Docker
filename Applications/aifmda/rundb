@@ -14,5 +14,6 @@ DIR=$(echo ${0} | sed "s/\/${scriptname}//")
 . ${DIR}/setenv
 if [ ! ${ENV} ]; then ENV=dev; fi
 if [ ! ${OS} ]; then OS=centos8; fi
+if [ ! ${DB} ]; then DB=mysql/mysql-server:5.7; fi
 
-run --env=${ENV} --purpose=database --app=${APP} ${1} mysql/mysql-server:5.7
+run --env=${ENV} --purpose=database --app=${APP} ${1} ${DB}
