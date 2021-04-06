@@ -1,0 +1,4 @@
+APP=grocery_data_generator
+CUSER=${GITUSER}
+KEYNAME=${GITKEYNAME}
+KEYPATH=${GITKEYPATH}
