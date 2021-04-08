@@ -64,8 +64,9 @@ function driver {
     CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}"
     RUN_COMMAND="${CMD} ${IMAGE} ${BINBASH}"
     DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} ${IMAGE} ${BINBASH}"
-    local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
-     BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:${USERDIR}/assets.${base##*-} ${BINDINGS}"
+#    local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
+#     BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:${USERDIR}/assets.${base##*-} ${BINDINGS}"
+#    BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}"
     if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${DEV_BNDGNS} ${BINDINGS}" ;fi
     CMD="${CMD} ${IMAGE} ${BINBASH}"
     if ! do_it "${CMD}"; then green Connecting to ${NAMEDCONTAINER}${EXT}${ENV}...
@@ -79,8 +80,9 @@ function driver {
     CMD="docker run ${RM} ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${USER} --name"
     LCL_IMAGE_VAR="local/${PWD##*/}"
     DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
-    local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
-    BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:${USERDIR}/assets.${base##*-} ${BINDINGS}"
+#    local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
+#    BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:${USERDIR}/assets.${base##*-} ${BINDINGS}"
+#    BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}"
     if ! do_it "${CMD} ${IMAGE} ${DEV_BNDGNS} ${BINDINGS} ${LCL_IMAGE_VAR}"
 ###
 ### CASE 3
@@ -240,7 +242,7 @@ function mysqld {
 ### C7-DOCKER ###
 function c7-docker {
   DEBUG ${LINENO} top of c7-docker && VARS
-  local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
+  local base="$(basename ${IMAGE}|awk -F: '{print $1}')" &&       BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}" # && BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
   EMBED="docker run ${NETWORK}  --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${DEV_BNDGNS} ${BINDINGS} ${NAME} local/c7-docker"
   DEBUG ${LINENO} EMBED ${EMBED}
   GUID=$(${EMBED})
@@ -257,7 +259,7 @@ function c7-docker {
 
 ### C7-SYSTEMD ###
 function c7-systemd {
-   local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
+   local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}" #&& BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
    CMD="docker run ${NETWORK}  --privileged -d ${PORT} -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${DEV_BNDGNS} ${BINDINGS} --name c7-systemd --rm local/c7-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash && docker rm -f ${GUID} > /dev/null"
@@ -267,7 +269,7 @@ function c7-systemd {
 
 ### C7 ###
 function c7 {
-   local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
+   local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}" # && BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
    CMD="docker run ${NETWORK}  --privileged -it ${PORT} ${DEV_BNDGNS} ${BINDINGS} ${NAME} c7" && DEBUG "${LINENO} Executing:${CMD}"
    eval ${CMD}
 }
@@ -276,7 +278,7 @@ function c7 {
 ### U18-SYSTEMD ###
 function u18-systemd {
    print_bindings
-   local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
+   local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}"#&& BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
    CMD="docker run ${NETWORK}  --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${DEV_BNDGNS} ${BINDINGS} --hostname=u18-systemd --name u18-systemd --rm local/u18-systemd" && DEBUG "${LINENO} Executing:${CMD}"
    GUID=`${CMD}`
    CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:${CMD}"
@@ -331,6 +333,7 @@ case $i in
   shift
   ;;
 --app=*|--appvol=*)
+  APP_ARG="${i#*=}"
   APPVOLUME_ARG="${i#*=}"
   APPVOLUME="${i#*=}"
   NETWORKNAME="${APPVOLUME}_network${ENV}"
@@ -426,8 +429,13 @@ if [ $ENV_ARG ] && [ $USER_ARG ]; then
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.aws:${USERDIR}/.aws"
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
   fi
-
 fi
+if [ ${APP_ARG} ]; then
+#  base="$(basename ${IMAGE}|awk -F: '{print $1}')"
+#  BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}"
+  BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${APP_ARG}-application,target=${USERDIR}/assets.${APP_ARG} ${BINDINGS}"
+fi
+
 
 #ENV=_noenv
 BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:${USERDIR}/public.assets"
@@ -436,6 +444,7 @@ BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:${USERDIR}/public.a
 SECRET=***REMOVED***
 MYSQLVOL=mysql-RUN-server-RUN-volume
 IMAGE=${1}
+
 DEBUG ${LINENO} top of special cases && VARS
 set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS

@@ -1,4 +1,5 @@
 APP=grocery_data_generator
+DB=SQLServer
 CUSER=${GITUSER}
 KEYNAME=${GITKEYNAME}
 KEYPATH=${GITKEYPATH}
