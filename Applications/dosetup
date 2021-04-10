@@ -13,7 +13,7 @@ cp ./generic/Dockerfile.centos8.sh ./${app}/
 mkdir -p ../assets.${app}-application && echo '*' >${_}/.gitignore
 
 # SYM LINK THE SANDBOX -APP DIR
-ln -fsn ~/Docker/assets.${app}-application ~/sandbox/assets.docker/${app}
+ln -fsn ~/Docker/assets.${app}-application ~/sandbox/${app}
 
 # COPY AND CHANGE ENV FILE
 cp ./generic/setenv ${app}/
@@ -23,4 +23,5 @@ ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 
 # SYM LINK THE EXECUTABLES TO THE SANDBOX
 for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/assets.docker/${app}/ ;done
+# GET THE PROJECT CODE
 git clone git@github.com:${CUSER}/${app} ~/Docker/assets.${app}-application/${app}
