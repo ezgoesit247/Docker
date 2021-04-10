@@ -1,4 +1,4 @@
-FROM local/centos-centos8 as top
+FROM local/centos8-appdev as top
 
 ##  . setenv
 
@@ -7,10 +7,6 @@ FROM local/centos-centos8 as top
 ##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
 
 ##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
-
-RUN yum update -y \
-&& yum install -y \
-git
 
 ENV GIT_SSH=/root/bin/git-ssh
 ARG ROOT_SAFE_PATH=\\/root
@@ -41,8 +37,7 @@ ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$UNAME
 ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
 
-RUN yum install -y sudo \
-&& useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
+RUN useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && mkdir $UDIRPATH/bin
 
@@ -56,10 +51,6 @@ RUN git clone git@github.com:$gituser/$APP /$APP \
 && rm -rf $GIT_CONFIG /root/.ssh /root/bin
 
 FROM code as setup
-
-RUN yum install -y \
-mysql \
-&& yum clean all
 
 FROM setup
 
