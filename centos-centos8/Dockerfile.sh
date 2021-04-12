@@ -1,12 +1,9 @@
 FROM centos:8 as tmp1
-# KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
-
-# build --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM $KEYPATH centos-centos8
 
 COPY assets.docker/jdk-8.tar.gz jdk-8.tar.gz
-ARG JAVA_HOME=/usr/local/jdk1.8
+ARG JAVA8=/usr/local/jdk1.8
 RUN tar zxf jdk-8.tar.gz -C /tmp \
-&& mv /tmp/jdk* ${JAVA_HOME} \
+&& mv /tmp/jdk* ${JAVA8} \
 && rm -rf jdk-8.tar.gz
 
 FROM tmp1 as tmp2
@@ -18,7 +15,7 @@ RUN tar zxf apache-maven-3.tar.gz -C /tmp \
 
 FROM tmp2 as tmp3
 
-ENV JAVA_HOME=$JAVA_HOME
+ENV JAVA_HOME=$JAVA8
 ENV M2_HOME=$M2_HOME
 ENV PATH="$PATH:$JAVA_HOME/bin:$M2_HOME/bin"
 ENV PS1="\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "
