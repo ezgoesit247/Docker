@@ -1,7 +1,37 @@
 #!/bin/bash
-#grocery_data_generator
+
+function usage {
+  echo missing app name for arg1
+}
+function create_git {
+  REPO=${1}
+  mkdir -p "/tmp/gitwork/${REPO}" && pushd "${_}"
+
+  COMMIT_MESSAGE="initial commit"
+  JSON={\"name\":\"${REPO}\"} && \
+  curl -s --url https://api.github.com/user/repos -d ${JSON} \
+  -K- <<< "--user ${GITLOGIN}:${GITTOKEN}"|grep ssh_url|sed 's/.\{1\}$//'
+  git init
+  git remote add origin git@github.com:***REMOVED***/${REPO}.git
+
+  echo "${REPO}" >README.md
+
+  git add . && git commit -m "$COMMIT_MESSAGE"
+  git push --set-upstream origin master
+
+  popd
+}
+app=$1
+if [ ! $app ]; then usage && exit $LINENO; fi
+
+create_git ${app}
 CUSER=${GITUSER}
-echo -e "using ${CUSER} for clone\nenter appname: " && read app
+#echo -e "using ${CUSER} for clone\nenter appname: " && read app
+echo "using ${CUSER} for clone"
+read -p "appname ${app}? (Y/n) " yn
+yn=${yn:-Y}
+if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage && exit ${LINENO}; fi
+
 mkdir -p ./${app}/assets.docker
 
 # HARD LINK PRIVATE ASSETS
@@ -13,15 +43,16 @@ cp ./generic/Dockerfile.centos8.sh ./${app}/
 mkdir -p ../assets.${app}-application && echo '*' >${_}/.gitignore
 
 # SYM LINK THE SANDBOX -APP DIR
-ln -fsn ~/Docker/assets.${app}-application ~/sandbox/${app}
+ln -fsn ~/Docker/assets.${app}-application ~/sandbox/assets.docker/${app}
 
 # COPY AND CHANGE ENV FILE
+echo "Building dev container"
 cp ./generic/setenv ${app}/
 sed -i '' "s/generic/${app}/" ${app}/setenv
 ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
-
-
 # SYM LINK THE EXECUTABLES TO THE SANDBOX
 for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/assets.docker/${app}/ ;done
+~/sandbox/assets.docker/${app}/dobuild
+
 # GET THE PROJECT CODE
 git clone git@github.com:${CUSER}/${app} ~/Docker/assets.${app}-application/${app}
