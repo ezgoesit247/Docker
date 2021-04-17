@@ -52,7 +52,7 @@ RUN git clone git@github.com:$gituser/$APP /$APP \
 
 FROM code as setup
 
-FROM setup
+FROM setup as app
 
 ENV GIT_SSH=$UDIRPATH/bin/git-ssh
 ARG GIT_CONFIG=$UDIRPATH/.gitconfig
@@ -86,3 +86,9 @@ alias ls=\"ls -Altr --color=auto\" \n\
 pushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 "\
 >> /home/$UNAME/.bashrc
+
+FROM app as env
+ENV TEST_INT_ENVIRONMENT=DV1
+ENV TEST_RUN_ENVIRONMENT=QA1
+ENV INT_ENVIRONMENT=INT
+ENV RUN_ENVIRONMENT=INT
