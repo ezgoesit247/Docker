@@ -1,43 +1,122 @@
-FROM local/u18-seed as top
+FROM local/u18-java8 as top0
 ### NODE ###
-RUN apt-get install -qq gnupg2 \
-&& curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-&& "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+RUN apt-get update -qq
+RUN apt-get install -qq gnupg2
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+RUN "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
 && apt-get install -qq \
-yarn \
+yarn
+
+
+##  CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH} && APP=node
+
+##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} u18-node
+
+##  run --rm --env=dev local/u18-node
+
+FROM top0 as top
+RUN apt-get -qq update \
+&& apt-get install -qq \
 git
 
+ENV GIT_SSH=/root/bin/git-ssh
+ARG ROOT_SAFE_PATH=\\/root
+ARG GIT_CONFIG=/root/.gitconfig
+ARG KNOWN_HOSTS=/root/.ssh/known_hosts
+COPY assets.docker/git-ssh $GIT_SSH
+COPY assets.docker/.gitconfig $GIT_CONFIG
+COPY assets.docker/known_hosts $KNOWN_HOSTS
+
+ARG SSH_PRIVATE_KEY_PATH=/root/.ssh
+ARG SSH_PRIVATE_KEY
+ARG SSH_PRIVATE_KEY_STREAM
+RUN echo "${SSH_PRIVATE_KEY_STREAM}" > $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
+
+RUN chmod 700 /root/.ssh \
+&& chmod 755 /root/bin \
+&& chmod 755 $GIT_SSH \
+&& chmod 600 $KNOWN_HOSTS \
+&& chmod 644 $GIT_CONFIG \
+&& sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
+&& chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
+
+ARG UNAME=default_virtual
+ARG UDIR=/home
+ARG UDIRPATH=$UDIR/$UNAME
+ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
+
+RUN apt-get -qq install sudo \
+&& useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
+&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+&& mkdir $UDIRPATH/bin
+
+
+RUN apt-get -qq clean
+
+FROM top as gitcode
+
+#ARG gituser
+#ARG APP=aifmda
+#VOLUME /$APP
+#RUN git clone git@github.com:$gituser/$APP /$APP \
+#&& chown -R $UNAME:$UNAME /$APP /$APP/.git \
+#&& rm -rf $GIT_CONFIG /root/.ssh /root/bin
+
+FROM gitcode as go
 ARG GO_HOME=/usr/local/go
 ARG GO_INSTALL_PATH=/usr/local
 ENV GO_HOME=$GO_HOME
 COPY assets.docker/go1.15.6.linux-amd64.tar.gz go.tar.gz
+
 RUN tar -zxf go.tar.gz \
 && mv go $GO_INSTALL_PATH \
 && rm -rf go.tar.gz
+#RUN apt-get install -qq \
+#mysql-client \
+#&& apt-get -qq clean
 
-ARG app=node
-ARG localuser=poweruser
-ARG U=$localuser
-ARG UDIR=/home
-ARG UDIRPATH=$UDIR/$U
+FROM go as setup
 
-RUN apt-get -qq install sudo \
-&& useradd -ms /bin/bash -d $UDIRPATH -U $U \
-&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+ENV GIT_SSH=$UDIRPATH/bin/git-ssh
+ARG GIT_CONFIG=$UDIRPATH/.gitconfig
+ARG KNOWN_HOSTS=$UDIRPATH/.ssh/known_hosts
 
-VOLUME /$app
+COPY assets.docker/git-ssh $GIT_SSH
+COPY assets.docker/.gitconfig $GIT_CONFIG
+COPY assets.docker/known_hosts $KNOWN_HOSTS
 
-#RUN chown -R $U:$U $app $app/.git
+RUN chmod 755 $UDIRPATH/bin \
+&& chmod 755 $GIT_SSH \
+&& chmod 600 $KNOWN_HOSTS \
+&& chmod 644 $GIT_CONFIG \
+&& sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
+&& chown -R $UNAME:$UNAME $UDIR/*
 
-
-USER $U
+USER $UNAME
 WORKDIR $UDIRPATH
-ENV DOCKER_ENV=$app
-ENV DOCKER_ENV=$DOCKER_ENV
+ARG APP
+ENV DOCKER_ENV=$APP
+
+#RUN sudo ln -fsn /$APP ${UDIRPATH}/$APP \
+#&& sudo chown -R $UNAME:$UNAME $UDIRPATH \
+RUN echo "\
+export PS1=\"\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ \"\n\
+export HISTTIMEFORMAT=\"%F	%T	\"\n\
+alias ls=\"ls -Altr --color=auto\" \n\
+if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE=\"${HOME}/public.assets/bash_history/history.${DOCKER_ENV}\"; fi && green \"Shared bash history at: \" && echo \${HISTFILE}\n\
+pushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
+"\
+>> /home/$UNAME/.bashrc
+
+
+
+############################################
+
+FROM setup as tmp2
 
 RUN git clone https://github.com/nvm-sh/nvm.git $UDIRPATH/.nvm
 
-FROM top
+FROM tmp2 as node
 
 ENV GO_HOME=$GO_HOME
 ENV PATH="$PATH:$GO_HOME/bin"
@@ -66,12 +145,16 @@ if command -v go > /dev/null 2>&1; then blue "Google Go:" && go version; else ye
 '\
 >> ${UDIRPATH}/.bashrc
 
-RUN echo 'export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
-export HISTTIMEFORMAT="%F	%T	"\n\
-if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.'$DOCKER_ENV'"; fi && green "Shared bash history at: " && echo ${HISTFILE}\n\
-pushd /'$app' >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
-'\
->> ${UDIRPATH}/.bashrc
+from node as vimrc
+ARG VIMRC="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent\nset number\nset nocompatible\nsyntax on\nset cursorline\nhi CursorLine   cterm=NONE ctermbg=236 ctermfg=NONE\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
+RUN echo "${VIMRC}" >$UDIRPATH/.vimrc
 
-
-RUN sudo apt-get -qq clean
+from vimrc as session
+ENV GITNAME=***REMOVED***
+ENV GITKEYNAME=***REMOVED***
+ENV GITTOKEN=867075f783b73b5527ef1c7764654dc38ab10502
+ENV GIT_SSH=${UDIRPATH}/bin/git-ssh
+ENV GITKEYPATH=${UDIRPATH}/.ssh/***REMOVED***
+ENV GITUSER=***REMOVED***
+ENV GITLOGIN=***REMOVED***
+ENV GITAUTHOR=***REMOVED***<***REMOVED***>
