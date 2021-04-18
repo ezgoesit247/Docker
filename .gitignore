@@ -27,5 +27,8 @@ assets.docker.private/
 private.assets
 Docker-Applications
 Docker-Main
+critical-synced-meta-files.txt
+critical-synced-software-files.txt
+critical-synced-application-files.txt
 
 !nginx-tomcat/assets.docker/
