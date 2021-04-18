@@ -62,13 +62,13 @@ FROM code as oktapre
 
 
 FROM oktapre as okta
-#ENV ***REMOVED***=***REMOVED***
-#ENV ***REMOVED***=***REMOVED***
-#ENV ***REMOVED***=***REMOVED***
+#ENV OKTADOMAIN=https://dev-8737669.okta.com
+#ENV OKTAPSSWD='P@ssw0rd!'
+#ENV OKTATOKEN='00s638kkGbqmX8Ojaqa6RDs8GcAMF9C4KdhvIrcEJ8'
 #RUN echo -e '\
-#echo ***REMOVED***: $***REMOVED*** \
-#&& echo ***REMOVED***: $***REMOVED*** \
-#&& echo ***REMOVED***: $***REMOVED*** \
+#echo OKTADOMAIN: $OKTADOMAIN \
+#&& echo OKTAPSSWD: $OKTAPSSWD \
+#&& echo OKTATOKEN: $OKTATOKEN \
 #&& export JAVA_HOME=/usr/local/jdk11 && export PATH=$JAVA_HOME/bin:$PATH \
 #'\
 #>> /home/$UNAME/.bashrc

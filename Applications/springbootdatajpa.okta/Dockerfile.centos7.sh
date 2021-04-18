@@ -61,19 +61,8 @@ alias okta=\"flatpak run com.okta.developer.CLI\" \
 >> /home/$UNAME/.bashrc
 
 
-FROM oktapre as okta
-ENV ***REMOVED***=***REMOVED***
-ENV ***REMOVED***=***REMOVED***
-ENV ***REMOVED***=***REMOVED***
-RUN echo -e '\
-echo ***REMOVED***: $***REMOVED*** \
-&& echo ***REMOVED***: $***REMOVED*** \
-&& echo ***REMOVED***: $***REMOVED*** \
-&& export JAVA_HOME=/usr/local/jdk11 && export PATH=$JAVA_HOME/bin:$PATH \
-'\
->> /home/$UNAME/.bashrc
 
-FROM okta as setup2
+FROM oktapre as setup2
 
 RUN sudo yum install -y dnf
 

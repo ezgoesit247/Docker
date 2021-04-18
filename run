@@ -441,7 +441,7 @@ fi
 BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:${USERDIR}/public.assets"
 
 ### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
-SECRET=***REMOVED***
+SECRET='P@ssw0rd!'
 MYSQLVOL=mysql-RUN-server-RUN-volume
 IMAGE=${1}
 
