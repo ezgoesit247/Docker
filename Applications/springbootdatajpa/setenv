@@ -1,0 +1,6 @@
+APP=springbootdatajpa
+CUSER=${GITUSER}
+KEYNAME=${GITKEYNAME}
+KEYPATH=${GITKEYPATH}
+OS=centos7
+PORT="-p=8080:8080"
