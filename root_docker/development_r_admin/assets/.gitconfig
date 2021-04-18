@@ -1,10 +1,22 @@
 # This is Git's per-user configuration file.
 [user]
 # Please adapt and uncomment the following lines:
-	name = Brandon R. India
-	email = brandon.r.india@gmail.com
+	name = ***REMOVED***
+	email = ***REMOVED***
 [advice]
 	addIgnoredFile = false
 [core]
 	excludesfile = ***REMOVED***/.gitignore_global
 	editor = vim
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[ssh]
+	identity = ***REMOVED***/.ssh/***REMOVED***
+[commit]
+	template = ***REMOVED***/.stCommitMsg
+[pull]
+	rebase = false

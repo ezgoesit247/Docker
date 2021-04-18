@@ -6,6 +6,7 @@ ignore/
 *ignore*/
 scratch/
 *scratch*/
+git_clone/
 
 # IGNORE WHATEVER AT THIS TREE ROOT
 /SOMEDIR
