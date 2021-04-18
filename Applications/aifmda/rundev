@@ -17,5 +17,7 @@ DIR=$(echo ${0} | sed "s/\/${scriptname}//")
 . ${DIR}/setenv
 if [ ! ${ENV} ]; then ENV=dev; fi
 if [ ! ${OS} ]; then OS=centos8; fi
+if [ ! ${DEBUG} ]; then DEBUG=0; fi
+if [ $# -eq 1 ]; then DEBUG=$1; fi
 
-run --rm --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:${OS}
+DEBUG=${DEBUG} run --rm --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} ${PORT} local/${APP}:${OS}

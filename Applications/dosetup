@@ -4,23 +4,28 @@ function usage {
   echo missing app name for arg1
 }
 function create_git {
-  REPO=${1}
-  mkdir -p "/tmp/gitwork/${REPO}" && pushd "${_}"
+REPO=${1}
 
-  COMMIT_MESSAGE="initial commit"
-  JSON={\"name\":\"${REPO}\"} && \
-  curl -s --url https://api.github.com/user/repos -d ${JSON} \
-  -K- <<< "--user ${GITLOGIN}:${GITTOKEN}"|grep ssh_url|sed 's/.\{1\}$//'
-  git init
-  git remote add origin git@github.com:***REMOVED***/${REPO}.git
+mkdir -p "/tmp/gitwork/${REPO}" && pushd "${_}"
 
-  echo "${REPO}" >README.md
+COMMIT_MESSAGE="initial commit"
+JSON={\"name\":\"${REPO}\"} && \
+curl -s --url https://api.github.com/user/repos -d ${JSON} \
+-K- <<< "--user ${GITLOGIN}:${GITTOKEN}"|grep ssh_url|sed 's/.\{1\}$//' || \
+echo create remote repr failed || exit ${LINENO}
 
-  git add . && git commit -m "$COMMIT_MESSAGE"
-  git push --set-upstream origin master
+git init
+git remote add origin git@github.com:***REMOVED***/${REPO}.git
 
-  popd
+echo "${REPO}" >README.md
+
+git add . && git commit -m "$COMMIT_MESSAGE"
+git push --set-upstream origin master
+
+popd
 }
+
+
 app=$1
 if [ ! $app ]; then usage && exit $LINENO; fi
 
@@ -53,6 +58,9 @@ ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 # SYM LINK THE EXECUTABLES TO THE SANDBOX
 for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/assets.docker/${app}/ ;done
 ~/sandbox/assets.docker/${app}/dobuild
+
+cp -p ~/sandbox/generic ~/sandbox/${app}
+sed -i '' "s/generic/${app}/" ~/sandbox/${app}
 
 # GET THE PROJECT CODE
 git clone git@github.com:${CUSER}/${app} ~/Docker/assets.${app}-application/${app}
