@@ -42,19 +42,19 @@ ENV DOCKER_ENV=$app
 ENV DOCKER_ENV=$DOCKER_ENV
 
 
-RUN    echo '### DOCKER ###\n \
-if ! sudo service docker status; then sudo service docker start; fi && sleep 2 && sudo service docker status\n \
-cyan "Docker:"; docker --version\n \
-if sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n \
-then pass "Docker Hello World"\n \
-else fail "Docker Hello World"\n \
+RUN    echo '### DOCKER ###\n\
+if ! sudo service docker status; then sudo service docker start; fi && sleep 2 && sudo service docker status\n\
+cyan "Docker:"; docker --version\n\
+if sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n\
+then pass "Docker Hello World"\n\
+else fail "Docker Hello World"\n\
 fi'\
->> ${UDIRPATH}/.bashrc
+>>${UDIRPATH}/.bashrc
 
-RUN    echo '### DOCKER ###\n \
+RUN    echo '### DOCKER ###\n\
 cyan "Docker Compose:"; docker-compose --version'\
 \
->> ${UDIRPATH}/.bashrc
+>>${UDIRPATH}/.bashrc
 
 #RUN sudo apt-get -qq update \
 #   && sudo apt-get install build-essential dkms
