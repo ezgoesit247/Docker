@@ -1,8 +1,18 @@
 #!/bin/bash
 
+_GENERATE_=ON
 function usage {
   echo "Usage arg1:\"appname\" arg2:\"platform (centos8 | ubuntu18)\""
+  echo "Gernerate dockerfile is ${_GENERATE_}"
 }
+
+function copy_generic_dockerfile {
+  cp ./generic/Dockerfile.${DEVELOPMENT_PLATFORM}.sh ./${app}/
+}
+function generate_dockerfile {
+  echo "##  GENERATE DOCKER FILE"
+}
+
 function create_git {
 REPO=${1}
 
@@ -26,6 +36,8 @@ popd
 }
 
 
+### main
+
 app=$1
 if [ ! $app ]; then usage && exit $LINENO; fi
 
@@ -47,7 +59,7 @@ for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./pri
 # HARD LINK RUN FILES
 for f in dobuild rundb rundev; do ln -fn ./generic/$f ./${app}/; done
 
-#cp ./generic/Dockerfile.${DEVELOPMENT_PLATFORM}.sh ./${app}/
+if [[ ! ${_GENERATE_} == ON ]]; then copy_generic_dockerfile; else
 ##  GENERATE DOCKER FILE
 cat >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
 FROM local/${DEVELOPMENT_PLATFORM}-appdev as root
@@ -132,6 +144,7 @@ pushd /\${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 |
 >>\$CUSERHOME/.bashrc
 
 EOF
+fi
 
 mkdir -p ../assets.${app}-application && echo '*' >${_}/.gitignore
 
