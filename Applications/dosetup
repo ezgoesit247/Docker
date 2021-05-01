@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-  echo missing app name for arg1
+  echo "Usage arg1:\"appname\" arg2:\"platform (centos8 | ubuntu18)\""
 }
 function create_git {
 REPO=${1}
@@ -29,6 +29,9 @@ popd
 app=$1
 if [ ! $app ]; then usage && exit $LINENO; fi
 
+DEVELOPMENT_PLATFORM=$2
+if [ ! $DEVELOPMENT_PLATFORM ]; then usage && exit $LINENO; fi
+
 create_git ${app}
 CUSER=${GITUSER}
 #echo -e "using ${CUSER} for clone\nenter appname: " && read app
@@ -44,7 +47,60 @@ for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./pri
 # HARD LINK RUN FILES
 for f in dobuild rundb rundev; do ln -fn ./generic/$f ./${app}/; done
 
-cp ./generic/Dockerfile.centos8.sh ./${app}/
+#cp ./generic/Dockerfile.${DEVELOPMENT_PLATFORM}.sh ./${app}/
+##  GENERATE DOCKER FILE
+cat >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
+FROM local/${DEVELOPMENT_PLATFORM}-appdev
+ARG gituser
+ARG CUSERHOME=/home/\$gituser
+RUN useradd -ms /bin/bash -d \$CUSERHOME -U \$gituser
+
+USER \$gituser
+WORKDIR \$CUSERHOME
+ENV GIT_SSH=\$CUSERHOME/bin/git-ssh
+ARG ROOT_SAFE_PATH=\\\\/home\\\\/\$gituser
+ARG GIT_CONFIG=\$CUSERHOME/.gitconfig
+ARG KNOWN_HOSTS=\$CUSERHOME/.ssh/known_hosts
+ARG GIT_IGNORE_GLOBAL=\$CUSERHOME/.gitignore_global
+COPY assets.docker/git-ssh \$GIT_SSH
+COPY assets.docker/.gitconfig \$GIT_CONFIG
+COPY assets.docker/known_hosts \$KNOWN_HOSTS
+COPY assets.docker/.gitignore_global \$GIT_IGNORE_GLOBAL
+
+ARG SSH_PRIVATE_KEY_PATH=\$CUSERHOME/.ssh
+ARG SSH_PRIVATE_KEY
+ARG SSH_PRIVATE_KEY_STREAM
+ARG KEYSTREAM="echo \"\${SSH_PRIVATE_KEY_STREAM}\" > \$SSH_PRIVATE_KEY_PATH/\$SSH_PRIVATE_KEY"
+RUN sudo su - -c "\$KEYSTREAM"
+
+RUN sudo chown -R \$gituser:\$gituser \$CUSERHOME \
+&& sudo chmod 700 \$CUSERHOME/.ssh \
+&& sudo chmod 755 \$CUSERHOME/bin \
+&& sudo chmod 755 \$GIT_SSH \
+&& sudo chmod 600 \$KNOWN_HOSTS \
+&& sudo chmod 644 \$GIT_CONFIG \
+&& sudo chmod 644 \$GIT_IGNORE_GLOBAL \
+&& sudo sed -i 's/\/Users\/***REMOVED***/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
+&& sudo chmod 600 \$SSH_PRIVATE_KEY_PATH/\$SSH_PRIVATE_KEY
+
+RUN echo '\
+if ! sudo service docker status; then sudo service docker start; fi\n\
+sleep 2 && sudo service docker status\n\
+sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n\
+'\
+>>\$CUSERHOME/.bashrc
+
+RUN echo '\
+export PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "\n\
+export HISTTIMEFORMAT="%F	%T	"\n\
+alias ls="ls -Altr --color=auto"\n\
+if [ -d \${HOME}/public.assets/bash_history/ ]; then export HISTFILE="\${HOME}/public.assets/bash_history/history.\${DOCKER_ENV}"; fi && green "Shared bash history at: " && echo \${HISTFILE}\n\
+pushd /\${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
+'\
+>>\$CUSERHOME/.bashrc
+
+EOF
+
 mkdir -p ../assets.${app}-application && echo '*' >${_}/.gitignore
 
 # SYM LINK THE SANDBOX -APP DIR
@@ -57,10 +113,17 @@ sed -i '' "s/generic/${app}/" ${app}/setenv
 ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 # SYM LINK THE EXECUTABLES TO THE SANDBOX
 for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/assets.docker/${app}/ ;done
-~/sandbox/assets.docker/${app}/dobuild
 
+## NEW env  FILE
+echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
+echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
+echo "_USER_=\"-u \${CUSER}\"" >>~/sandbox/assets.docker/${app}/setenv
+## BIULD DEVE LOPMENT COMTAINER
+~/sandbox/assets.docker/${app}/dobuild
+#echo $LINENO && exit $LINENO
+## COPY & CHANGE RUN FILE
 cp -p ~/sandbox/generic ~/sandbox/${app}
 sed -i '' "s/generic/${app}/" ~/sandbox/${app}
 
-# GET THE PROJECT CODE
-git clone git@github.com:${CUSER}/${app} ~/Docker/assets.${app}-application/${app}
+## GET THE PROJECT CODE
+#git clone git@github.com:${CUSER}/${app} ~/Docker/assets.${app}-application/${app}

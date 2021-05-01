@@ -15,5 +15,9 @@ DIR=$(echo ${0} | sed "s/\/${scriptname}//")
 if [ ! ${ENV} ]; then ENV=dev; fi
 if [ ! ${OS} ]; then OS=centos8; fi
 if [ ! ${DB} ]; then DB=mysql/mysql-server:5.7; fi
+if [ $# -eq 1 ]; then DEBUG=$1; fi
 
-run --env=${ENV} --purpose=database --app=${APP} ${1} ${DB}
+#echo "${*}" && echo ${DB} && exit $LINENO
+echo run --env=${ENV} --purpose=database --container=${APP} --app=${APP} ${DBPORT} ${DETACHEDDB} ${NAMEDCONTAINER} ${DBINTERACTIVE} "${ENVVAR}" ${DB}
+
+DEBUG=${DEBUG} run --env=${ENV} --purpose=database --container=${APP} --app=${APP} ${DBPORT} ${DETACHEDDB} ${NAMEDCONTAINER} ${DBINTERACTIVE} "${ENVVAR}" ${DB}

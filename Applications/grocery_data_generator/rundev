@@ -20,4 +20,4 @@ if [ ! ${OS} ]; then OS=centos8; fi
 if [ ! ${DEBUG} ]; then DEBUG=0; fi
 if [ $# -eq 1 ]; then DEBUG=$1; fi
 
-DEBUG=${DEBUG} run --rm --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} ${PORT} local/${APP}:${OS}
+DEBUG=${DEBUG} run --rm --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} ${PORT} ${PRIV} ${_USER_} -I local/${APP}:${OS}

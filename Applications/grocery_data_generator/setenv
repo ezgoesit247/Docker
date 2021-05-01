@@ -1,5 +1,9 @@
 APP=grocery_data_generator
-DB=SQLServer
+DB=mcr.microsoft.com/mssql/server:2017-latest
 CUSER=${GITUSER}
 KEYNAME=${GITKEYNAME}
 KEYPATH=${GITKEYPATH}
+ENVVAR="-e='ACCEPT_EULA=Y' -e='SA_PASSWORD=P@ssw0rd!'"
+DBPORT="-p=1433:1433"
+DETACHEDDB="-d"
+NAMEDCONTAINER="-n=grocery_datagenerator"

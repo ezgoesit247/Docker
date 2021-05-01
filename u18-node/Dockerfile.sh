@@ -40,7 +40,7 @@ RUN chmod 700 /root/.ssh \
 && sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
-ARG UNAME=default_virtual
+ARG UNAME=poweruser
 ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$UNAME
 ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
@@ -66,7 +66,7 @@ FROM gitcode as go
 ARG GO_HOME=/usr/local/go
 ARG GO_INSTALL_PATH=/usr/local
 ENV GO_HOME=$GO_HOME
-COPY assets.docker/go1.15.6.linux-amd64.tar.gz go.tar.gz
+COPY assets.docker/go1.tar.gz go.tar.gz
 
 RUN tar -zxf go.tar.gz \
 && mv go $GO_INSTALL_PATH \
@@ -106,7 +106,7 @@ alias ls=\"ls -Altr --color=auto\" \n\
 if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE=\"${HOME}/public.assets/bash_history/history.${DOCKER_ENV}\"; fi && green \"Shared bash history at: \" && echo \${HISTFILE}\n\
 pushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 "\
->> /home/$UNAME/.bashrc
+>>/home/$UNAME/.bashrc
 
 
 
@@ -126,24 +126,24 @@ RUN echo '### NODE ###\n\
 pushd /home/poweruser/.nvm\n\
 git pull\n\
 popd\n\
-if  ! command -v nvm > /dev/null; then\n\
+if  ! command -v nvm >/dev/null; then\n\
 . /home/poweruser/.nvm/nvm.sh\n\
 export NVM_DIR="$HOME/.nvm"\n\
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm\n\
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion\n\
 fi\n\
-function nodever() { if [ ! -z $1 ]; then nvm install ${1} > /dev/null 2>&1 && nvm use ${_} > /dev/null 2>&1 && nvm alias default ${_} > /dev/null 2>&1; blue "Node:"; node -v; else echo -e " usage: nodedef ver\n\tinstall or switch node versions, currently:"; blue "Node:"; node -v; fi; }\n\
-if command -v nvm > /dev/null  && ! command -v node; then blue "nvm:";nvm install --lts; fi\n\
+function nodever() { if [ ! -z $1 ]; then nvm install ${1} >/dev/null 2>&1 && nvm use ${_} > /dev/null 2>&1 && nvm alias default ${_} > /dev/null 2>&1; blue "Node:"; node -v; else echo -e " usage: nodedef ver\n\tinstall or switch node versions, currently:"; blue "Node:"; node -v; fi; }\n\
+if command -v nvm >/dev/null  && ! command -v node; then blue "nvm:";nvm install --lts; fi\n\
 blue "Node:"; node -v \n\
 '\
->> ${UDIRPATH}/.bashrc
+>>${UDIRPATH}/.bashrc
 
 
 
 RUN echo '\n\
 if command -v go > /dev/null 2>&1; then blue "Google Go:" && go version; else yellow "No Google Go"; echo; fi;\n\
 '\
->> ${UDIRPATH}/.bashrc
+>>${UDIRPATH}/.bashrc
 
 from node as vimrc
 ARG VIMRC="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent\nset number\nset nocompatible\nsyntax on\nset cursorline\nhi CursorLine   cterm=NONE ctermbg=236 ctermfg=NONE\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"

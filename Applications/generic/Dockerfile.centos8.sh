@@ -2,11 +2,11 @@ FROM local/centos8-appdev as top
 
 ##  . setenv
 
-##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
-
 ##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
 
 ##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
+
+##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
 ENV GIT_SSH=/root/bin/git-ssh
 ARG ROOT_SAFE_PATH=\\/root
@@ -85,4 +85,4 @@ RUN sudo ln -fsn /$APP ${UDIRPATH}/$APP \
 alias ls=\"ls -Altr --color=auto\" \n\
 pushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 "\
->> /home/$UNAME/.bashrc
+>>/home/$UNAME/.bashrc

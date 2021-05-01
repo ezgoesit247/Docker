@@ -3,7 +3,7 @@
 if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ]; then debug=1; else debug=0; fi;
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
-function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}${EXT}${ENV}\\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${USER}:\t\t\t${USER}\n\t\${USERNAME}:\t\t\t${USERNAME}\n\t\${CONX_CLI}:\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
+function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${INTERACTIVE}:\t\t${INTERACTIVE}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}\n\t\${EXT}:\t\t\t${EXT}\n\t\${ENV}:\t\t\t${ENV}\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${PRIV}:\t\t${PRIV}\n\t\${USER}:\t\t${USER}\n\t\${NETWORK}:\t\t${NETWORK}\n\t\${ENVVAR}:\t\t${ENVVAR}\n\t\${USERNAME}:\t\t${USERNAME}\n\t\${CONX_CLI}:\t\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
 
 DEBUG "${LINENO} STARTING..." && VARS
 function println {
@@ -61,7 +61,7 @@ function driver {
                                           && DEBUG ${LINENO} calling c7-docker && VARS && c7-docker; else
     DEBUG ${LINENO}; echo "Looking for image-container: ${PWD##*/}"
     IMAGE="local/${PWD##*/}"
-    CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}"
+    CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR} ${ENVVAR}"
     RUN_COMMAND="${CMD} ${IMAGE} ${BINBASH}"
     DEBUG ${LINENO} Case \#1 calling do_it && green1 "Case #1" "${CMD} ${IMAGE} ${BINBASH}"
 #    local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
@@ -77,7 +77,7 @@ function driver {
 ### CASE 2
 ###
   else DEBUG ${LINENO} && VARS
-    CMD="docker run ${RM} ${NETWORK}  ${PRIV} ${DETACHED} -it ${PORT} ${USER} --name"
+    CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} ${INTERACTIVE} ${PORT} ${USER} --name"
     LCL_IMAGE_VAR="local/${PWD##*/}"
     DEBUG ${LINENO} Case \#2 calling do_it && green1 "Case #2" "${CMD} ${IMAGE} ${LCL_IMAGE_VAR}"
 #    local base="$(basename ${IMAGE}|awk -F: '{print $1}')"
@@ -97,7 +97,7 @@ function driver {
 ### CASE 4
 ###
       else
-        CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} -it ${PORT} ${NAME} ${USER} ${WORKDIR}";
+        CMD="docker run ${RM} ${NETWORK} ${PRIV} ${DETACHED} ${INTERACTIVE} ${PORT} ${NAME} ${USER} ${WORKDIR} ${ENVVAR}"
 #        RUN_CMD="${CMD} ${IMAGE} ${BINBASH}"
         DEBUG ${LINENO} Case \#4 calling do_it && green1 "Case #4" "${CMD} ${IMAGE} ${BINBASH}"
         if [ ! ${NOBIND} ];then print_bindings && CMD="${CMD} ${DEV_BNDGNS} ${BINDINGS}" ;fi
@@ -111,7 +111,7 @@ function driver {
 ### CASE 5
 ###
     else
-      CMD="docker run ${RM} ${NETWORK}  ${PRIV} -it ${PORT} ${USER} ${NAME}"
+      CMD="docker run ${RM} ${NETWORK} ${PRIV} ${INTERACTIVE} ${PORT} ${USER} ${NAME}"
       info "(${LINENO}) can't start, running container: ${CMD} ${IMAGE}"
       DEBUG ${LINENO} Case \#5 calling do_it && green1 "Case #5" "${CMD} ${IMAGE}"
       do_it "${CMD} ${DEV_BNDGNS} ${IMAGE}"
@@ -120,7 +120,6 @@ function driver {
 
 }
 ### END DRIVER
-
 
 ##### MYSQL SERVER ######
 function mysqld-mysqlserver {
@@ -298,23 +297,29 @@ USERNAME=default_virtual
 USERDIR=/home/${USERNAME}
 ROOT_BIND=" -v ${HOME}/Docker/_shared_assets:/root/_assets"
 
+if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $* is: ' && echo "${*}"; fi
+DEBUG ${LINENO} && VARS
+
 ### GET PARAMETERS ###
 ### INFINITY PREVENTION COUNTERS ###
 HITENV=0
 HITUSER=0
 for i in "$@"
 do
+  DEBUG ${LINENO} && VARS
+  if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $* is: ' && echo "${*}"; fi
+  if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $1 is: ' && echo "${1}"; fi
 case $i in
 -n)
   NAMEDCONTAINER="${PWD##*/}"
   NAME="--name ${NAMEDCONTAINER}"
-  DEBUG "${LINENO} SET \$NAME:${NAME}"
+  DEBUG "${LINENO} SET \$NAMEDCONTAINER:${NAMEDCONTAINER}" && VARS
   shift
   ;;
 -n=*|--container=*|--name=*)
   NAMEDCONTAINER="${i#*=}"
   NAME="--name ${NAMEDCONTAINER}"
-  DEBUG "${LINENO} SET \$NAME:${NAME}"
+  DEBUG "${LINENO} SET \$NAMEDCONTAINER:${NAMEDCONTAINER}" && VARS
   shift
   ;;
 --env=*)
@@ -326,6 +331,7 @@ case $i in
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.aws:${USERDIR}/.aws"
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
   fi
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --ext=*|--appext=*|--purpose=*)
@@ -333,12 +339,17 @@ case $i in
   shift
   ;;
 --app=*|--appvol=*)
-  APP_ARG="${i#*=}"
   APPVOLUME_ARG="${i#*=}"
   APPVOLUME="${i#*=}"
   NETWORKNAME="${APPVOLUME}_network${ENV}"
   NETWORK="--network ${NETWORKNAME}"
   docker network create ${NETWORKNAME} >/dev/null 2>&1
+  DEBUG ${LINENO} && VARS
+  shift
+  ;;
+--localapp)
+  LOCAL_APP="${i#*=}"
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --network=*|--net=*)
@@ -346,6 +357,7 @@ case $i in
   NETWORKNAME="${i#*=}_network"
   NETWORK="--network ${NETWORKNAME}"
   docker network create ${NETWORKNAME} >/dev/null 2>&1
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 -u)
@@ -353,6 +365,7 @@ case $i in
   USER_ARG="${1}"
   USER="--user ${1}"
   USERNAME=${1}
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --user=*)
@@ -360,41 +373,50 @@ case $i in
   USER="--user ${i#*=}"
   USERNAME=${i#*=}
   if [[ ${USERNAME} == root ]]; then USERDIR=/${USERNAME} ; else USERDIR="/home/${USERNAME}"; fi
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 -w)
   shift
   WORKDIR="--workdir ${1}"
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --workdir=*)
   WORKDIR="--workdir ${i#*=}"
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --new)
   DASH_N=true
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --priv)
   PRIV="--privileged"
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 -d)
   MYSQLD_DETACHED=true
   DETACHED="-d"
+  DEBUG ${LINENO} && VARS
   shift
     ;;
 -connect)
   CONX_MYSQL=1
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 -cli)
   CONX_CLI=1
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 -p=*|--port=*)
   if [[ ${PORT} == "-P" ]]; then PORT=; fi
   PORT="${PORT} -p ${i#*=}"
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 -v=*)
@@ -406,20 +428,49 @@ case $i in
   DOCKER_VOLUME="${i#*=}"
   DEBUG ${LINENO} checkvol ${DOCKER_VOLUME}
   docker_volume_check ${DOCKER_VOLUME}
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --nobind|-int)
   ### THIS STOP ANY BINDINGS OR VOL MAPPING, NO SHARED BASH HISTORY
   NOBIND=NOBIND
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --rm)
   RM="--rm"
+  DEBUG ${LINENO} && VARS
   shift
+  ;;
+-I)
+  INTERACTIVE="-it"
+  DEBUG ${LINENO} && VARS
+  shift
+  ;;
+-e=*)
+if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $1 is: ' && echo "${1}"; fi
+ENVVARp1=`awk '{print $1}' <<<$(echo $1)`
+ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+ENVVARp1=`awk '{print $2}' <<<$(echo $1)`
+ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+ENVVARp1=`awk '{print $3}' <<<$(echo $1)`
+ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+ENVVARp1=`awk '{print $4}' <<<$(echo $1)`
+ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $2 is: ' && echo "${1}"; fi
+DEBUG ${LINENO} && VARS
+shift
   ;;
 esac
 done
 
+### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
+SECRET='P@ssw0rd!'
+MYSQLVOL=mysql-RUN-server-RUN-volume
+IMAGE=${1}
+
+if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $* is: ' && echo "${*}"; fi
+VARS
 
 if [ $ENV_ARG ] && [ $USER_ARG ]; then
   if [[ ${USER_ARG} == root ]]; then USERDIR=/${USER_ARG} ; else USERDIR="/home/${USER_ARG}"; fi
@@ -430,38 +481,50 @@ if [ $ENV_ARG ] && [ $USER_ARG ]; then
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
   fi
 fi
-if [ ${APP_ARG} ]; then
-#  base="$(basename ${IMAGE}|awk -F: '{print $1}')"
-#  BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}"
-  BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${APP_ARG}-application,target=${USERDIR}/assets.${APP_ARG} ${BINDINGS}"
+if [ ${LOCAL_APP} ]; then
+  BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${LOCAL_APP}-application,target=${USERDIR}/assets.${LOCAL_APP} ${BINDINGS}"
 fi
 
+if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is: ' && echo -n "${#}" && echo -n ': $* is: ' && echo "${*}"; fi
+VARS
 
 #ENV=_noenv
 BINDINGS="${BINDINGS} -v ${HOME}/Docker/assets.docker.public:${USERDIR}/public.assets"
-
-### HANDLE SPECIAL CASES FOR SPECIFIC IMAGES ###
-SECRET='P@ssw0rd!'
-MYSQLVOL=mysql-RUN-server-RUN-volume
-IMAGE=${1}
 
 DEBUG ${LINENO} top of special cases && VARS
 set_hostname
 DEBUG ${LINENO} returned from set_hostname && VARS
 case $1 in
+
+mongo|mongo:4)
+  DEBUG "${LINENO} calling function: mongo"
+  IMAGE="mongo:4"
+  #echo "${ENVVAR} "&& exit 8
+  VARS
+  CMD="docker run -d ${NETWORK} ${ENVVAR} ${IMAGE}"
+  do_it "${CMD}"
+  ;;
+
+mssql2017)
+
+  ;;
+
 local/mysqld-mysqlserver5.7|mysql-server:5.7|mysql/mysql-server:5.7)
   DEBUG "${LINENO} calling function: mysqld-mysqlserver"
   IMAGE="mysql/mysql-server:5.7"
   mysqld-mysqlserver
   ;;
+
 local/mysql-server)
   DEBUG "${LINENO} calling function: mysql-server"
   mysql-server
   ;;
+
 local/mysqld)
   DEBUG "${LINENO} calling function: mysqld"
   mysqld
   ;;
+
 local/u18-docker)
   DEBUG "${LINENO} calling function: driver"
   print_bindings
@@ -469,33 +532,40 @@ local/u18-docker)
   PRIV="--privileged"
   driver ${@}
   ;;
+
 c7-docker|local/c7-docker)
   if [[ ${NAME} = "--hostname c7-docker --rm" ]]; then RM="--rm"; fi
   DEBUG "${LINENO} calling function: c7-docker" && VARS
   c7-docker
   ;;
+
 c7-systemd|local/c7-systemd)
   DEBUG "${LINENO} calling function: c7-systemd"
   c7-systemd
   ;;
+
 local/u18-systemd)
   DEBUG "${LINENO} calling function: u18-systemd"
   u18-systemd
   ;;
+
 local/u18-crio)
   DEBUG "${LINENO} calling function: u18-crio"
   u18-crio
   ;;
+
 c7|local/c7)
   DEBUG "${LINENO} calling function: c7"
   c7
   ;;
+
 centos-dev|centos8-developer:systemd|local/centos8-developer:systemd)
   DEBUG "${LINENO} $1"
   if ! docker exec -it $(docker run --hostname centos8 -d --rm --privileged --name centos8-developer -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash 2>/dev/null
   then run centos8-developer 2>/dev/null; fi
   exit 0
   ;;
+
 local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-scala-template)
   DEBUG ${LINENO} spark-scala-submit
   IMAGE="local/spark-scala-submit sbt console"
@@ -503,21 +573,26 @@ local/spark-scala-submit|spark-scala-submit|local/spark-scala-template|spark-sca
   DEBUG ${LINENO} calling do_it
   do_it ${CMD} ${DEV_BNDGNS} ${IMAGE}
   ;;
+
 seedling)
   DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-seedling ${@}" && VARS
   ${0} local/u18-seedling ${@}
   ;;
+
 seed)
   DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-seed ${@}" && VARS
   ${0} local/u18-seed ${@}
   ;;
+
 developer)
   DEBUG "${LINENO} SPECIAL CASE, recalling as: local/u18-developer ${@}" && VARS
   ${0} local/u18-developer ${@}
   ;;
+
+
 *)
   DEBUG "*** ${LINENO} NOTHING IS SPECIAL ANYMORE ***"
-  if [[ ${PWD##*/} -eq docker ]]; then PRIV="--privileged"; fi
+  if [[ ${PWD##*/} == docker ]]; then PRIV="--privileged"; fi
   DEBUG "Calling driver with ${@}" && VARS
   driver ${@}
   ;;

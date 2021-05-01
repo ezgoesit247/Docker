@@ -1,5 +1,4 @@
 FROM local/u18-seed as top
-
 RUN apt-get -qq update
 ### DOCKER ###
 RUN apt-get install -qq \
@@ -22,43 +21,40 @@ RUN curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-c
 
 
 
-ARG app=node
-ARG localuser=poweruser
-ARG U=$localuser
-ARG UDIR=/home
-ARG UDIRPATH=$UDIR/$U
+#ARG app=node
+#ARG localuser
+#ARG U=$localuser
+#ARG UDIR=/home
+#ARG UDIRPATH=$UDIR/$U
 
-RUN apt-get -qq install sudo \
-&& useradd -ms /bin/bash -d $UDIRPATH -U $U \
-&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+#RUN apt-get -qq install sudo \
+#&& useradd -ms /bin/bash -d $UDIRPATH -U $U \
+#&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-VOLUME /$app
+#VOLUME /$app
 
-FROM top
+#FROM top
 
-USER $U
-WORKDIR $UDIRPATH
-ENV DOCKER_ENV=$app
-ENV DOCKER_ENV=$DOCKER_ENV
+#USER $U
+#WORKDIR $UDIRPATH
+#ENV DOCKER_ENV=$app
+#ENV DOCKER_ENV=$DOCKER_ENV
 
 
-RUN    echo '### DOCKER ###\n\
-if ! sudo service docker status; then sudo service docker start; fi && sleep 2 && sudo service docker status\n\
-cyan "Docker:"; docker --version\n\
-if sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n\
-then pass "Docker Hello World"\n\
-else fail "Docker Hello World"\n\
-fi'\
->>${UDIRPATH}/.bashrc
-
-RUN    echo '### DOCKER ###\n\
-cyan "Docker Compose:"; docker-compose --version'\
-\
->>${UDIRPATH}/.bashrc
+#RUN echo '### DOCKER ###\n\
+#if ! service docker status; then service docker start; fi && sleep 2 && service docker status\n\
+#cyan "Docker:"; docker --version\n\
+#if docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n\
+#then pass "Docker Hello World"\n\
+#else fail "Docker Hello World"\n\
+#fi\n\
+#cyan "Docker Compose:"; docker-compose --version\n\
+#'\
+#>>/etc/bash.bashrc
 
 #RUN sudo apt-get -qq update \
 #   && sudo apt-get install build-essential dkms
 
 #https://www.vagrantup.com/docs/providers/virtualbox/boxes
 #apt-get install linux-headers-$(uname -r) build-essential dkms
-RUN sudo apt-get -qq clean
+RUN apt-get -qq clean
