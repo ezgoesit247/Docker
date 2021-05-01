@@ -36,6 +36,9 @@ function get_size {
 function do_network {
   docker network ls
 }
+function help {
+  echo -e "\t-i VOL: inspect \n\t-n: network \n\t-s VOL: size \n\t-r|--rm VOL: remove \n\t-c VOL: create"
+}
 
 for i in "$@"
 do
@@ -70,9 +73,10 @@ case $i in
   shift
   if [ ! ${VOL} ]; then usage need volume arg; fi
   ;;
+--help)
+  help && exit $LINENO
 esac
 done
-
 
 if [ ${INSPECT} ]; then run_inspect_container; fi
 if [ ${SIZE} ]; then get_size; fi
