@@ -45,7 +45,7 @@ RUN sudo su - -c "$KEYSTREAM"
 RUN sudo chown -R $gituser:$gituser $CUSERHOME && sudo chmod 700 $CUSERHOME/.ssh && sudo chmod 755 $CUSERHOME/bin && sudo chmod 755 $GIT_SSH && sudo chmod 600 $KNOWN_HOSTS && sudo chmod 644 $GIT_CONFIG && sudo chmod 644 $GIT_IGNORE_GLOBAL && sudo sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG && sudo chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
 
-RUN echo 'if ! sudo service docker status; then sudo service docker start; fi\n#sleep 2\nsudo service docker status\n#sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n'>>$CUSERHOME/.bashrc
+RUN echo 'if ! sudo service docker status; then sudo service docker start; fi\nsudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n'>>$CUSERHOME/.bashrc
 
 ARG DOCKER_ENV=spring-petclinic
 ENV DOCKER_ENV=$DOCKER_ENV
