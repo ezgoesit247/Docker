@@ -2,7 +2,7 @@
 
 _GENERATE_=ON
 function usage {
-  echo "Usage arg1:\"appname\" arg2:\"platform (centos8 | ubuntu18)\""
+  echo "Usage $(basename $0) [app] [platform (eg centos8 | ubuntu18)]"
   echo "Gernerate dockerfile is ${_GENERATE_}"
 }
 
@@ -10,58 +10,16 @@ function copy_generic_dockerfile {
   cp ./generic/Dockerfile.${DEVELOPMENT_PLATFORM}.sh ./${app}/
 }
 function generate_dockerfile {
-  echo "##  GENERATE DOCKER FILE"
-}
+  local app=$1
+  local DEVELOPMENT_PLATFORM=$2
 
-function create_git {
-REPO=${1}
+  echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
+#  echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
+  echo "_USER_=\"-u \${CUSER}\"" >>~/sandbox/assets.docker/${app}/setenv
 
-mkdir -p "/tmp/gitwork/${REPO}" && pushd "${_}"
-
-COMMIT_MESSAGE="initial commit"
-JSON={\"name\":\"${REPO}\"} && \
-curl -s --url https://api.github.com/user/repos -d ${JSON} \
--K- <<< "--user ${GITLOGIN}:${GITTOKEN}"|grep ssh_url|sed 's/.\{1\}$//' || \
-echo create remote repr failed || exit ${LINENO}
-
-git init
-git remote add origin git@github.com:***REMOVED***/${REPO}.git
-
-echo "${REPO}" >README.md
-
-git add . && git commit -m "$COMMIT_MESSAGE"
-git push --set-upstream origin master
-
-popd
-}
-
-
-### main
-
-app=$1
-if [ ! $app ]; then usage && exit $LINENO; fi
-
-DEVELOPMENT_PLATFORM=$2
-if [ ! $DEVELOPMENT_PLATFORM ]; then usage && exit $LINENO; fi
-
-create_git ${app}
-CUSER=${GITUSER}
-#echo -e "using ${CUSER} for clone\nenter appname: " && read app
-echo "using ${CUSER} for clone"
-read -p "appname ${app}? (Y/n) " yn
-yn=${yn:-Y}
-if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage && exit ${LINENO}; fi
-
-mkdir -p ./${app}/assets.docker
-
-# HARD LINK PRIVATE ASSETS
-for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./private.assets/$f ./${app}/assets.docker/; done
-# HARD LINK RUN FILES
-for f in dobuild rundb rundev; do ln -fn ./generic/$f ./${app}/; done
-
-if [[ ! ${_GENERATE_} == ON ]]; then copy_generic_dockerfile; else
-##  GENERATE DOCKER FILE
-cat >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
+  ##  GENERATE DOCKER FILE
+  cat >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
+### BUILT WITH dosetup
 FROM local/${DEVELOPMENT_PLATFORM}-appdev as root
 ARG gituser
 ARG CUSERHOME=/home/\$gituser
@@ -144,12 +102,51 @@ pushd /\${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 |
 >>\$CUSERHOME/.bashrc
 
 EOF
-fi
+}
 
-mkdir -p ../assets.${app}-application && echo '*' >${_}/.gitignore
+function create_git {
+REPO=${1}
 
-# SYM LINK THE SANDBOX -APP DIR
-ln -fsn ~/Docker/assets.${app}-application ~/sandbox/assets.docker/${app}
+mkdir -p "/tmp/gitwork/${REPO}" && pushd "${_}"
+
+COMMIT_MESSAGE="initial commit"
+JSON={\"name\":\"${REPO}\"} && \
+curl -s --url https://api.github.com/user/repos -d ${JSON} \
+-K- <<< "--user ${GITLOGIN}:${GITTOKEN}"|grep ssh_url|sed 's/.\{1\}$//' || \
+echo create remote repr failed || exit ${LINENO}
+
+git init
+git remote add origin git@github.com:***REMOVED***/${REPO}.git
+
+echo "${REPO}" >README.md
+
+git add . && git commit -m "$COMMIT_MESSAGE"
+git push --set-upstream origin master
+
+popd
+}
+
+
+### main
+
+app=$1 && DEVELOPMENT_PLATFORM=$2
+if [ ! $app ]; then usage no app && exit $LINENO; fi
+if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform && exit $LINENO; fi
+
+create_git ${app}
+CUSER=${GITUSER}
+#echo -e "using ${CUSER} for clone\nenter appname: " && read app
+echo "using ${CUSER} for clone"
+read -p "appname ${app}? (Y/n) " yn
+yn=${yn:-Y}
+if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage && exit ${LINENO}; fi
+
+mkdir -p ./${app}/assets.docker
+
+# HARD LINK PRIVATE ASSETS
+for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./private.assets/$f ./${app}/assets.docker/; done
+# HARD LINK RUN FILES
+for f in dobuild rundb rundev; do ln -fn ./generic/$f ./${app}/; done
 
 # COPY AND CHANGE ENV FILE
 echo "Building dev container"
@@ -159,10 +156,16 @@ ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 # SYM LINK THE EXECUTABLES TO THE SANDBOX
 for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/assets.docker/${app}/ ;done
 
-## NEW env  FILE
-echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
-echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
-echo "_USER_=\"-u \${CUSER}\"" >>~/sandbox/assets.docker/${app}/setenv
+if [[ ! ${_GENERATE_} == ON ]];
+  then copy_generic_dockerfile;
+  else generate_dockerfile ${app} ${DEVELOPMENT_PLATFORM};
+fi
+
+mkdir -p ../assets.${app}-application && echo '*' >${_}/.gitignore
+
+# SYM LINK THE SANDBOX -APP DIR
+ln -fsn ~/Docker/assets.${app}-application ~/sandbox/assets.docker/${app}
+
 ## BIULD DEVE LOPMENT COMTAINER
 ~/sandbox/assets.docker/${app}/dobuild
 #echo $LINENO && exit $LINENO
