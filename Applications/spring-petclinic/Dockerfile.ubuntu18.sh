@@ -1,3 +1,4 @@
+### BUILT WITH dosetup
 FROM local/ubuntu18-appdev as root
 ARG gituser
 ARG CUSERHOME=/home/$gituser
