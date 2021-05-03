@@ -84,9 +84,7 @@ RUN sudo chown -R \$gituser:\$gituser \$CUSERHOME \
 
 RUN echo '\
 if ! sudo service docker status; then sudo service docker start; fi\n\
-#sleep 2\n\
-sudo service docker status\n\
-#sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n\
+sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n\
 '\
 >>\$CUSERHOME/.bashrc
 
@@ -96,7 +94,8 @@ RUN echo '\
 export PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ "\n\
 export HISTTIMEFORMAT="%F	%T	"\n\
 alias ls="ls -Altr --color=auto"\n\
-if [ -d \${HOME}/public.assets/bash_history/ ]; then export HISTFILE="\${HOME}/public.assets/bash_history/history.\${DOCKER_ENV}"; fi && green "Shared bash history at: " && echo \${HISTFILE}\n\
+if [ -d \${HOME}/public.assets/bash_history/ ]; then export HISTFILE="\${HOME}/public.assets/bash_history/history.\${DOCKER_ENV}"; fi\
+ && green "Shared bash history at: " && echo \${HISTFILE}\n\
 pushd /\${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 '\
 >>\$CUSERHOME/.bashrc
