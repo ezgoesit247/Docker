@@ -450,13 +450,13 @@ case $i in
 -e=*)
 if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $1 is: ' && echo "${1}"; fi
 ENVVARp1=`awk '{print $1}' <<<$(echo $1)`
-ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+if [ ${ENVVARp1} ]; then ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"; fi
 ENVVARp1=`awk '{print $2}' <<<$(echo $1)`
-ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+if [ ${ENVVARp1} ]; then ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"; fi
 ENVVARp1=`awk '{print $3}' <<<$(echo $1)`
-ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+if [ ${ENVVARp1} ]; then ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"; fi
 ENVVARp1=`awk '{print $4}' <<<$(echo $1)`
-ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"
+if [ ${ENVVARp1} ]; then ENVVAR="${ENVVAR} -e ${ENVVARp1#*=}"; fi
 if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $2 is: ' && echo "${1}"; fi
 DEBUG ${LINENO} && VARS
 shift
