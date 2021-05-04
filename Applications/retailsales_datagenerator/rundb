@@ -17,7 +17,9 @@ if [ ! ${OS} ]; then OS=centos8; fi
 if [ ! ${DB} ]; then DB=mysql/mysql-server:5.7; fi
 if [ $# -eq 1 ]; then DEBUG=$1; fi
 
-#echo "${*}" && echo ${DB} && exit $LINENO
-echo run --env=${ENV} --purpose=database --container=${APP} --app=${APP} ${DBPORT} ${DETACHEDDB} ${NAMEDCONTAINER} ${DBINTERACTIVE} "${ENVVAR}" ${DB}
 
-DEBUG=${DEBUG} run --env=${ENV} --purpose=database --container=${APP} --app=${APP} ${DBPORT} ${DETACHEDDB} ${NAMEDCONTAINER} ${DBINTERACTIVE} "${ENVVAR}" ${DB}
+
+CMD="DEBUG=${DEBUG} run --env=${ENV} --purpose=database --container=${APP} --app=${APP} ${DBPORT} ${DETACHDB} ${NAMEDCONTAINER} ${DBINTERACTIVE} \"${ENVVAR}\" ${DB}"
+
+#echo ${CMD} && exit 1
+eval ${CMD}
