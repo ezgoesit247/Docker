@@ -8,6 +8,7 @@ PORT="-p=8080:8080"
 DBPORT="-p=3306:3306"
 DB=mysql:5.7.8
 ENVVAR="-e=MYSQL_USER=petclinic -e=MYSQL_PASSWORD=petclinic -e=MYSQL_ROOT_PASSWORD=root -e=MYSQL_DATABASE=petclinic"
-DETACHEDDB="-d"
+DETACHDB="-d"
 PRIV=--priv
 REMOVE=false
+RUNSTATE="-d"
