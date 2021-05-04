@@ -4,7 +4,7 @@
 # QUICK CALL SCRIPT TO START A WORKSTATION
 # CALL THIS SCRIPT FROM ~/sandbox/
 #   ./assets.docker/<APPLICATION>/this_script
-# DEFAULTS: CENTOS, DEV
+# DEFAULTS: CENTOS8, DEV, RM
 # CHANGE OS or ENV VARIABLE AS SUCH:
 #   OS=os ENV=env ./assets.docker/<APPLICATION>/this_script
 #
@@ -16,12 +16,13 @@ DIR=$(echo ${0} | sed "s/\/${scriptname}//")
 . ${DIR}/setenv
 if [ ! ${ENV} ]; then ENV=dev; fi
 if [ ! ${OS} ]; then OS=centos8; fi
+if [ ! ${RUNSTATE} ]; then RUNSTATE=-I; fi
 if [ ! ${DEBUG} ]; then DEBUG=0; fi
 if [ $# -eq 1 ]; then DEBUG=$1; fi
 if ${REMOVE}; then RM=--rm; fi
 
-CMD="DEBUG=${DEBUG} run --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} ${RM} -v=${APP}:/${APP} ${PORT} ${PRIV} ${_USER_} -I local/${APP}:${OS}
-"
+
+CMD="DEBUG=${DEBUG} run --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} ${RM} -v=${APP}:/${APP} ${PORT} ${PRIV} ${_USER_} ${RUNSTATE} local/${APP}:${OS}"
+
 #echo ${CMD} && exit 1
 eval ${CMD}
-#DEBUG=${DEBUG} run --env=${ENV} --purpose=sandbox --container=${APP} --app=${APP} ${RM} -v=${APP}:/${APP} ${PORT} ${PRIV} ${_USER_} -I local/${APP}:${OS}
