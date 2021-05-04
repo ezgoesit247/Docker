@@ -4,8 +4,18 @@ RUN apt-get -qq update \
 && apt-get install -qq \
 git
 
+FROM top as jdk8
+ARG JDK8_TAR=jdk-1.8.tar.gz
+ARG JAVA8=/usr/local/jdk1.8
+ENV JAVA_HOME=$JAVA8
+ENV PATH="$PATH:$JAVA_HOME/bin"
+COPY assets.docker/$JDK8_TAR $JDK8_TAR
+RUN tar zxf $JDK8_TAR -C /tmp \
+&& mv /tmp/jdk* ${JAVA8} \
+&& rm -rf $JDK8_TAR
 
-FROM top as jdk11
+
+FROM jdk8 as jdk11
 ARG JDK11_TAR=jdk-11.tar.gz
 ARG JAVA11=/usr/local/jdk11
 ENV JAVA_HOME=$JAVA11
@@ -40,6 +50,7 @@ COPY assets.docker/$M2_TAR $M2_TAR
 RUN tar zxf $M2_TAR -C /tmp \
 && mv /tmp/apache-maven-3* ${M2_HOME} \
 && rm -rf $M2_TAR
+
 
 FROM maven as userstuff
 RUN echo "export GOPATH=\$(go env GOPATH)\n\
