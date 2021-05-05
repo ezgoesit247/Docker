@@ -23,7 +23,7 @@ function build_all {
 function do_build {
 #   if [[ -n ${TAG} ]]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
 #   CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ${STREAM_ARG} ."
-   local TAGS="${1}"
+   local TAGS="${*}"
    CMD="docker build ${NOCACHE} ${ARGS} --rm ${TAGS} ${STREAM_ARG} ."
    msg "do_build:${LINENO}" "trying: ${CMD}"
 #   while ! ${CMD}; do
@@ -158,5 +158,7 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   popd > /dev/null
 else
   if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then doc; fi
-  echo ${PWD##*/} && build "-t ${REMOTE}${PWD##*/}"
+  if [ $MYTAG ];then TGS="-t ${REMOTE}${PWD##*/}:${MYTAG}"; fi
+  if [ $TAG ];then TGS="${TGS} -t ${REMOTE}${PWD##*/}:${TAG}"; fi
+  echo "${PWD##*/} ${TGS}" && build "-t ${REMOTE}${PWD##*/} ${TGS}"
 fi
