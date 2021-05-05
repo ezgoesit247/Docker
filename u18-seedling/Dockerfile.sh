@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 as tmp1
+FROM ubuntu:20.04 as tmp1
 CMD ["/bin/bash"]
 
 RUN apt-get -qq update \
