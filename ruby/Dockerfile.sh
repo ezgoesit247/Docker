@@ -4,7 +4,7 @@ FROM local/seed:ubuntu-18.04 as top
 
 ##  run --rm -I
 ##  run --rm -I --env=dev --user=root -w /root -v=${PWD}/ruby:/root/ruby.assets local/u18-ruby
-##  CUSER=${GITUSER} CPATH=/home/${CUSER} run -u $CUSER --env=dev --rm -I -v=${PWD}/ruby:$CPATH/ruby.assets -p=3000:3000 local/u18-ruby
+##  CUSER=${GITUSER} CPATH=/home/${CUSER} run -u $CUSER --env=dev --rm -I -v=${PWD}/ruby:$CPATH/ruby.assets -p=3000:3000 local/ruby
 
 
 FROM top as git
