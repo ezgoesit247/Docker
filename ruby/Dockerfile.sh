@@ -145,19 +145,27 @@ RUN echo '### YARN (NEEDS NVM) ###\n\
 
 RUN echo '### RUBY RAILS ###\n\
 RUBY_VER=ruby-2.5.8 && RAILS_VER=5.2.0\n\
-if [[ ! ${RUBY_VER} == $(rvm current) ]]; then\n\
-  grey "Getting ruby: " && echo -n "${RUBY_VER} " && grey "rails: " && echo ${RAILS_VER}\n\
-  rvm install ${RUBY_VER} && rvm --default use ${RUBY_VER} && gem install rails -v ${RAILS_VER}\n\
-fi\n\
+function rubyver {\n\
+  local RUBY_VER=$1 && local RAILS_VER=\n\
+  if [ $2 ]; then RAILS_VER="-v $2";fi\n\
+  if [ ! -z $1 ]; then\n\
+    if [[ ! ${RUBY_VER} == $(rvm current) ]]; then\n\
+      grey "Getting ruby: " && echo -n "${RUBY_VER} " && grey "rails: " && echo ${RAILS_VER}\n\
+      rvm install ${RUBY_VER} && rvm --default use ${RUBY_VER} && gem install rails ${RAILS_VER}\n\
+    fi\n\
+  fi\n\
+  blue "Ruby:"; echo $(rvm current)\n\
+  blue "Gem:"; gem -v\n\
+  blue "Rails:"; rails -v\n\
+}\n\
 \
+rubyver\n\
 grey "Ruby versions with:" && echo rvm list known\n\
 grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
 grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
 blue "YARN:"; yarn -v\n\
 blue "SQLite3:"; sqlite3 --version\n\
-blue "Ruby:"; ruby -v\n\
-blue "Gem:"; gem -v\n\
-blue "Rails:"; rails -v\n\
+\n\
 '\
 >>$USERHOME/.bashrc
 
