@@ -1,4 +1,4 @@
-FROM local/seedling:ubuntu-20.04
+FROM local/seedling:ubuntu-20.04 as top
 
 ### GEN EDS- yarrgh ###
 RUN apt-get -qq update \
@@ -8,11 +8,7 @@ RUN apt-get -qq update \
    software-properties-common \
    apt-transport-https \
    ca-certificates \
-   gnupg-agent \
-   python \
-   python3-pip
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
-   && ln -s /usr/bin/pip3 /usr/bin/pip
+   gnupg-agent
 
 RUN echo '\n\
 ### FUNCTIONS ###\n\
@@ -36,3 +32,9 @@ blue "pip: "; pip --version\
 >> /etc/bash.bashrc
 
 RUN apt-get -qq clean
+
+FROM top as bottom
+RUN apt-get -qq install -y \
+python \
+python3-pip \
+&& apt-get -qq clean
