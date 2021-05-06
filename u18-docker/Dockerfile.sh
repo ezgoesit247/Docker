@@ -1,4 +1,4 @@
-FROM local/u18-seed as top
+FROM local/seed:ubuntu-18.04 as top
 RUN apt-get -qq update
 ### DOCKER ###
 RUN apt-get install -qq \
