@@ -4,6 +4,7 @@ FROM local/seed:ubuntu-18.04 as top
 
 ##  run --rm -I
 ##  run --rm -I --env=dev --user=root -w /root -v=${PWD}/ruby:/root/ruby.assets local/u18-ruby
+##  run -u ${GITUSER} --env=dev -I -v=${sandbox}/ruby:/home/${GITUSER}/ruby.assets --rm local/ruby
 ##  CUSER=${GITUSER} CPATH=/home/${CUSER} run -u $CUSER --env=dev --rm -I -v=${PWD}/ruby:${CPATH}/ruby.assets -p=3000:3000 local/ruby
 
 
@@ -78,9 +79,12 @@ FROM nodeinstall0 as rvminstall
 RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 \
 7D2BAF1CF37B13E2069D6956105BD0E739499BDB \
 && curl -sSL https://get.rvm.io | sudo bash -s stable --ruby \
-&& echo 'source /usr/local/rvm/scripts/rvm \
+&& echo 'source /usr/local/rvm/scripts/rvm\n\
 '\
->>$USERHOME/.bashrc
+>>$USERHOME/.bashrc \
+&& echo 'rvm_silence_path_mismatch_check_flag=1\n\
+'\
+>>$USERHOME/.rvmrc
 
 FROM rvminstall as rvmconfig
 RUN /usr/local/rvm/bin/rvm get stable --autolibs=enable \
@@ -117,10 +121,7 @@ sqlite3 \
 FROM sqlite as bashrc
 
 RUN echo '### NODE ###\n\
-pushd ~/.nvm\n\
-git pull\n\
-popd\n\
-#echo $PATH\n\
+grey "Updating nvm: " && echo $(cd .nvm && git pull)\n\
 if  ! command -v nvm >/dev/null; then\n\
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm\n\
 [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion\n\
@@ -137,31 +138,25 @@ nodever\n\
 >>$USERHOME/.bashrc
 
 RUN echo '### YARN (NEEDS NVM) ###\n\
-  #npm install --global yarn\n\
+  if ! command -v yarn >/dev/null 2>&1; then grey "Getting yarn: " && npm install --global yarn >/dev/null; fi\n\
 '\
 >>$USERHOME/.bashrc
 
 
-RUN echo '### RVM ###\n\
-#RUBY_VER=2.7 && rvm install ruby-$RUBY_VER && rvm --default use ruby-$RUBY_VER && em install rails\n\
-#RAILS_VER=5.2 && gem install rails -v $RAILS_VER\n\
-#rvm get stable --auto-dotfiles\n\
-#rvm use ruby-3.0.0\n\
-\
-X=2 && Y=5 && rvm install ruby-$X.$Y && rvm --default use ruby-$X.$Y && unset X Y Z\n\
-X=5 && Y=2 && Z=0 && gem install rails -v \$X.\$Y.\$Z && unset X Y Z\n\
+RUN echo '### RUBY RAILS ###\n\
+RUBY_VER=ruby-2.5.8 && RAILS_VER=5.2.0\n\
+if [[ ! ${RUBY_VER} == $(rvm current) ]]; then\n\
+  grey "Getting ruby: " && echo -n "${RUBY_VER} " && grey "rails: " && echo ${RAILS_VER}\n\
+  rvm install ${RUBY_VER} && rvm --default use ${RUBY_VER} && gem install rails -v ${RAILS_VER}\n\
+fi\n\
 \
 grey "Ruby versions with:" && echo rvm list known\n\
-grey "install ruby with:" && echo rvm install ruby-\$X.\$Y \&\& rvm --default use ruby-\$X.\$Y\n\
-grey "install rails with:" && echo gem install rails -v \$X.\$Y.\$Z\n\
+grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
+grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
 blue "YARN:"; yarn -v\n\
 blue "SQLite3:"; sqlite3 --version\n\
-blue "Gem:"; gem -v\n\
 blue "Ruby:"; ruby -v\n\
-'\
->>$USERHOME/.bashrc
-
-RUN echo '### RAILS ###\n\
+blue "Gem:"; gem -v\n\
 blue "Rails:"; rails -v\n\
 '\
 >>$USERHOME/.bashrc
@@ -183,5 +178,17 @@ alias ls="ls -Altr --color=auto"\n\
 '\
 >>$USERHOME/.bashrc
 
+
 WORKDIR $USERHOME
 EXPOSE 3000
+
+FROM bashrc as vimvc
+ARG line="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent"
+ARG line="$line\nset number"
+ARG line="$line\nset nocompatible"
+ARG line="$line\nsyntax on"
+ARG line="$line\ncolo pablo"
+ARG line="$line\nset cursorline"
+ARG line="$line\nhi CursorLine   cterm=NONE ctermbg=237 ctermfg=NONE"
+ARG line="$line\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
+RUN echo "$line" >$USERHOME/.vimrc
