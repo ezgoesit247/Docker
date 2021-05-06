@@ -1,4 +1,4 @@
-FROM local/u18-seedling
+FROM local/seedling:ubuntu-20.04
 
 ### GEN EDS- yarrgh ###
 RUN apt-get -qq update \
