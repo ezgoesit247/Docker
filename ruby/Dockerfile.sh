@@ -1,6 +1,6 @@
 FROM local/seed:ubuntu-18.04 as top
 
-##  . ./setenv && build -t ubuntu-18.04 --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
+##  . ./setenv && DEFAULT_RUBY_VER=ruby-2.7.2 build -t ubuntu-18.04 --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
 
 ##  run --rm -I
 ##  run --rm -I --env=dev --user=root -w /root -v=${PWD}/ruby:/root/ruby.assets local/u18-ruby
@@ -125,6 +125,8 @@ sqlite3 \
 #su - postgres
 
 FROM sqlite as bashrc
+ARG DEFAULT_RUBY_VER=$DEFAULT_RUBY_VER
+ENV DEFAULT_RUBY_VER=$DEFAULT_RUBY_VER
 
 RUN echo '### NODE ###\n\
 grey "Updating nvm: " && echo $(cd .nvm && git pull)\n\
@@ -164,7 +166,7 @@ function rubyver {\n\
   blue "Rails:"; rails -v\n\
 }\n\
 \
-rubyver 2.7 default\n\
+rubyver $(if [ ! ${RUBY_VER} ];then echo ${DEFAULT_RUBY_VER};else echo ${RUBY_VER};fi) default\n\
 grey "Ruby versions with:" && echo rvm list known\n\
 grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
 grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
