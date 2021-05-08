@@ -479,6 +479,7 @@ if [ $ENV_ARG ] && [ $USER_ARG ]; then
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.m2:${USERDIR}/.m2"
     DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.aws:${USERDIR}/.aws"
 #    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
+    BINDINGS="${BINDINGS} -v code-store:/home/${USERNAME}/code-store"
   fi
 fi
 if [ ${LOCAL_APP} ]; then

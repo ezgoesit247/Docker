@@ -1,11 +1,10 @@
 FROM local/seed:ubuntu-18.04 as top
 
-##  . ./setenv && DEFAULT_RUBY_VER=ruby-2.7.3 && DEFAULT_RAILS_VER=default && build -t ubuntu-18.04 --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
+##  . ./setenv && DEFAULT_RUBY_VER=ruby-2.7.3 && DEFAULT_RAILS_VER=latest && build -t ubuntu-18.04 --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
 
 ##  run --rm -I
 ##  run --rm -I --env=dev --user=root -w /root -v=${PWD}/ruby:/root/ruby.assets local/u18-ruby
-##  run -u ${GITUSER} --env=dev -I -v=${sandbox}/ruby:/home/${GITUSER}/ruby.assets --rm local/ruby
-##  CUSER=${GITUSER} CPATH=/home/${CUSER} run -u $CUSER --env=dev --rm -I -v=${PWD}/ruby:${CPATH}/ruby.assets -p=3000:3000 local/ruby
+##  . ./setenv && run -u ${CUSER} --env=dev --app=${APP} -I -p=3000:3000 --name=${CNAME} --rm local/ruby
 
 
 FROM top as git
@@ -28,6 +27,7 @@ RUN useradd -ms /bin/bash -U $gituser \
 FROM user as security
 ARG THISUSER=$gituser
 ARG HOMEPATH=/home
+ARG LOCALHOMESAFE=$LOCALHOMESAFE
 
 # THESE SHOULD NOT *need* TO CHANGE
 ARG SAFEPATH=\\$HOMEPATH
@@ -137,9 +137,7 @@ tzdata
 
 FROM tzdata as bashrc
 ARG DEFAULT_RUBY_VER=$DEFAULT_RUBY_VER
-#ENV DEFAULT_RUBY_VER=$DEFAULT_RUBY_VER
 ARG DEFAULT_RAILS_VER=$DEFAULT_RAILS_VER
-#ENV DEFAULT_RAILS_VER=$DEFAULT_RAILS_VER
 
 run echo ${DEFAULT_RUBY_VER} \
 && echo ${DEFAULT_RUBY_VER}
@@ -155,7 +153,7 @@ function nodever() {\n\
   if [ ! -z $1 ]; then\n\
     nvm install ${1} >/dev/null 2>&1 && nvm use ${_} > /dev/null 2>&1\\\n\
       && nvm alias default ${_} > /dev/null 2>&1; blue "Node:"; node -v; else\n\
-    yellow "Use nodever to install or switch node versions:" && echo && echo " usage: nodever [ver]"; blue "Node:"; node -v && blue "nvm:"; nvm -v; fi;\n\
+    yellow "Use nodever to install or switch node versions:" && echo -e "\n usage: nodever [ver]"; blue "Node:"; node -v && blue "nvm:"; nvm -v; fi;\n\
 }\n\
 nodever\n\
 '\
@@ -169,8 +167,8 @@ RUN echo '### YARN (NEEDS NVM) ###\n\
 
 RUN echo '### RUBY RAILS ###\n\
 function rubyver() {\n\
-  local RUBY_VER=$1 && local RAILS=$2\n\
-  if [[ ! $RAILS == default ]]; then RAILS_VER="-v $RAILS";fi\n\
+  local RUBY_VER=${1} && local RAILS_VER=${2}\n\
+  if [[ ${RAILS_VER} == ${DEFAULT_RAILS_VER} ]]; then RAILS_VER="";else RAILS_VER="-v ${RAILS_VER}";fi\n\
   if [ ! -z $1 ]; then\n\
     if [[ ! ${RUBY_VER} == $(rvm current) ]]; then\n\
       cyan "getting ruby:" && echo -n "${RUBY_VER} " && rvm install ${RUBY_VER} 2>/dev/null\\\n\
@@ -178,17 +176,18 @@ function rubyver() {\n\
       cyan "getting rails:" && echo ${RAILS} && gem install rails ${RAILS_VER} 2>/dev/null\n\
       cyan "getting bundler" && gem install bundler\n\
     fi\n\
-    else yellow rubyver && echo\n\
-  fi\n\
+  else yellow "Use rubyver to switch ruby & rails" && echo -e "\n usage: rubyver ruby-[X.Y.Z] [RAILSVER]"; fi\n\
   blue "Ruby:"; echo $(rvm current)\n\
   blue "Gem:"; gem -v\n\
   blue "Rails:"; rails -v\n\
+  blue "Bundler:"; bundler -v\n\
   blue "YARN:"; yarn -v\n\
   blue "SQLite3:"; sqlite3 --version\n\
 }\n\
 \
 export DEFAULT_RUBY_VER='$DEFAULT_RUBY_VER'\n\
 export DEFAULT_RAILS_VER='$DEFAULT_RAILS_VER'\n\
+rubyver\n\
 rubyver \
   $(if [[ ! ${RUBY_VERSION} == $DEFAULT_RUBY_VER ]];then echo ${DEFAULT_RUBY_VER} ${DEFAULT_RAILS_VER};fi; exit) \
   \n\
@@ -198,9 +197,9 @@ if [ ! -d /usr/local/heroku ] && [ -d ~/.nvm ]\n\
   else echo heroku not installed\n\
 fi\n\
 blue "Heroku:"; heroku --version\n\
-grey "Ruby versions with:" && echo rvm list known\n\
-grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
-grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
+#grey "Ruby versions with:" && echo rvm list known\n\
+#grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
+#grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
 \n\
 '\
 >>$USERHOME/.bashrc
@@ -238,3 +237,7 @@ ARG line="$line\nset cursorline"
 ARG line="$line\nhi CursorLine   cterm=NONE ctermbg=237 ctermfg=NONE"
 ARG line="$line\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
 RUN echo "$line" >$USERHOME/.vimrc
+
+
+ARG TMPVAR="\/Users\/***REMOVED***"
+RUN sed -i 's/'$LOCALHOMESAFE'/'$SAFEHOME'/' $GIT_CONFIG

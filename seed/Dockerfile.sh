@@ -12,7 +12,6 @@ RUN apt-get -qq update \
 
 RUN echo '\n\
 ### FUNCTIONS ###\n\
-grep "DISTRIB_DESCRIPTION" /etc/lsb-release\n\
 function showcolors { for bg in `seq 0 9`; do for fg in `seq 0 9`; do echo -n "`expr $fg` `expr $bg`: " && color `expr $fg` `expr $bg` "Tyler & Corey"; echo; done; done }\n\
 alias colors=showcolors\n\
 function color  { echo -n "$(tput setaf $1;tput setab $2)${3}$(tput sgr 0) "; }\n\
@@ -26,6 +25,7 @@ function pass   { echo; echo "$(green PASS: ${*})"; echo; }\n\
 function warn   { echo; echo "$(yellow PASS: ${*})"; echo; }\n\
 function fail   { echo; echo "$(red FAIL: ${*})"; echo; }\n\
 function info   { echo; echo "$(grey INFO: ${*})"; echo; }\n\
+green $(grep "DISTRIB_DESCRIPTION" /etc/lsb-release) && echo\n\
 blue "python:"; python --version\n\
 blue "pip: "; pip --version\
 '\
@@ -38,3 +38,7 @@ RUN apt-get -qq install -y \
 python \
 python3-pip \
 && apt-get -qq clean
+
+FROM bottom as bottom2
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+&& update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
