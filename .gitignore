@@ -30,5 +30,7 @@ Docker-Main
 critical-synced-meta-files.txt
 critical-synced-software-files.txt
 critical-synced-application-files.txt
+private
+public
 
 !nginx-tomcat/assets.docker/
