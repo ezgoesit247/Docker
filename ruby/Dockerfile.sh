@@ -1,6 +1,6 @@
 FROM local/seed:ubuntu-18.04 as top
 
-##  . ./setenv && DEFAULT_RUBY_VER=ruby-2.7.2 build -t ubuntu-18.04 --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
+##  . ./setenv && DEFAULT_RUBY_VER=ruby-2.7.3 && DEFAULT_RAILS_VER=default && build -t ubuntu-18.04 --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
 
 ##  run --rm -I
 ##  run --rm -I --env=dev --user=root -w /root -v=${PWD}/ruby:/root/ruby.assets local/u18-ruby
@@ -59,11 +59,16 @@ RUN chmod 700 $USERHOME/.ssh \
 
 
 ARG GITTOKEN=$USERHOME/.ssh/GITTOKEN
+ENV GITTOKEN=$USERHOME/.ssh/GITTOKEN
 COPY assets.docker/GITTOKEN $GITTOKEN
-ENV GITNAME=$THISUSER
-RUN echo 'export GITTOKEN=$(cat '$GITTOKEN')' >>$USERHOME/.bashrc \
-&& sudo chown $THISUSER:$THISUSER $GITTOKEN
+ARG HEROKUTOKEN=$USERHOME/.ssh/HEROKUTOKEN
+ENV HEROKUTOKEN=$USERHOME/.ssh/HEROKUTOKEN
+COPY assets.docker/HEROKUTOKEN $HEROKUTOKEN
+ENV GITUSER=$THISUSER
+ENV GITLOGIN=$THISUSER@gmail.com
+RUN chown $THISUSER:$THISUSER $GITTOKEN
 
+#echo 'export GITTOKEN=$(cat $GITTOKEN)' >>$USERHOME/.bashrc
 USER $THISUSER
 
 FROM security as nodeinstall
@@ -114,6 +119,12 @@ RUN sudo apt-get -qq install \
 sqlite3 \
 && sudo apt-get clean
 
+FROM sqlite as tzdata
+RUN sudo ln -fs /usr/share/zoneinfo/CST6CDT /etc/localtime \
+&& sudo DEBIAN_FRONTEND=noninteractive \
+apt-get install -y --no-install-recommends \
+tzdata
+
 #RUN DEBIAN_FRONTEND=noninteractive apt-get -qq install \
 #postgresql postgresql-contrib libpq-dev \
 #&& cp -p /var/lib/postgresql/10/main/postgresql.auto.conf /var/lib/postgresql/10/main/postgresql.conf \
@@ -124,12 +135,17 @@ sqlite3 \
 #/etc/postgresql/10/main/postgresql.conf
 #su - postgres
 
-FROM sqlite as bashrc
+FROM tzdata as bashrc
 ARG DEFAULT_RUBY_VER=$DEFAULT_RUBY_VER
-ENV DEFAULT_RUBY_VER=$DEFAULT_RUBY_VER
+#ENV DEFAULT_RUBY_VER=$DEFAULT_RUBY_VER
+ARG DEFAULT_RAILS_VER=$DEFAULT_RAILS_VER
+#ENV DEFAULT_RAILS_VER=$DEFAULT_RAILS_VER
+
+run echo ${DEFAULT_RUBY_VER} \
+&& echo ${DEFAULT_RUBY_VER}
 
 RUN echo '### NODE ###\n\
-grey "Updating nvm: " && echo $(cd .nvm && git pull)\n\
+cyan "Updating nvm:" && echo $(cd .nvm && git pull)\n\
 if  ! command -v nvm >/dev/null; then\n\
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm\n\
 [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion\n\
@@ -139,7 +155,7 @@ function nodever() {\n\
   if [ ! -z $1 ]; then\n\
     nvm install ${1} >/dev/null 2>&1 && nvm use ${_} > /dev/null 2>&1\\\n\
       && nvm alias default ${_} > /dev/null 2>&1; blue "Node:"; node -v; else\n\
-    grey "Use nodever to install or switch node versions:" && echo && echo " usage: nodever [ver]"; blue "Node:"; node -v && blue "nvm:"; nvm -v; fi;\n\
+    yellow "Use nodever to install or switch node versions:" && echo && echo " usage: nodever [ver]"; blue "Node:"; node -v && blue "nvm:"; nvm -v; fi;\n\
 }\n\
 nodever\n\
 '\
@@ -152,26 +168,39 @@ RUN echo '### YARN (NEEDS NVM) ###\n\
 
 
 RUN echo '### RUBY RAILS ###\n\
-function rubyver {\n\
+function rubyver() {\n\
   local RUBY_VER=$1 && local RAILS=$2\n\
   if [[ ! $RAILS == default ]]; then RAILS_VER="-v $RAILS";fi\n\
   if [ ! -z $1 ]; then\n\
     if [[ ! ${RUBY_VER} == $(rvm current) ]]; then\n\
-      grey "Getting ruby:" && echo -n "${RUBY_VER} " && grey "rails:" && echo ${RAILS}\n\
-      rvm install ${RUBY_VER} && rvm --default use ${RUBY_VER} && gem install rails ${RAILS_VER}\n\
+      cyan "getting ruby:" && echo -n "${RUBY_VER} " && rvm install ${RUBY_VER} 2>/dev/null\\\n\
+        && rvm --default use ${RUBY_VER} &&\n\
+      cyan "getting rails:" && echo ${RAILS} && gem install rails ${RAILS_VER} 2>/dev/null\n\
+      cyan "getting bundler" && gem install bundler\n\
     fi\n\
+    else yellow rubyver && echo\n\
   fi\n\
   blue "Ruby:"; echo $(rvm current)\n\
   blue "Gem:"; gem -v\n\
   blue "Rails:"; rails -v\n\
+  blue "YARN:"; yarn -v\n\
+  blue "SQLite3:"; sqlite3 --version\n\
+  blue "Heroku:"; heroku --version\n\
 }\n\
 \
-rubyver $(if [ ! ${RUBY_VER} ];then echo ${DEFAULT_RUBY_VER};else echo ${RUBY_VER};fi) default\n\
+export DEFAULT_RUBY_VER='$DEFAULT_RUBY_VER'\n\
+export DEFAULT_RAILS_VER='$DEFAULT_RAILS_VER'\n\
+rubyver \
+  $(if [[ ! ${RUBY_VERSION} == $DEFAULT_RUBY_VER ]];then echo ${DEFAULT_RUBY_VER} ${DEFAULT_RAILS_VER};fi; exit) \
+  \n\
+if [ ! -d /usr/local/heroku ] && [ -d ~/.nvm ]\n\
+  then cyan "Getting heroku" && echo\n\
+    source <(curl -sL https://cdn.learnenough.com/heroku_install) 2>/dev/null\n\
+  else echo heroku not installed\n\
+fi\n\
 grey "Ruby versions with:" && echo rvm list known\n\
 grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
 grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
-blue "YARN:"; yarn -v\n\
-blue "SQLite3:"; sqlite3 --version\n\
 \n\
 '\
 >>$USERHOME/.bashrc
@@ -196,6 +225,8 @@ alias ls="ls -Altr --color=auto"\n\
 
 WORKDIR $USERHOME
 EXPOSE 3000
+RUN mkdir $USERHOME/code-store
+VOLUME $USERHOME/code-store
 
 FROM bashrc as vimvc
 ARG line="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent"
