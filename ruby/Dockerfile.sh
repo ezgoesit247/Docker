@@ -185,7 +185,6 @@ function rubyver() {\n\
   blue "Rails:"; rails -v\n\
   blue "YARN:"; yarn -v\n\
   blue "SQLite3:"; sqlite3 --version\n\
-  blue "Heroku:"; heroku --version\n\
 }\n\
 \
 export DEFAULT_RUBY_VER='$DEFAULT_RUBY_VER'\n\
@@ -198,6 +197,7 @@ if [ ! -d /usr/local/heroku ] && [ -d ~/.nvm ]\n\
     source <(curl -sL https://cdn.learnenough.com/heroku_install) 2>/dev/null\n\
   else echo heroku not installed\n\
 fi\n\
+blue "Heroku:"; heroku --version\n\
 grey "Ruby versions with:" && echo rvm list known\n\
 grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
 grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
