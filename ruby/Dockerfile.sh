@@ -1,6 +1,6 @@
-FROM local/seed:ubuntu-18.04 as top
+FROM local/seed:ubuntu-20.04 as top
 
-##  . ./setenv && DEFAULT_RUBY_VER=ruby-2.7.3 && DEFAULT_RAILS_VER=latest && build -t ubuntu-18.04 --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
+##  TAG=20.04 && RUBY_VER=ruby-2.7.3 && RAILS_VER=latest && . ./setenv && DEFAULT_RUBY_VER=${RUBY_VER} && DEFAULT_RAILS_VER=${RAILS_VER} && build -t ubuntu-18.04 --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
 
 ##  run --rm -I
 ##  run --rm -I --env=dev --user=root -w /root -v=${PWD}/ruby:/root/ruby.assets local/u18-ruby
@@ -87,7 +87,7 @@ FROM nodeinstall0 as rvminstall
 #ruby-full \
 #&& apt-get clean
 
-RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 \
+RUN sudo gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 \
 7D2BAF1CF37B13E2069D6956105BD0E739499BDB \
 && curl -sSL https://get.rvm.io | sudo bash -s stable --ruby \
 && echo 'source /usr/local/rvm/scripts/rvm\n\
