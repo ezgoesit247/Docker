@@ -170,7 +170,7 @@ export DEFAULT_RUBY_VER='$DEFAULT_RUBY_VER'\n\
 export DEFAULT_RAILS_VER='$DEFAULT_RAILS_VER'\n\
 function rubyver() {\n\
   if [ $# -eq 0 ]; then\n\
-    yellow "Use rubyver to switch ruby & rails" && echo -e "\\n usage: rubyver ruby-[X.Y.Z] [RAILSVER($DEFAULT_RAILS_VER)]"\n\
+    yellow "Use rubyver to switch ruby & rails:" && echo -e "\\n usage: rubyver ruby-[X.Y.Z] [RAILSVER($DEFAULT_RAILS_VER)]"\n\
 #    return ${LINENO}\n\
   fi\n\
   local RUBY_VER=${1} && local RAILS_VER=${2}\n\
@@ -193,10 +193,11 @@ function rubyver() {\n\
 \
 rubyver \
   $(if [[ ! ${RUBY_VERSION} == ${DEFAULT_RUBY_VER} ]];then echo ${DEFAULT_RUBY_VER} ${DEFAULT_RAILS_VER};fi; exit)\n\
-if [ ! -d /usr/local/heroku ] && [ -d ~/.nvm ]\n\
+export HEROKUHOME=/usr/local/heroku/bin\n\
+if [ ! -d $HEROKUHOME ] && [ -d ~/.nvm ]\n\
   then cyan "Getting heroku" && echo\n\
     source <(curl -sL https://cdn.learnenough.com/heroku_install) 2>/dev/null\n\
-  else echo heroku not installed\n\
+  else if ! command -v heroku;then export PATH=$PATH:$HEROKUHOME;fi\n\
 fi\n\
 blue "Heroku:"; heroku --version\n\
 #grey "Ruby versions with:" && echo rvm list known\n\
