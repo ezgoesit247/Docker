@@ -171,13 +171,7 @@ export DEFAULT_RAILS_VER='$DEFAULT_RAILS_VER'\n\
 function rubyver() {\n\
   if [ $# -eq 0 ]; then\n\
     yellow "Use rubyver to switch ruby & rails" && echo -e "\\n usage: rubyver ruby-[X.Y.Z] [RAILSVER($DEFAULT_RAILS_VER)]"\n\
-    blue "Ruby:"; echo $(rvm current)\n\
-    blue "Gem:"; gem -v\n\
-    blue "Rails:"; rails -v\n\
-    blue "Bundler:"; bundler -v\n\
-    blue "YARN:"; yarn -v\n\
-    blue "SQLite3:"; sqlite3 --version\n\
-    return ${LINENO}\n\
+#    return ${LINENO}\n\
   fi\n\
   local RUBY_VER=${1} && local RAILS_VER=${2}\n\
   if [[ ${RAILS_VER} == ${DEFAULT_RAILS_VER} ]]; then RAILS_VER="";else RAILS_VER="-v ${RAILS_VER}";fi\n\
@@ -189,11 +183,16 @@ function rubyver() {\n\
       cyan "getting bundler" && gem install bundler\n\
     fi\n\
   fi\n\
+  blue "Ruby:"; echo $(rvm current)\n\
+  blue "Gem:"; gem -v\n\
+  blue "Rails:"; rails -v\n\
+  blue "Bundler:"; bundler -v\n\
+  blue "YARN:"; yarn -v\n\
+  blue "SQLite3:"; sqlite3 --version\n\
 }\n\
 \
 rubyver \
-  $(if [[ ! ${RUBY_VERSION} == $DEFAULT_RUBY_VER ]];then echo ${DEFAULT_RUBY_VER} ${DEFAULT_RAILS_VER};fi; exit)\n\
-  rubyver\n\
+  $(if [[ ! ${RUBY_VERSION} == ${DEFAULT_RUBY_VER} ]];then echo ${DEFAULT_RUBY_VER} ${DEFAULT_RAILS_VER};fi; exit)\n\
 if [ ! -d /usr/local/heroku ] && [ -d ~/.nvm ]\n\
   then cyan "Getting heroku" && echo\n\
     source <(curl -sL https://cdn.learnenough.com/heroku_install) 2>/dev/null\n\
