@@ -53,7 +53,7 @@ RUN chmod 700 $USERHOME/.ssh \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
 && chmod 644 $GIT_IGNORE_GLOBAL \
-&& sed -i 's/\/Users\/***REMOVED***/'$SAFEHOME'/' $GIT_CONFIG \
+&& sed -i 's/'$LOCALHOMESAFE'/'$SAFEHOME'/' $GIT_CONFIG
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY \
 && chown -R $THISUSER:$THISUSER $USERHOME
 
@@ -237,7 +237,3 @@ ARG line="$line\nset cursorline"
 ARG line="$line\nhi CursorLine   cterm=NONE ctermbg=237 ctermfg=NONE"
 ARG line="$line\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
 RUN echo "$line" >$USERHOME/.vimrc
-
-
-ARG TMPVAR="\/Users\/***REMOVED***"
-RUN sed -i 's/'$LOCALHOMESAFE'/'$SAFEHOME'/' $GIT_CONFIG
