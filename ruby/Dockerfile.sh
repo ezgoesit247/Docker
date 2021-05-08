@@ -6,7 +6,7 @@ FROM local/seed:ubuntu-20.04 as top
 
 ##  run --rm -I --env=dev --user=root -w /root --rm local/ruby
 
-##  TAG=":ubuntu-20.04" && if [ ${TAG} ]; then TAG=":${TAG}"; fi && run -u ${CUSER} --env=dev --app=${APP} -I -p=3000:3000 --name=${CNAME} local/ruby${TAG}
+##  TAG="ubuntu-20.04" && if [ ${TAG} ]; then TAG=":${TAG}"; fi && run -u ${CUSER} --env=dev --app=${APP} -I -p=3000:3000 --name=${CNAME} local/ruby${TAG}
 
 
 FROM top as git
