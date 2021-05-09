@@ -65,10 +65,19 @@ ENV GITTOKEN=$USERHOME/.ssh/GITTOKEN
 COPY assets.docker/GITTOKEN $GITTOKEN
 ARG HEROKUTOKEN=$USERHOME/.ssh/HEROKUTOKEN
 ENV HEROKUTOKEN=$USERHOME/.ssh/HEROKUTOKEN
-COPY assets.docker/HEROKUTOKEN $HEROKUTOKEN
+COPY assets.docker/HEROKUPASSWD $HEROKUTOKEN
+ARG HEROKUPASSWD=$USERHOME/.ssh/HEROKUPASSWD
+ENV HEROKUPASSWD=$USERHOME/.ssh/HEROKUPASSWD
+COPY assets.docker/HEROKUPASSWD $HEROKUPASSWD
 ENV GITUSER=$THISUSER
 ENV GITLOGIN=$THISUSER@gmail.com
-RUN chown $THISUSER:$THISUSER $GITTOKEN
+ENV HEROKULOGIN=$GITLOGIN
+RUN chown $THISUSER:$THISUSER $GITTOKEN \
+&& chown $THISUSER:$THISUSER $HEROKUTOKEN \
+&& chmod 600 $GITTOKEN \
+&& chmod 600 $HEROKUTOKEN \
+&& chmod 600 $HEROKUPASSWD
+
 
 #echo 'export GITTOKEN=$(cat $GITTOKEN)' >>$USERHOME/.bashrc
 USER $THISUSER
@@ -176,15 +185,15 @@ function rubyver() {\n\
 #    return ${LINENO}\n\
   fi\n\
   local RUBY_VER=${1} && local RAILS_VER=${2}\n\
-  if [[ ${RAILS_VER} == ${DEFAULT_RAILS_VER} ]]; then RAILS_VER="";else RAILS_VER="-v ${RAILS_VER}";fi\n\
-  if [ ! -z $1 ]; then\n\
+  if [ ! -z ${1} ]; then\n\
     if [[ ! ${RUBY_VER} == $(rvm current) ]]; then\n\
       cyan "getting ruby:" && echo -n "${RUBY_VER} " && rvm install ${RUBY_VER} 2>/dev/null\\\n\
-        && rvm --default use ${RUBY_VER} &&\n\
-      cyan "getting rails:" && echo ${RAILS} && gem install rails ${RAILS_VER} 2>/dev/null\n\
-      cyan "getting bundler" && gem install bundler\n\
+        && rvm --default use ${RUBY_VER}\n\
     fi\n\
   fi\n\
+  if [[ ! ${RAILS_VER} == ${DEFAULT_RAILS_VER} ]];then RAILS="-v ${RAILS_VER}";fi\n\
+  cyan "getting rails:" && echo ${RAILS} && gem install rails ${RAILS} 2>/dev/null\n\
+  cyan "getting bundler" && gem install bundler\n\
   blue "Ruby:"; echo $(rvm current)\n\
   blue "Gem:"; gem -v\n\
   blue "Rails:"; rails -v\n\
@@ -229,8 +238,11 @@ alias ls="ls -Altr --color=auto"\n\
 
 WORKDIR $USERHOME
 EXPOSE 3000
-RUN mkdir $USERHOME/code-store
+RUN mkdir $USERHOME/code-store \
+&& mkdir $USERHOME/scratch
+
 VOLUME $USERHOME/code-store
+VOLUME $USERHOME/scratch
 
 FROM bashrc as vimvc
 ARG line="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent"
