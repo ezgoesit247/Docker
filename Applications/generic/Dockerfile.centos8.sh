@@ -2,13 +2,14 @@ FROM local/centos8-appdev as top
 
 ##  . setenv
 
-##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
+##  build --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
 
 ##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
 
 ##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
 ENV GIT_SSH=/root/bin/git-ssh
+ARG LOCALHOMESAFE=$LOCALHOMESAFE
 ARG ROOT_SAFE_PATH=\\/root
 ARG GIT_CONFIG=/root/.gitconfig
 ARG KNOWN_HOSTS=/root/.ssh/known_hosts
@@ -29,7 +30,7 @@ RUN chmod 700 /root/.ssh \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
 && chmod 644 $GIT_IGNORE_GLOBAL \
-&& sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/'$LOCALHOMESAFE'/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
 ARG UNAME=default_virtual
@@ -69,7 +70,7 @@ RUN chmod 755 $UDIRPATH/bin \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
 && chmod 644 $GIT_IGNORE_GLOBAL \
-&& sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/'$LOCALHOMESAFE'/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 && chown -R $UNAME:$UNAME $UDIR/*
 
 USER $UNAME

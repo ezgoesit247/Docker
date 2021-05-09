@@ -62,7 +62,7 @@ RUN chmod 700 $RDIRPATH/.ssh \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
-&& sed -i 's/\/Users\/***REMOVED***/'$RDIR_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/'$LOCALHOMESAFE'/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 \
 #&& echo "${SSH_PRIVATE_KEY_STREAM}" > $SSH_PRIVATE_KEY \
 && chmod 600 $SSH_PRIVATE_KEY
@@ -101,7 +101,7 @@ ARG SSH_PRIVATE_KEY_STREAM
 COPY assets.docker/.gitconfig $GIT_CONFIG
 
 RUN sudo chmod 644 $GIT_CONFIG
-RUN sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG
+&& sed -i 's/'$LOCALHOMESAFE'/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 
 #&& echo "${SSH_PRIVATE_KEY_STREAM}" > $SSH_PRIVATE_KEY \
 #RUN sudo chown -R $U:$U $UDIR/*
