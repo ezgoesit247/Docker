@@ -148,13 +148,3 @@ if command -v go > /dev/null 2>&1; then blue "Google Go:" && go version; else ye
 from node as vimrc
 ARG VIMRC="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent\nset number\nset nocompatible\nsyntax on\nset cursorline\nhi CursorLine   cterm=NONE ctermbg=236 ctermfg=NONE\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
 RUN echo "${VIMRC}" >$UDIRPATH/.vimrc
-
-from vimrc as session
-ENV GITNAME=***REMOVED***
-ENV GITKEYNAME=***REMOVED***
-ENV GITTOKEN=867075f783b73b5527ef1c7764654dc38ab10502
-ENV GIT_SSH=${UDIRPATH}/bin/git-ssh
-ENV GITKEYPATH=${UDIRPATH}/.ssh/***REMOVED***
-ENV GITUSER=***REMOVED***
-ENV GITLOGIN=***REMOVED***
-ENV GITAUTHOR=***REMOVED***<***REMOVED***>
