@@ -2,7 +2,7 @@
 
 _GENERATE_=ON
 function usage {
-  echo "Usage $(basename $0) [app] [platform (eg centos8 | ubuntu18)]"
+  echo "Usage $(basename $0) [app] [platform]"
   echo "Gernerate dockerfile is ${_GENERATE_}"
 }
 
@@ -20,7 +20,7 @@ function generate_dockerfile {
   ##  GENERATE DOCKER FILE
   cat >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
 ### BUILT WITH dosetup
-FROM local/${DEVELOPMENT_PLATFORM}-appdev as root
+FROM local/${DEVELOPMENT_PLATFORM}-appdev:latest as root
 ARG gituser
 ARG CUSERHOME=/home/\$gituser
 RUN useradd -ms /bin/bash -d \$CUSERHOME -U \$gituser

@@ -1,4 +1,4 @@
-FROM local/u18-docker as top
+FROM local/docker:ubuntu-20.04 as top
 
 RUN apt-get -qq update \
 && apt-get install -qq \
