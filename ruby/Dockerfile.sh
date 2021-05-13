@@ -192,7 +192,7 @@ function rubyver() {\n\
     fi\n\
   fi\n\
   if [[ ! ${RAILS_VER} == ${DEFAULT_RAILS_VER} ]];then RAILS="-v ${RAILS_VER}";fi\n\
-  cyan "getting rails:" && echo ${RAILS} && gem install rails ${RAILS} 2>/dev/null\n\
+  cyan "getting rails:" && echo ${RAILS_VER} && gem install rails ${RAILS} 2>/dev/null\n\
   cyan "getting bundler" && gem install bundler\n\
   blue "Ruby:"; echo $(rvm current)\n\
   blue "Gem:"; gem -v\n\
