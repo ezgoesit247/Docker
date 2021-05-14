@@ -1,5 +1,5 @@
 ### BUILT WITH dosetup
-FROM local/ubuntu-appdev:latest as root
+FROM local/ubuntu-appdev:18.04 as root
 ARG gituser
 ARG CUSERHOME=/home/$gituser
 RUN useradd -ms /bin/bash -d $CUSERHOME -U $gituser
