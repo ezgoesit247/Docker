@@ -2,7 +2,8 @@
 
 _GENERATE_=ON
 function usage {
-  echo "Usage $(basename $0) [app] [platform]"
+  echo "Usage $(basename $0) [APP] [PLATFORM] <VERSION>"
+  echo -e "\tex: ./dosetup bestappever ubuntu 18.04"
   echo "Gernerate dockerfile is ${_GENERATE_}"
 }
 
@@ -12,6 +13,8 @@ function copy_generic_dockerfile {
 function generate_dockerfile {
   local app=$1
   local DEVELOPMENT_PLATFORM=$2
+  local PLATFORM_VERSION=$3
+  if [ ! ${PLATFORM_VERSION} ]; then PLATFORM_VERSION=latest; fi
 
   echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
 #  echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
@@ -20,7 +23,7 @@ function generate_dockerfile {
   ##  GENERATE DOCKER FILE
   cat >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
 ### BUILT WITH dosetup
-FROM local/${DEVELOPMENT_PLATFORM}-appdev:latest as root
+FROM local/${DEVELOPMENT_PLATFORM}-appdev:${PLATFORM_VERSION} as root
 ARG gituser
 ARG CUSERHOME=/home/\$gituser
 RUN useradd -ms /bin/bash -d \$CUSERHOME -U \$gituser
@@ -128,7 +131,7 @@ popd
 
 ### main
 
-app=$1 && DEVELOPMENT_PLATFORM=$2
+app=$1 && DEVELOPMENT_PLATFORM=$2 && PLATFORM_VERSION=$3
 if [ ! $app ]; then usage no app && exit $LINENO; fi
 if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform && exit $LINENO; fi
 
@@ -165,7 +168,7 @@ mv ~/sandbox/assets.docker/${app}/dobuild ~/sandbox/assets.docker/${app}/build
 
 if [[ ! ${_GENERATE_} == ON ]];
   then copy_generic_dockerfile;
-  else generate_dockerfile ${app} ${DEVELOPMENT_PLATFORM};
+  else generate_dockerfile ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION};
 fi
 
 ## BIULD DEVE LOPMENT COMTAINER
