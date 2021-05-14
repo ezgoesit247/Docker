@@ -205,12 +205,12 @@ function rubyver() {\n\
 rubyver \
   $(if [[ ! ${RUBY_VERSION} == ${DEFAULT_RUBY_VER} ]];then echo ${DEFAULT_RUBY_VER} ${DEFAULT_RAILS_VER};fi; exit)\n\
 export HEROKUHOME=/usr/local/heroku/bin\n\
-if [ ! -d $HEROKUHOME ] && [ -d ~/.nvm ]\n\
-  then cyan "Getting heroku" && echo\n\
-    source <(curl -sL https://cdn.learnenough.com/heroku_install) 2>/dev/null\n\
-  else if ! command -v heroku;then export PATH=$PATH:$HEROKUHOME;fi\n\
-fi\n\
-blue "Heroku:"; heroku --version\n\
+#if [ ! -d $HEROKUHOME ] && [ -d ~/.nvm ]\n\
+#  then cyan "Getting heroku" && echo\n\
+#    source <(curl -sL https://cdn.learnenough.com/heroku_install) 2>/dev/null\n\
+#  else if ! command -v heroku;then export PATH=$PATH:$HEROKUHOME;fi\n\
+#fi\n\
+#blue "Heroku:"; heroku --version\n\
 #grey "Ruby versions with:" && echo rvm list known\n\
 #grey "install ruby with:" && echo rvm install ruby-[RUBY_VER] \&\& rvm --default use ruby-[RUBY_VER]\n\
 #grey "install rails with:" && echo gem install rails -v [RAILS_VER]\n\
@@ -235,6 +235,15 @@ alias ls="ls -Altr --color=auto"\n\
 '\
 >>$USERHOME/.bashrc
 
+ARG line="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent"
+ARG line="$line\nset number"
+ARG line="$line\nset nocompatible"
+ARG line="$line\nsyntax on"
+ARG line="$line\ncolo pablo"
+ARG line="$line\nset cursorline"
+ARG line="$line\nhi CursorLine   cterm=NONE ctermbg=NONE ctermfg=NONE"
+ARG line="$line\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
+RUN echo "$line" >$USERHOME/.vimrc
 
 WORKDIR $USERHOME
 EXPOSE 3000
@@ -244,13 +253,9 @@ RUN mkdir $USERHOME/code-store \
 VOLUME $USERHOME/code-store
 VOLUME $USERHOME/scratch
 
-FROM bashrc as vimvc
-ARG line="set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab autoindent"
-ARG line="$line\nset number"
-ARG line="$line\nset nocompatible"
-ARG line="$line\nsyntax on"
-ARG line="$line\ncolo pablo"
-ARG line="$line\nset cursorline"
-ARG line="$line\nhi CursorLine   cterm=NONE ctermbg=237 ctermfg=NONE"
-ARG line="$line\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
-RUN echo "$line" >$USERHOME/.vimrc
+
+FROM bashrc as awscli
+#AWS CLI
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+  && unzip awscliv2.zip && rm -rf awscliv2.zip \
+  && sudo mv aws/ /usr/local/ && sudo /usr/local/aws/install
