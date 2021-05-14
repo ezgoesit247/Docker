@@ -40,5 +40,6 @@ python3-pip \
 && apt-get -qq clean
 
 FROM bottom as bottom2
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
-&& update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python2 80 \
+&& update-alternatives --install /usr/bin/python python /usr/bin/python3 90 \
+&& update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 90
