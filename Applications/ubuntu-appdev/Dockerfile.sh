@@ -1,4 +1,4 @@
-FROM local/docker:ubuntu-20.04 as top
+FROM local/seed:ubuntu-20.04 as top
 
 RUN apt-get -qq update \
 && apt-get install -qq \
