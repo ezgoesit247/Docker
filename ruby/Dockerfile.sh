@@ -1,6 +1,6 @@
 FROM local/seed:ubuntu-20.04 as top
 
-##  TAG=ubuntu-20.04 && RUBY_VER=ruby-2.7.3 && RAILS_VER=latest && . ./setenv && DEFAULT_RUBY_VER=${RUBY_VER} && DEFAULT_RAILS_VER=${RAILS_VER} && build -t ${TAG} --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
+##  DOCKER_ENV=ruby && TAG=ubuntu-20.04 && RUBY_VER=ruby-2.7.3 && RAILS_VER=latest && . ./setenv && DEFAULT_RUBY_VER=${RUBY_VER} && DEFAULT_RAILS_VER=${RAILS_VER} && build -t ${TAG} --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DOCKER_ENV=${DOCKER_ENV}
 
 ##  run --rm -I
 
@@ -204,7 +204,7 @@ function rubyver() {\n\
 \
 rubyver \
   $(if [[ ! ${RUBY_VERSION} == ${DEFAULT_RUBY_VER} ]];then echo ${DEFAULT_RUBY_VER} ${DEFAULT_RAILS_VER};fi; exit)\n\
-export HEROKUHOME=/usr/local/heroku/bin\n\
+#export HEROKUHOME=/usr/local/heroku/bin\n\
 #if [ ! -d $HEROKUHOME ] && [ -d ~/.nvm ]\n\
 #  then cyan "Getting heroku" && echo\n\
 #    source <(curl -sL https://cdn.learnenough.com/heroku_install) 2>/dev/null\n\
@@ -222,8 +222,8 @@ export HEROKUHOME=/usr/local/heroku/bin\n\
 #chown '$THISUSER':'$THISUSER' '$USERHOME'/*\n\
 #'\
 #>>$USERHOME/.bashrc
-
-ENV DOCKER_ENV=ruby
+ARG DOCKER_ENV
+ENV DOCKER_ENV=$DOCKER_ENV
 RUN echo '### SHARED HISTORY ###\n\
 if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.${DOCKER_ENV}"; fi && green "Shared bash history at:" && echo ${HISTFILE}\n\
 '\
@@ -254,8 +254,16 @@ VOLUME $USERHOME/code-store
 VOLUME $USERHOME/scratch
 
 
-FROM bashrc as awscli
+FROM bashrc as awscliinstall
+VOLUME $USERHOME/aws
+RUN mkdir $USERHOME/aws
+RUN echo '\n\
+if ! command -v aws; then sudo '$USERHOME'/aws/install; fi\n\
+' \
+>>$USERHOME/.bashrc
+
+
 #AWS CLI
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
-  && unzip awscliv2.zip && rm -rf awscliv2.zip \
-  && sudo mv aws/ /usr/local/ && sudo /usr/local/aws/install
+#RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+#  && unzip awscliv2.zip #&& rm -rf awscliv2.zip \
+#  && sudo mv aws/ /usr/local/ && sudo /usr/local/aws/install
