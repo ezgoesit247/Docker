@@ -38,6 +38,7 @@ ARG SPACE="' '"
 ARG COLOR_NORMAL="'\\\e[0m'"
 RUN echo '\n\
 ### FUNCTIONS ###\n\
+#https://askubuntu.com/questions/558280/changing-colour-of-text-and-background-of-terminal
 function shades {\n\
   for((i=16; i<256; i++)); do\n\
       printf "\\e[48;5;${i}m%03d" $i;\n\
@@ -53,6 +54,8 @@ function println { printf "$1\n" "${@:2}"; }\n\
 function green { changetext 0 34 42 $* ; }\n\
 function yellow { changetext 0 31 43 $* ; }\n\
 function blue { changetext 0 36 44 $*; }\n\
+function cyan { changetext 0 0 46 $*; }\n\
+function grey { changetext 1 39 100 $* ; }\n\
 green "$(grep DISTRIB_DESCRIPTION /etc/lsb-release)" && echo\n\
 blue "python:" && python --version\n\
 blue "pip:" && pip --version\
