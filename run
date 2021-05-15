@@ -442,6 +442,12 @@ case $i in
   DEBUG ${LINENO} && VARS
   shift
   ;;
+--irm|--rmi)
+  RM="--rm"
+  INTERACTIVE="-it"
+  DEBUG ${LINENO} && VARS
+  shift
+  ;;
 -I)
   INTERACTIVE="-it"
   DEBUG ${LINENO} && VARS
