@@ -1,4 +1,12 @@
-FROM local/seedling:ubuntu-20.04 as top
+FROM local/seedling:ubuntu-20.04 as seedling
+CMD ["/bin/bash"]
+
+RUN apt-get -qq update \
+   && apt-get -qq install \
+      curl \
+      wget \
+      unzip \
+      vim
 
 ### GEN EDS- yarrgh ###
 RUN apt-get -qq update \
@@ -10,36 +18,51 @@ RUN apt-get -qq update \
    ca-certificates \
    gnupg-agent
 
-RUN echo '\n\
-### FUNCTIONS ###\n\
-function showcolors { for bg in `seq 0 9`; do for fg in `seq 0 9`; do echo -n "`expr $fg` `expr $bg`: " && color `expr $fg` `expr $bg` "Tyler & Corey"; echo; done; done }\n\
-alias colors=showcolors\n\
-function color  { echo -n "$(tput setaf $1;tput setab $2)${3}$(tput sgr 0) "; }\n\
-function green  { color 4 2 "${*}"; }\n\
-function yellow { color 0 3 "${*}"; }\n\
-function red    { color 9 1 "${*}"; }\n\
-function blue   { color 6 4 "${*}"; }\n\
-function cyan   { color 9 6 "${*}"; }\n\
-function grey   { color 0 7 "${*}"; }\n\
-function pass   { echo; echo "$(green PASS: ${*})"; echo; }\n\
-function warn   { echo; echo "$(yellow PASS: ${*})"; echo; }\n\
-function fail   { echo; echo "$(red FAIL: ${*})"; echo; }\n\
-function info   { echo; echo "$(grey INFO: ${*})"; echo; }\n\
-green $(grep "DISTRIB_DESCRIPTION" /etc/lsb-release) && echo\n\
-blue "python:"; python --version\n\
-blue "pip: "; pip --version\
-'\
->> /etc/bash.bashrc
-
-RUN apt-get -qq clean
-
-FROM top as bottom
+FROM seedling as python
 RUN apt-get -qq install -y \
 python \
 python3-pip \
 && apt-get -qq clean
 
-FROM bottom as bottom2
+FROM python as py2
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python2 80 \
 && update-alternatives --install /usr/bin/python python /usr/bin/python3 90 \
 && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 90
+
+FROM py2 as stuff
+ARG GREEN="'\e[32m%s\e[m'"
+ARG YELLOW="'\e[33m%s\e[m'"
+ARG BLUE="'\e[34m%s\e[m'"
+ARG NEWLINE="'\\\n'"
+ARG SPACE="' '"
+ARG COLOR_NORMAL="'\\\e[0m'"
+RUN echo '\n\
+### FUNCTIONS ###\n\
+function shades {\n\
+  for((i=16; i<256; i++)); do\n\
+      printf "\\e[48;5;${i}m%03d" $i;\n\
+      printf "\\e[0m";\n\
+      [ ! $((($i - 15) % 6)) -eq 0 ] && printf '$SPACE' || printf '$NEWLINE'\n\
+  done\n\
+}\n\
+function changetext { printf "\e[$1;$2;$3m${*:4}\e[0m " ; }\n\
+function showcolors { for bg in `seq 0 9`; do for fg in `seq 0 9`; do echo -n "`expr $fg` `expr $bg`: " && color `expr $fg` `expr $bg` "Tyler & Corey"; echo; done; done }\n\
+alias colors=showcolors\n\
+function color  { echo -n "$(tput setaf $1;tput setab $2)${3}$(tput sgr 0) "; }\n\
+function println { printf "$1\n" "${@:2}"; }\n\
+function green { changetext 0 34 42 $* ; }\n\
+function yellow { changetext 0 31 43 $* ; }\n\
+function blue { changetext 0 36 44 $*; }\n\
+green "$(grep DISTRIB_DESCRIPTION /etc/lsb-release)" && echo\n\
+blue "python:" && python --version\n\
+blue "pip:" && pip --version\
+'\
+>>/etc/bash.bashrc
+
+FROM stuff as rootstuff
+RUN echo '### ROOT STUFF ###\n\
+alias ls="ls -Altr --color=auto"\n\
+export PS1="${debian_chroot:+($debian_chroot)}\[\033[1;32m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ " \n\
+export HISTTIMEFORMAT="%FT%T\t"\n\
+'\
+>>/root/.bashrc
