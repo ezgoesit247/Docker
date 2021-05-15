@@ -1,4 +1,4 @@
-FROM local/seedling:ubuntu-20.04 as seedling
+FROM ubuntu:20.04 as seedling
 CMD ["/bin/bash"]
 
 RUN apt-get -qq update \
