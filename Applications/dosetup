@@ -19,6 +19,7 @@ function generate_dockerfile {
   echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
 #  echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
   echo "_USER_=\"-u \${CUSER}\"" >>~/sandbox/assets.docker/${app}/setenv
+  echo 'LOCALUSER="--arg=LOCALUSER=${USER}"' >>~/sandbox/assets.docker/${app}/setenv
 
   ##  GENERATE DOCKER FILE
   cat >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
@@ -26,6 +27,7 @@ function generate_dockerfile {
 FROM local/${DEVELOPMENT_PLATFORM}-appdev:${PLATFORM_VERSION} as root
 ARG gituser
 ARG CUSERHOME=/home/\$gituser
+ARG LOCALUSER
 RUN useradd -ms /bin/bash -d \$CUSERHOME -U \$gituser
 
 ENV GIT_SSH=/root/bin/git-ssh
@@ -46,7 +48,7 @@ RUN chmod 700 /root/.ssh \
 && chmod 755 \$GIT_SSH \
 && chmod 600 \$KNOWN_HOSTS \
 && chmod 644 \$GIT_CONFIG \
-&& sed -i 's/\/Users\/***REMOVED***/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
+&& sed -i 's/\/Users\/'\$LOCALUSER'/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
 && chmod 600 /root/.ssh/\$SSH_PRIVATE_KEY
 
 VOLUME /$app
@@ -81,7 +83,7 @@ RUN sudo chown -R \$gituser:\$gituser \$CUSERHOME \
 && sudo chmod 600 \$KNOWN_HOSTS \
 && sudo chmod 644 \$GIT_CONFIG \
 && sudo chmod 644 \$GIT_IGNORE_GLOBAL \
-&& sudo sed -i 's/\/Users\/***REMOVED***/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
+&& sudo sed -i 's/\/Users\/'\$LOCALUSER'/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
 && sudo chmod 600 \$SSH_PRIVATE_KEY_PATH/\$SSH_PRIVATE_KEY
 
 
