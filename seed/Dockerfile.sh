@@ -25,9 +25,9 @@ python3-pip \
 && apt-get -qq clean
 
 FROM python as py2
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python2 80 \
-&& update-alternatives --install /usr/bin/python python /usr/bin/python3 90 \
-&& update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 90
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python2 2 \
+&& update-alternatives --install /usr/bin/python python /usr/bin/python3 3 \
+&& update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 3
 
 FROM py2 as stuff
 ARG GREEN="'\e[32m%s\e[m'"
