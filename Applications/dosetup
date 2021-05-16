@@ -16,7 +16,8 @@ function generate_dockerfile {
   local PLATFORM_VERSION=$3
   local ROOT_BUILD=$4
   if [ ! ${PLATFORM_VERSION} ]; then PLATFORM_VERSION=latest; fi
-  if [ ! ${ROOT_BUILD} ]; then ROOT_BUILD=false; else ROOT_BUILD=true; fi
+  if [ ! ${ROOT_BUILD} ]; then ROOT_BUILD=false;
+  else ROOT_BUILD=true && echo ROOT_BUILD NOT IMPLEMENTED && exit ${LINENO}; fi
 
   echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
 #  echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
@@ -60,9 +61,13 @@ RUN git clone git@github.com:\$gituser/$app /$app \
 && chown -R \$gituser:\$gituser /$app /$app/.git \
 && ln -fsn /$app \$CUSERHOME/$app
 RUN apt-get -qq clean
+
+
 EOF
 
-  if ${ROOT_BUILD}; then cat >>./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF; fi
+
+  ## THIS IS NOT IMPLEMENTED YET
+  if ! ${ROOT_BUILD}; then cat >>./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF; fi
 FROM root as user
 USER \$gituser
 WORKDIR \$CUSERHOME
