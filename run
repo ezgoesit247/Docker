@@ -392,7 +392,7 @@ case $i in
   DEBUG ${LINENO} && VARS
   shift
   ;;
---priv)
+-priv|--priv)
   PRIV="--privileged"
   DEBUG ${LINENO} && VARS
   shift
@@ -437,12 +437,12 @@ case $i in
   DEBUG ${LINENO} && VARS
   shift
   ;;
---rm)
+-rm|--rm)
   RM="--rm"
   DEBUG ${LINENO} && VARS
   shift
   ;;
---irm|--rmi)
+-irm|--irm|-rmi|--rmi)
   RM="--rm"
   INTERACTIVE="-it"
   DEBUG ${LINENO} && VARS
