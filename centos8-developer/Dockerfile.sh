@@ -1,12 +1,8 @@
 FROM local/centos-centos8 as root1
 
-# CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
+##  CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH} && build --rm --arg=LOCALUSER=${USER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DH=${DOCKERHUBUSER} --arg=DP=${DOCKERHUBTOKEN} -t systemd centos8-developer
 
-# build --rm --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DH=${DOCKERHUB_USER} --arg=DP=${DOCKERHUB_PWD} -t systemd centos8-developer
-
-# NAME_CLAUSE="--name centos8-developer"
-
-# docker exec -it $(docker run --hostname centos8 -d --rm --privileged ${NAME_CLAUSE} -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash
+##  NAME_CLAUSE="--name centos8-developer" && docker exec -it $(docker run --hostname centos8 --env=dev -d --rm --privileged ${NAME_CLAUSE} -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash
 
 RUN yum -y update \
 && yum install -y wget curl
@@ -34,6 +30,7 @@ COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
 
+ARG LOCALUSER
 ARG SSH_PRIVATE_KEY_PATH=/root/.ssh
 ARG SSH_PRIVATE_KEY
 ARG SSH_PRIVATE_KEY_STREAM
@@ -44,7 +41,7 @@ RUN chmod 700 /root/.ssh \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
-&& sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/\/Users\/'$LOCALUSER'/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
 FROM root4 as root5
@@ -116,9 +113,9 @@ ARG DH
 ARG DP
 ENV DOCKERHUB_USER=$DH
 ENV DOCKERHUB_USERNAME=$DOCKERHUB_USER
-ENV DOCKERHUB_PWD=$DP
+ENV DOCKERHUB_PSWD=$DP
 RUN echo -e "\
-docker login -u ${DOCKERHUB_USER} --password-stdin <<<$(echo "${DOCKERHUB_PWD}") \n\
+docker login -u ${DOCKERHUB_USER} --password-stdin <<<$(echo "${DOCKERHUB_PSWD}") \n\
 "\
 >>/etc/bashrc
 
