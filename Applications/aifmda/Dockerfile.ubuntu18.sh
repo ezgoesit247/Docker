@@ -4,7 +4,7 @@ FROM local/u18-java8 as top
 
 ##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
-##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.ubuntu18.sh Applications/${APP}
+##  build --arg=LOCALUSER=${USER} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.ubuntu18.sh Applications/${APP}
 
 ##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:ubuntu18
 
@@ -20,6 +20,7 @@ COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
 
+ARG LOCALUSER
 ARG SSH_PRIVATE_KEY_PATH=/root/.ssh
 ARG SSH_PRIVATE_KEY
 ARG SSH_PRIVATE_KEY_STREAM
@@ -30,7 +31,7 @@ RUN chmod 700 /root/.ssh \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
-&& sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/\/Users\/'$LOCALUSER'/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
 ARG UNAME=default_virtual
@@ -54,7 +55,7 @@ RUN git clone git@github.com:$gituser/$APP /$APP \
 
 FROM code as setup
 
-RUN apt-get install -qq \
+RUN apt-get update && apt-get install -qq \
 mysql-client \
 && apt-get -qq clean
 
@@ -72,7 +73,7 @@ RUN chmod 755 $UDIRPATH/bin \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
-&& sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/\/Users\/'$LOCALUSER'/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 && chown -R $UNAME:$UNAME $UDIR/*
 
 USER $UNAME
