@@ -2,7 +2,7 @@ FROM local/centos-centos8 as root1
 
 ##  CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH} && build --rm --arg=LOCALUSER=${USER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DH=${DOCKERHUBUSER} --arg=DP=${DOCKERHUBTOKEN} -t systemd centos8-developer
 
-##  NAME_CLAUSE="--name centos8-developer" && docker exec -it $(docker run --hostname centos8 --env=dev -d --rm --privileged ${NAME_CLAUSE} -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash
+##  NAME_CLAUSE="--name centos8-developer" && docker exec -it $(docker run --hostname centos8 --env=dev -d --privileged ${NAME_CLAUSE} -v=docker_vol:/docker_vol -v=/sys/fs/cgroup:/sys/fs/cgroup:ro local/centos8-developer:systemd) /bin/bash
 
 RUN yum -y update \
 && yum install -y wget curl
