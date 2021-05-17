@@ -19,12 +19,17 @@ function generate_dockerfile {
   if [ ! ${ROOT_BUILD} ]; then ROOT_BUILD=false;
   else ROOT_BUILD=true && echo ROOT_BUILD NOT IMPLEMENTED && exit ${LINENO}; fi
 
-  echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
-#  echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
-  echo "_USER_=\"-u \${CUSER}\"" >>~/sandbox/assets.docker/${app}/setenv
-  echo 'LOCALUSER="--arg=LOCALUSER=${USER}"' >>~/sandbox/assets.docker/${app}/setenv
+   ## COPY AND CHANGE ENV FILE UNLESS MARKED STICKY
+  if [ ! -k ${app}/setenv ]; then
+    echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
+  #  echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
+    echo "_USER_=\"-u \${CUSER}\"" >>~/sandbox/assets.docker/${app}/setenv
+    echo 'LOCALUSER="--arg=LOCALUSER=${USER}"' >>~/sandbox/assets.docker/${app}/setenv
 
-  ## PRIME OURFILE
+    chmod 1644 ${app}/setenv
+  fi
+
+  ## PRIME OUTFILE
   >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh
   ##  GENERATE DOCKER FILE
   cat >>./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF
@@ -60,7 +65,6 @@ RUN chmod 700 /root/.ssh \
 ENV DOCKER_ENV=\$DOCKER_ENV
 VOLUME /$app
 RUN git clone git@github.com:\$gituser/$app /$app \
-&& chown -R \$gituser:\$gituser /$app /$app/.git \
 && ln -fsn /$app \$CUSERHOME/$app \
 && echo '### SHARED HISTORY ###\n\
 if [ -d \${HOME}/public.assets/bash_history/ ]; then export HISTFILE="\${HOME}/public.assets/bash_history/history.\${DOCKER_ENV}"; fi && green "Shared bash history at:" && echo \${HISTFILE}\n\
@@ -91,7 +95,8 @@ ARG SSH_PRIVATE_KEY_PATH=\$CUSERHOME/.ssh
 ARG KEYSTREAM="echo \"\${SSH_PRIVATE_KEY_STREAM}\" > \$SSH_PRIVATE_KEY_PATH/\$SSH_PRIVATE_KEY"
 RUN sudo su - -c "\$KEYSTREAM"
 
-RUN sudo chown -R \$gituser:\$gituser \$CUSERHOME \
+RUN sudo chown -R \$gituser:\$gituser /$app /$app/.git \
+&& sudo chown -R \$gituser:\$gituser \$CUSERHOME \
 && sudo chmod 700 \$CUSERHOME/.ssh \
 && sudo chmod 755 \$CUSERHOME/bin \
 && sudo chmod 755 \$GIT_SSH \
@@ -123,24 +128,22 @@ EOF
 }
 
 function create_git {
-REPO=${1}
+REPO="${1}"
 
-mkdir -p "/tmp/gitwork/dosetup/${REPO}" && pushd "${_}"
+mkdir -p /tmp/gitwork/dosetup/${REPO} && pushd ${_}
 
-COMMIT_MESSAGE="initial commit"
-JSON={\"name\":\"${REPO}\"} && \
+RETURN=$(JSON={\"name\":\"${REPO}\"} && \
 curl -s --url https://api.github.com/user/repos -d ${JSON} \
--K- <<< "--user ${GITLOGIN}:$(cat ${GITTOKEN})"|grep ssh_url|sed 's/.\{1\}$//' || \
-echo create remote repr failed || exit ${LINENO}
+-K- <<<"--user ${GITLOGIN}:$(cat ${GITTOKEN})"|jq -r .ssh_url)
 
-git init
-git remote add origin git@github.com:${GITUSER}/${REPO}.git
-
-echo "${REPO}" >README.md
-
-git add . && git commit -m "$COMMIT_MESSAGE"
-git push --set-upstream origin master
-
+if [[ $(basename ${RETURN}) == ${REPO}.git ]]; then
+  git init
+  COMMIT_MESSAGE="initial commit"
+  git remote add origin git@github.com:${GITUSER}/${REPO}.git
+  echo "${REPO}" >README.md
+  git add . && git commit -m "$COMMIT_MESSAGE"
+  git push --set-upstream origin master
+fi
 popd
 }
 
@@ -174,8 +177,10 @@ for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./pri
 for f in dobuild rundb rundev; do ln -fn ./generic/$f ./${app}/; done
 
 # COPY AND CHANGE ENV FILE
-cp ./generic/setenv ${app}/
-sed -i '' "s/generic/${app}/" ${app}/setenv
+if [ ! -k ${app}/setenv ]; then
+  cp ./generic/setenv ${app}/
+  sed -i '' "s/generic/${app}/" ${app}/setenv
+fi
 ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 # SYM LINK THE EXECUTABLES TO THE SANDBOX
 for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/assets.docker/${app}/ ;done
@@ -187,13 +192,14 @@ if [[ ! ${_GENERATE_} == ON ]];
   else generate_dockerfile ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION} ${ROOT_BUILD};
 fi
 
-## BIULD DEVE LOPMENT COMTAINER
+## BUILD DEVELOPMENT COMTAINER
 echo "Building dev container"
-~/sandbox/assets.docker/${app}/build
+~/sandbox/assets.docker/${app}/build --no-cache
 #echo $LINENO && exit $LINENO
-## COPY & CHANGE RUN FILE
-cp -p ~/sandbox/generic ~/sandbox/${app}
-sed -i '' "s/generic/${app}/" ~/sandbox/${app}
-
+## COPY & CHANGE RUN FILE UNLESS MARKED STICKY
+if [ ! -k ~/sandbox/${app} ]; then
+  cp -p ~/sandbox/generic ~/sandbox/${app}
+  sed -i '' "s/generic/${app}/" ~/sandbox/${app}
+fi
 ## GET THE PROJECT CODE
 #git clone git@github.com:${CUSER}/${app} ~/Docker/assets.${app}-application/${app}
