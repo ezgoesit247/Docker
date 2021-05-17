@@ -126,8 +126,8 @@ terraform validate
 
 mkdir ~/.aws && echo | cat >> ~/.aws/credentials<<EOF
 [default]
-***REMOVED***=${KEY_ID}
-***REMOVED***=${ACCESS_KEY}
+aws_access_key_id=${KEY_ID}
+aws_secret_access_key=${ACCESS_KEY}
 EOF
 
 
