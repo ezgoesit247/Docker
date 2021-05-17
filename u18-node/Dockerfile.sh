@@ -10,7 +10,7 @@ yarn
 
 ##  CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH} && APP=node
 
-##  build --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} u18-node
+##  build --arg=LOCALUSER=${USER} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} u18-node
 
 ##  run --rm --env=dev local/u18-node
 
@@ -27,6 +27,7 @@ COPY assets.docker/git-ssh $GIT_SSH
 COPY assets.docker/.gitconfig $GIT_CONFIG
 COPY assets.docker/known_hosts $KNOWN_HOSTS
 
+ARG LOCALUSER
 ARG SSH_PRIVATE_KEY_PATH=/root/.ssh
 ARG SSH_PRIVATE_KEY
 ARG SSH_PRIVATE_KEY_STREAM
@@ -37,7 +38,7 @@ RUN chmod 700 /root/.ssh \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
-&& sed -i 's/\/Users\/***REMOVED***/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/\/Users\/'$LOCALUSER'/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
 ARG UNAME=poweruser
@@ -89,7 +90,7 @@ RUN chmod 755 $UDIRPATH/bin \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
-&& sed -i 's/\/Users\/***REMOVED***/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
+&& sed -i 's/\/Users\/'$LOCALUSER'/'$UDIR_SAFE_PATH'/' $GIT_CONFIG \
 && chown -R $UNAME:$UNAME $UDIR/*
 
 USER $UNAME
