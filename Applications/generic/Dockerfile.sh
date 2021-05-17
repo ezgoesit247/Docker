@@ -75,7 +75,7 @@ ARG UDIRPATH=$UDIR/$U
 
 VOLUME /$app
 #VOLUME /$app
-RUN git clone git@github.com:***REMOVED***/$app /$app
+RUN git clone git@github.com:*\\//*REMOVED*\\//*/$app /$app
 RUN ln -fsn /$app /usr/local/$app
 RUN rm -rf $GIT_CONFIG $RDIRPATH/.ssh/* $RDIRPATH/bin
 
