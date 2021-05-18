@@ -1,0 +1,69 @@
+### BUILT WITH dosetup
+FROM local/ubuntu-appdev:18.04 as root
+ARG gituser
+ARG DOCKER_ENV=mesen
+ARG CUSERHOME=/root
+ARG LOCALUSER
+
+ENV GIT_SSH=/root/bin/git-ssh
+ARG ROOT_SAFE_PATH=\\/root
+ARG GIT_CONFIG=/root/.gitconfig
+ARG KNOWN_HOSTS=/root/.ssh/known_hosts
+COPY assets.docker/git-ssh $GIT_SSH
+COPY assets.docker/git-ssh $GIT_SSH
+COPY assets.docker/.gitconfig $GIT_CONFIG
+COPY assets.docker/known_hosts $KNOWN_HOSTS
+
+ARG SSH_PRIVATE_KEY
+ARG SSH_PRIVATE_KEY_STREAM
+RUN echo "${SSH_PRIVATE_KEY_STREAM}" > /root/.ssh/$SSH_PRIVATE_KEY
+
+RUN chmod 700 /root/.ssh && chmod 755 /root/bin && chmod 755 $GIT_SSH && chmod 600 $KNOWN_HOSTS && chmod 644 $GIT_CONFIG && sed -i 's/\/Users\/'$LOCALUSER'/'$ROOT_SAFE_PATH'/' $GIT_CONFIG && chmod 600 /root/.ssh/$SSH_PRIVATE_KEY
+
+ENV DOCKER_ENV=$DOCKER_ENV
+VOLUME /mesen
+RUN git clone git@github.com:$gituser/mesen /mesen && ln -fsn /mesen $CUSERHOME/mesen && echo '### SHARED HISTORY ###\nif [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.${DOCKER_ENV}"; fi && green "Shared bash history at:" && echo ${HISTFILE}\n'>>/root/.bashrc && apt-get -qq clean
+
+
+FROM root as monodeps
+RUN apt-get install -qq gnupg ca-certificates \
+&& apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF \
+&& echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | tee /etc/apt/sources.list.d/mono-official-stable.list \
+&& apt-get update
+
+FROM monodeps as mono
+RUN apt-get install -qq mono-devel
+
+FROM mono as libsdl2
+RUN apt-get install -qq libsdl2-dev
+
+
+
+FROM libsdl2 as zip
+RUN apt-get install -qq zip
+
+FROM zip as clang
+RUN apt-get install -qq clang-10 \
+&& update-alternatives --install /usr/bin/clang clang /usr/bin/clang-10 10 \
+&& update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-10 10
+
+#FROM clang9 as gcc9
+#RUN apt-get install -qq build-essential \
+#&& apt-get install manpages-dev \
+#&& apt-get install -qq software-properties-common \
+#&& add-apt-repository -y ppa:ubuntu-toolchain-r/test \
+#&& apt-get install -qq gcc-9 g++-9 \
+#&& update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
+
+
+
+FROM clang as runmesen
+VOLUME /root/.config/mesen
+RUN echo 'function buildmesen { LTO=true make ; }\n\
+echo Run buildmesen\n\
+'\
+>>/root/.bashrc
+
+
+FROM runmesen as clean
+RUN apt-get -qq clean
