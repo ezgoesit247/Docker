@@ -1,3 +1,4 @@
+#!/bin/sh
 #docker volume ls!/bin/bash
 
 # THIS RUNS FIRST
