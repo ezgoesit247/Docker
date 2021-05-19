@@ -15,17 +15,19 @@ function generate_dockerfile {
   local DEVELOPMENT_PLATFORM=$2
   local PLATFORM_VERSION=$3
   local ROOT_BUILD=$4
+  local IS_ROOT_BUILD=false
   if [ ! ${PLATFORM_VERSION} ]; then PLATFORM_VERSION=latest; fi
-  if [ ! ${ROOT_BUILD} ]; then ROOT_BUILD=false;
-  else ROOT_BUILD=true && echo ROOT_BUILD NOT IMPLEMENTED && exit ${LINENO}; fi
+  if [ ${ROOT_BUILD} ]; then IS_ROOT_BUILD=true; fi
 
+  OS_CLAUSE="OS=${DEVELOPMENT_PLATFORM}"
+  LOCALUSER_CLAUSE='LOCALUSER="--arg=LOCALUSER=${USER}"'
+  USER_CUSER_CLAUSE='_USER_="-u ${CUSER}"'
+  USER_ROOT_CLAUSE='_USER_="-u root"'
    ## COPY AND CHANGE ENV FILE UNLESS MARKED STICKY
   if [ ! -k ${app}/setenv ]; then
-    echo "OS=${DEVELOPMENT_PLATFORM}" >>~/sandbox/assets.docker/${app}/setenv
-  #  echo "PRIV=--priv" >>~/sandbox/assets.docker/${app}/setenv
-    echo "_USER_=\"-u \${CUSER}\"" >>~/sandbox/assets.docker/${app}/setenv
-    echo 'LOCALUSER="--arg=LOCALUSER=${USER}"' >>~/sandbox/assets.docker/${app}/setenv
-
+    echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+    echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+    echo ${LOCALUSER_CLAUSE }>>~/sandbox/assets.docker/${app}/setenv
     chmod 1644 ${app}/setenv
   fi
 
@@ -37,9 +39,7 @@ function generate_dockerfile {
 FROM local/${DEVELOPMENT_PLATFORM}-appdev:${PLATFORM_VERSION} as root
 ARG gituser
 ARG DOCKER_ENV=$app
-ARG CUSERHOME=/home/\$gituser
 ARG LOCALUSER
-RUN useradd -ms /bin/bash -d \$CUSERHOME -U \$gituser
 
 ENV GIT_SSH=/root/bin/git-ssh
 ARG ROOT_SAFE_PATH=\\\\/root
@@ -62,27 +62,33 @@ RUN chmod 700 /root/.ssh \
 && sed -i 's/\/Users\/'\$LOCALUSER'/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
 && chmod 600 /root/.ssh/\$SSH_PRIVATE_KEY
 
+WORKDIR /root
 ENV DOCKER_ENV=\$DOCKER_ENV
 VOLUME /$app
 RUN git clone git@github.com:\$gituser/$app /$app \
-&& ln -fsn /$app \$CUSERHOME/$app \
+&& ln -fsn /$app /root/$app \
 && echo '### SHARED HISTORY ###\n\
 if [ -d \${HOME}/public.assets/bash_history/ ]; then export HISTFILE="\${HOME}/public.assets/bash_history/history.\${DOCKER_ENV}"; fi && green "Shared bash history at:" && echo \${HISTFILE}\n\
 '\
 >>/root/.bashrc \
 && apt-get -qq clean
-
-
 EOF
 
-
-  ## THIS IS NOT IMPLEMENTED YET
-  if ! ${ROOT_BUILD}; then cat >>./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh <<EOF; fi
+  if ! ${IS_ROOT_BUILD}; then
+    sed -i '' "s/${USER_ROOT_CLAUSE}/${USER_CUSER_CLAUSE}/" ${app}/setenv \
+      && cat >>./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh
+  else sed -i '' "s/${USER_CUSER_CLAUSE}/${USER_ROOT_CLAUSE}/" ${app}/setenv; fi <<EOF
 FROM root as user
-USER \$gituser
+ARG CUSERPATH=/home
+ARG CUSER=\$gituser
+ARG CUSERHOME=\$CUSERPATH/\$CUSER
+RUN useradd -ms /bin/bash -d \$CUSERHOME -U \$CUSER
+USER \$CUSER
 WORKDIR \$CUSERHOME
+
+ENV DOCKER_ENV=\$DOCKER_ENV
 ENV GIT_SSH=\$CUSERHOME/bin/git-ssh
-ARG ROOT_SAFE_PATH=\\\\/home\\\\/\$gituser
+ARG ROOT_SAFE_PATH=\\\\\$CUSERPATH\\\\/\$CUSER
 ARG GIT_CONFIG=\$CUSERHOME/.gitconfig
 ARG KNOWN_HOSTS=\$CUSERHOME/.ssh/known_hosts
 ARG GIT_IGNORE_GLOBAL=\$CUSERHOME/.gitignore_global
@@ -95,8 +101,9 @@ ARG SSH_PRIVATE_KEY_PATH=\$CUSERHOME/.ssh
 ARG KEYSTREAM="echo \"\${SSH_PRIVATE_KEY_STREAM}\" > \$SSH_PRIVATE_KEY_PATH/\$SSH_PRIVATE_KEY"
 RUN sudo su - -c "\$KEYSTREAM"
 
-RUN sudo chown -R \$gituser:\$gituser /$app /$app/.git \
-&& sudo chown -R \$gituser:\$gituser \$CUSERHOME \
+RUN sudo chown -R \$CUSER:\$CUSER /$app /$app/.git \
+&& sudo chown -R \$CUSER:\$CUSER \$CUSERHOME \
+&& ln -fsn /$app $app \
 && sudo chmod 700 \$CUSERHOME/.ssh \
 && sudo chmod 755 \$CUSERHOME/bin \
 && sudo chmod 755 \$GIT_SSH \
@@ -105,7 +112,6 @@ RUN sudo chown -R \$gituser:\$gituser /$app /$app/.git \
 && sudo chmod 644 \$GIT_IGNORE_GLOBAL \
 && sudo sed -i 's/\/Users\/'\$LOCALUSER'/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
 && sudo chmod 600 \$SSH_PRIVATE_KEY_PATH/\$SSH_PRIVATE_KEY
-
 
 RUN echo '\
 if ! sudo service docker status; then sudo service docker start; fi\n\
@@ -123,7 +129,6 @@ if [ -d \${HOME}/public.assets/bash_history/ ]; then export HISTFILE="\${HOME}/p
 pushd /\${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n\
 '\
 >>\$CUSERHOME/.bashrc
-
 EOF
 }
 
