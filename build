@@ -1,5 +1,6 @@
 #!/bin/bash
 
+if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ]; then debug=1; else debug=0; fi;
 docker_dir=${HOME}/Docker
 function msg {
   green2 "build::${1}" "${2}"
@@ -36,8 +37,10 @@ function do_build {
 #      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
 #      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
 #   done
-  if ! ${CMD}; then msg "do_build:${LINENO}" "retrying: ${CMD}"
-    eval ${CMD}
+  if [ ${debug} -eq 1 ]; then exit ${LINENO}; else
+    if ! ${CMD}; then msg "do_build:${LINENO}" "retrying: ${CMD}"
+      eval ${CMD}
+    fi
   fi
 }
 function build {
@@ -145,7 +148,7 @@ done
 build_list=(~/Docker/u18-terraform ~/Docker/Applications/aifmda ~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-scala ~/Docker/u18-node ~/Docker/u18-java8 ~/Docker/u18-jdk8header ~/Docker/u18-seed ~/Docker/u18-seedling)
 if [ ${BUILDALL} ]; then build_all ${build_list} && exit 0; fi
 
-if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
+if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then #if [ ${debug} -eq 1 ]; then exit ${LINENO}; fi
   pushd ${docker_dir}/${1} > /dev/null && DIR=$(basename ${1})
   if [ -f ${FNAME} ]; then doc ${FNAME}; else doc; fi
   TAGS="-t ${REMOTE}${DIR}"
@@ -156,7 +159,7 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   if [ ${USERTAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${USERTAG}"; fi
   build "${TAGS}"
   popd > /dev/null
-else
+else #if [ ${debug} -eq 1 ]; then exit ${LINENO}; fi
   if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then doc; fi
   if [ $MYTAG ];then TGS="-t ${REMOTE}${PWD##*/}:${MYTAG}"; fi
   if [ $TAG ];then TGS="${TGS} -t ${REMOTE}${PWD##*/}:${TAG}"; fi
