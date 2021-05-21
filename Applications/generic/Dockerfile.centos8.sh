@@ -38,7 +38,8 @@ ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$UNAME
 ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
 
-RUN useradd -ms /bin/bash -d $UDIRPATH -U $UNAME \
+RUN groupadd -g 1000 $UNAME \
+&& useradd -d $UDIRPATH -ms /bin/bash -u 1000 -g 1000 $UNAME \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
 && mkdir $UDIRPATH/bin
 

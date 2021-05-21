@@ -27,7 +27,8 @@ FROM root as user
 ARG CUSERPATH=/home
 ARG CUSER=$gituser
 ARG CUSERHOME=$CUSERPATH/$CUSER
-RUN useradd -ms /bin/bash -d $CUSERHOME -U $CUSER
+RUN groupadd -g 1000 $CUSER \
+&& useradd -d $CUSERHOME -ms /bin/bash -u 1000 -g 1000 $CUSER
 USER $CUSER
 WORKDIR $CUSERHOME
 

@@ -28,7 +28,8 @@ RUN curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-c
 #ARG UDIRPATH=$UDIR/$U
 
 #RUN apt-get -qq install sudo \
-#&& useradd -ms /bin/bash -d $UDIRPATH -U $U \
+#&& groupadd -g 1000 $U \
+#&& useradd -d $UDIRPATH -s /bin/bash -m $U -u 1000 -g 1000 \
 #&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 #VOLUME /$app

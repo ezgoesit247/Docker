@@ -118,17 +118,3 @@ RUN echo -e "\
 docker login -u ${DOCKERHUB_USER} --password-stdin <<<$(echo "${DOCKERHUB_PSWD}") \n\
 "\
 >>/etc/bashrc
-
-FROM endroot as final
-ARG UNAME=default_virtual
-ARG UPATH=/home/$UNAME
-ARG UPATH_SAFE=\\/home\\/$UNAME
-RUN useradd -ms /bin/bash -d $UPATH -U $UNAME \
-&& usermod -aG docker,users $UNAME \
-&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
-&& echo -e "\
-alias ls=\"ls -Altr --color=auto\" \n\
-export PS1=\"\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]\$ \" \n\
-cd /docker_vol \n\
-"\
->>$UPATH/.bashrc

@@ -1,9 +1,10 @@
 ### BUILT WITH dosetup
-FROM local/ubuntu18-appdev as root
+FROM local/ubuntu-appdev as root
 ARG gituser
 ARG CUSERHOME=/home/$gituser
 ARG LOCALUSER
-RUN useradd -ms /bin/bash -d $CUSERHOME -U $gituser
+RUN groupadd -g 1000 $gituser \
+&& useradd -d $CUSERHOME -ms /bin/bash -u 1000 -g 1000 $gituser
 
 ENV GIT_SSH=/root/bin/git-ssh
 ARG ROOT_SAFE_PATH=\\/root
