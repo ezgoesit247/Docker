@@ -251,24 +251,8 @@ ARG line="$line\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
 RUN echo "$line" >$USERHOME/.vimrc
 
 WORKDIR $USERHOME
-EXPOSE 3000
 RUN mkdir $USERHOME/code-store \
 && mkdir $USERHOME/scratch
 
 VOLUME $USERHOME/code-store
 VOLUME $USERHOME/scratch
-
-
-FROM bashrc as awscliinstall
-VOLUME $USERHOME/aws
-RUN mkdir $USERHOME/aws
-RUN echo '\n\
-if ! command -v aws; then sudo '$USERHOME'/aws/install; fi\n\
-' \
->>$USERHOME/.bashrc
-
-
-#AWS CLI
-#RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
-#  && unzip awscliv2.zip #&& rm -rf awscliv2.zip \
-#  && sudo mv aws/ /usr/local/ && sudo /usr/local/aws/install
