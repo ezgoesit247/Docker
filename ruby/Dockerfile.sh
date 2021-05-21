@@ -1,6 +1,6 @@
 FROM local/seed:ubuntu-20.04 as top
 
-##  DOCKER_ENV=ruby && TAG=ubuntu-20.04 && RUBY_VER=ruby-2.7.3 && RAILS_VER=latest && . ./setenv && DEFAULT_RUBY_VER=${RUBY_VER} && DEFAULT_RAILS_VER=${RAILS_VER} && build -t ${TAG} --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DOCKER_ENV=${DOCKER_ENV}
+##  DOCKER_ENV=ruby && TAG1=ubuntu-20.04 && TAG2=ubuntu && RUBY_VER=ruby-2.7.3 && RAILS_VER=latest && . ./setenv && DEFAULT_RUBY_VER=${RUBY_VER} && DEFAULT_RAILS_VER=${RAILS_VER} && DEBUG=0 build --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DOCKER_ENV=${DOCKER_ENV} -t ${TAG1} -t=${TAG2}
 
 ##  run --rm -I
 
@@ -165,7 +165,11 @@ function nodever() {\n\
   if [ ! -z $1 ]; then\n\
     nvm install ${1} >/dev/null 2>&1 && nvm use ${_} > /dev/null 2>&1\\\n\
       && nvm alias default ${_} > /dev/null 2>&1; blue "Node:"; node -v; else\n\
-    yellow "Use nodever to install or switch node versions:" && echo -e "\n usage: nodever [ver]"; blue "Node:"; node -v && blue "nvm:"; nvm -v; fi;\n\
+    yellow "Use nodever to install or switch node versions:" && echo -e "\\n usage: nodever [ver]"\n\
+    blue "Node:" && node -v\n\
+    blue "npm:" && npm -v\n\
+    blue "nvm:" && nvm -v\n\
+  fi\n\
 }\n\
 nodever\n\
 '\
