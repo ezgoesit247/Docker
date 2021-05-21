@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_GENERATE_=ON
+if [ ! ${_GENERATE_} ]; then _GENERATE_=ON; else _GENERATE_=OFF; fi
 function usage {
   echo "Usage $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD> "
   echo -e "\tex: ./dosetup bestappever ubuntu 18.04"
@@ -27,7 +27,7 @@ function generate_dockerfile {
   if [ ! -k ${app}/setenv ]; then
     echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
     echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-    echo ${LOCALUSER_CLAUSE }>>~/sandbox/assets.docker/${app}/setenv
+    echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
     chmod 1644 ${app}/setenv
   fi
 
@@ -159,6 +159,18 @@ app=$1 && DEVELOPMENT_PLATFORM=$2 && PLATFORM_VERSION=$3 && ROOT_BUILD=$4
 if [ ! $app ]; then usage no app && exit $LINENO; fi
 if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform && exit $LINENO; fi
 
+
+
+CUSER=${GITUSER}
+#echo -e "using ${CUSER} for clone\nenter appname: " && read app
+echo "Gernerate dockerfile is ${_GENERATE_}"
+echo "using ${CUSER} for clone"
+read -p "appname ${app}? (Y/n) " yn
+yn=${yn:-Y}
+if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage && exit ${LINENO}; fi
+
+
+
 # SYM LINK THE SANDBOX -APP DIR
 echo "Creating assets.${app}-application"
 mkdir -p ../assets.${app}-application && echo '*' >${_}/.gitignore
@@ -167,19 +179,7 @@ mkdir -p ./${app}/assets.docker
 echo "linking them..."
 ln -fsn ~/Docker/assets.${app}-application ~/sandbox/assets.docker/${app}
 
-create_git ${app}
-CUSER=${GITUSER}
-#echo -e "using ${CUSER} for clone\nenter appname: " && read app
-echo "using ${CUSER} for clone"
-read -p "appname ${app}? (Y/n) " yn
-yn=${yn:-Y}
-if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage && exit ${LINENO}; fi
 
-
-# HARD LINK PRIVATE ASSETS
-for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./private.assets/$f ./${app}/assets.docker/; done
-# HARD LINK RUN FILES
-for f in dobuild rundb rundev; do ln -fn ./generic/$f ./${app}/; done
 
 # COPY AND CHANGE ENV FILE
 if [ ! -k ${app}/setenv ]; then
@@ -187,6 +187,17 @@ if [ ! -k ${app}/setenv ]; then
   sed -i '' "s/generic/${app}/" ${app}/setenv
 fi
 ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
+
+
+create_git ${app}
+
+
+# HARD LINK PRIVATE ASSETS
+for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./private.assets/$f ./${app}/assets.docker/; done
+# HARD LINK RUN FILES
+for f in dobuild rundb rundev; do ln -fn ./generic/$f ./${app}/; done
+
+
 # SYM LINK THE EXECUTABLES TO THE SANDBOX
 for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/assets.docker/${app}/ ;done
 mv ~/sandbox/assets.docker/${app}/rundev ~/sandbox/assets.docker/${app}/dev
