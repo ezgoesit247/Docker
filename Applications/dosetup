@@ -24,7 +24,7 @@ function use_local_base {
     cat >>./${app}/Dockerfile.sh <<EOF
 ### BUILT WITH dosetup
 FROM local/$(basename ${PLATFORM_VERSION})${DEVELOPMENT_PLATFORM} as ${app}
-
+CMD [/bin/bash]
 EOF
 
   else
@@ -100,6 +100,7 @@ if [ -d \${HOME}/public.assets/bash_history/ ]; then export HISTFILE="\${HOME}/p
 '\
 >>/root/.bashrc \
 && apt-get -qq clean
+CMD [/bin/bash]
 EOF
 
   if ! ${IS_ROOT_BUILD}; then
