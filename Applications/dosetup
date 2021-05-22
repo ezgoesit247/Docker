@@ -39,8 +39,8 @@ function dosetenv {
   local app=$1
   local DEVELOPMENT_PLATFORM=$2
   local OS_CLAUSE="OS=${DEVELOPMENT_PLATFORM}"
-  local LOCALUSER_CLAUSE='LOCALUSER="--arg=LOCALUSER=${USER}"'
-  local USER_CUSER_CLAUSE='_USER_="-u ${CUSER}"'
+  LOCALUSER_CLAUSE='LOCALUSER="--arg=LOCALUSER=${USER}"'
+  USER_CUSER_CLAUSE='_USER_="-u ${CUSER}"'
    ## COPY AND CHANGE ENV FILE UNLESS MARKED STICKY
   if [ ! -k ${app}/setenv ]; then
     echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
