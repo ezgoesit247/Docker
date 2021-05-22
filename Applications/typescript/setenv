@@ -1,0 +1,9 @@
+APP=typescript
+CUSER=${GITUSER}
+KEYNAME=${GITKEYNAME}
+KEYPATH=${GITKEYPATH}
+OS=ubuntu
+LOCALUSER="--arg=LOCALUSER=${USER}"
+_USER_="-u ${CUSER}"
+REMOVE=false
+RUNENV="-e='DOCKER_ENV=typescript'"
