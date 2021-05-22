@@ -1,35 +1,63 @@
 #!/bin/bash
 
-if [ ! ${_GENERATE_} ]; then _GENERATE_=ON; else _GENERATE_=OFF; fi
+if [ ! ${_GENERATE_} ]; then _GENERATE_=ON; fi
 function usage {
-  echo "Usage $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD> "
-  echo -e "\tex: ./dosetup bestappever ubuntu 18.04"
-  echo "Gernerate dockerfile is ${_GENERATE_}"
+  echo "Usage: $*"
+  echo -e "\t_GENERATE_=[\"ON\" | \"LOCAL\"] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
+  exit 1
 }
 
-function copy_generic_dockerfile {
-  cp ./generic/Dockerfile.${DEVELOPMENT_PLATFORM}.sh ./${app}/
+function use_local_base {
+  local app=$1
+  local PLATFORM_VERSION=$2
+  local DEVELOPMENT_PLATFORM=$3
+  local IMAGE="local/$(basename ${PLATFORM_VERSION})"
+  dosetenv ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION}
+  DOCKERFILE=../$(basename ${PLATFORM_VERSION})/Dockerfile
+  if [ -f ${DOCKERFILE} ]; then
+    if [ ${DEVELOPMENT_PLATFORM} ];then DEVELOPMENT_PLATFORM=":${DEVELOPMENT_PLATFORM}";fi
+
+    if ! docker images|grep --quiet --word-regexp ${IMAGE}; then usage image ${IMAGE} not found; fi
+    ## PRIME OUTFILE
+    >./${app}/Dockerfile.sh
+    ##  GENERATE DOCKER FILE
+    cat >>./${app}/Dockerfile.sh <<EOF
+### BUILT WITH dosetup
+FROM local/$(basename ${PLATFORM_VERSION})${DEVELOPMENT_PLATFORM} as ${app}
+
+EOF
+
+  else
+    usage no Dockerfile: $DOCKERFILE \
+    && echo -e "app:$app\nPLATFORM_VERSION:$PLATFORM_VERSION\nDEVELOPMENT_PLATFORM:$DEVELOPMENT_PLATFORM"
+  fi
+  #cp ./generic/Dockerfile.${DEVELOPMENT_PLATFORM}.sh ./${app}/
 }
-function generate_dockerfile {
+function dosetenv {
+  local app=$1
+  local DEVELOPMENT_PLATFORM=$2
+  local OS_CLAUSE="OS=${DEVELOPMENT_PLATFORM}"
+  local LOCALUSER_CLAUSE='LOCALUSER="--arg=LOCALUSER=${USER}"'
+  local USER_CUSER_CLAUSE='_USER_="-u ${CUSER}"'
+   ## COPY AND CHANGE ENV FILE UNLESS MARKED STICKY
+  if [ ! -k ${app}/setenv ]; then
+    echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+    echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+    echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+    chmod 1644 ${app}/setenv
+  fi
+}
+function generate_new_dockerfile {
   local app=$1
   local DEVELOPMENT_PLATFORM=$2
   local PLATFORM_VERSION=$3
   local ROOT_BUILD=$4
   local IS_ROOT_BUILD=false
-  if [ ! ${PLATFORM_VERSION} ]; then PLATFORM_VERSION=latest; fi
-  if [ ${ROOT_BUILD} ]; then IS_ROOT_BUILD=true; fi
+  if [ ! ${PLATFORM_VERSION} ];then PLATFORM_VERSION=latest;fi
+  if [ ${ROOT_BUILD} ];then IS_ROOT_BUILD=true;fi
 
-  OS_CLAUSE="OS=${DEVELOPMENT_PLATFORM}"
-  LOCALUSER_CLAUSE='LOCALUSER="--arg=LOCALUSER=${USER}"'
-  USER_CUSER_CLAUSE='_USER_="-u ${CUSER}"'
+  dosetenv ${app} ${DEVELOPMENT_PLATFORM}
   USER_ROOT_CLAUSE='_USER_="-u root"'
-   ## COPY AND CHANGE ENV FILE UNLESS MARKED STICKY
-  if [ ! -k ${app}/setenv ]; then
-    echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-    echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-    echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-    chmod 1644 ${app}/setenv
-  fi
 
   ## PRIME OUTFILE
   >./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}.sh
@@ -156,8 +184,8 @@ popd
 ### main
 
 app=$1 && DEVELOPMENT_PLATFORM=$2 && PLATFORM_VERSION=$3 && ROOT_BUILD=$4
-if [ ! $app ]; then usage no app && exit $LINENO; fi
-if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform && exit $LINENO; fi
+if [ ! $app ]; then usage no app; fi
+if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform; fi
 
 
 
@@ -189,9 +217,6 @@ fi
 ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 
 
-create_git ${app}
-
-
 # HARD LINK PRIVATE ASSETS
 for f in $(/bin/ls -A ./private.assets/|grep -vE '.gitignore$'); do ln -fn ./private.assets/$f ./${app}/assets.docker/; done
 # HARD LINK RUN FILES
@@ -203,19 +228,23 @@ for f in setenv dobuild rundb rundev; do ln -fsn ${PWD}/${app}/$f ~/sandbox/asse
 mv ~/sandbox/assets.docker/${app}/rundev ~/sandbox/assets.docker/${app}/dev
 mv ~/sandbox/assets.docker/${app}/dobuild ~/sandbox/assets.docker/${app}/build
 
-if [[ ! ${_GENERATE_} == ON ]];
-  then copy_generic_dockerfile;
-  else generate_dockerfile ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION} ${ROOT_BUILD};
+if [[ ${_GENERATE_} == LOCAL ]];
+  then use_local_base ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION};
+elif [[ ${_GENERATE_} == ON ]];
+  then generate_new_dockerfile ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION} ${ROOT_BUILD};
+else
+  usage bad generate && exit ${LINENO}
 fi
+
+
+create_git ${app}
 
 ## BUILD DEVELOPMENT COMTAINER
 echo "Building dev container"
 ~/sandbox/assets.docker/${app}/build --no-cache
-#echo $LINENO && exit $LINENO
+#echo $LINENO
 ## COPY & CHANGE RUN FILE UNLESS MARKED STICKY
 if [ ! -k ~/sandbox/${app} ]; then
   cp -p ~/sandbox/generic ~/sandbox/${app}
   sed -i '' "s/generic/${app}/" ~/sandbox/${app}
 fi
-## GET THE PROJECT CODE
-#git clone git@github.com:${CUSER}/${app} ~/Docker/assets.${app}-application/${app}
