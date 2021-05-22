@@ -46,6 +46,10 @@ function dosetenv {
     echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
     echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
     echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+
+    echo ENVVAR=\"-e=\'DOCKER_ENV=typescript\'\" >>~/sandbox/assets.docker/${app}/setenv
+    echo REMOVE=true >>~/sandbox/assets.docker/${app}/setenv
+
     chmod 1644 ${app}/setenv
   fi
 }
