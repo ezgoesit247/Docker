@@ -2,11 +2,11 @@ FROM local/seed:ubuntu-20.04 as top
 
 ##  DOCKER_ENV=ruby && TAG1=ubuntu-20.04 && TAG2=ubuntu && RUBY_VER=ruby-2.7.3 && RAILS_VER=latest && . ./setenv && DEFAULT_RUBY_VER=${RUBY_VER} && DEFAULT_RAILS_VER=${RAILS_VER} && DEBUG=0 build --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DOCKER_ENV=${DOCKER_ENV} -t ${TAG1} -t=${TAG2}
 
-##  run --rm -I
+##  run --rm -I -e='DOCKER_ENV=ruby'
 
-##  run --rm -I --env=dev --user=root -w /root --rm local/ruby
+##  run --rm -I -e='DOCKER_ENV=ruby' --env=dev --user=root -w /root --rm local/ruby
 
-##  TAG="ubuntu-20.04" && if [ ${TAG} ]; then TAG=":${TAG}"; fi && run -u ${CUSER} --env=dev --app=${APP} -I -p=3000:3000 --name=${CNAME} local/ruby${TAG}
+##  TAG="ubuntu-20.04" && if [ ${TAG} ]; then TAG=":${TAG}"; fi && run -p=3000:3000 --name=${CNAME} --app=${APP} -u ${CUSER} -w /home/${CUSER} --env=dev -e='DOCKER_ENV=ruby' -rmi local/ruby${TAG}
 
 
 FROM top as git
@@ -227,8 +227,8 @@ rubyver \
 #chown '$THISUSER':'$THISUSER' '$USERHOME'/*\n\
 #'\
 #>>$USERHOME/.bashrc
-ARG DOCKER_ENV
-ENV DOCKER_ENV=$DOCKER_ENV
+#ARG DOCKER_ENV
+#ENV DOCKER_ENV=$DOCKER_ENV
 RUN echo '### SHARED HISTORY ###\n\
 if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.${DOCKER_ENV}"; fi && green "Shared bash history at:" && echo ${HISTFILE}\n\
 '\
