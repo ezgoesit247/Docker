@@ -1,4 +1,15 @@
-FROM local/centos-centos7
+
+##  docker exec -it $(docker run -d --rm --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro local/centos-systemd) /bin/bash
+
+FROM centos:8 as tmp1
+
+RUN echo -e "\
+alias ls=\"ls -Altr --color=auto\" \n\
+grep PRETTY_NAME /etc/os-release|sed \"s/[\\\"=_PRETTYNAME]//g\" \n\
+"\
+>>/root/.bashrc
+
+
 ENV container docker
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
 systemd-tmpfiles-setup.service ] || rm -f $i; done); \
