@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM mysql:8
 
 VOLUME ["/mysql-server-volume"]

@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM centos:8 as tmp1
 
 COPY assets.docker/jdk-8.tar.gz jdk-8.tar.gz

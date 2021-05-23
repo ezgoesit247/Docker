@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM ubuntu:20.04 as tmp1
 CMD ["/bin/bash"]
 

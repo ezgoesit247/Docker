@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM local/seed:ubuntu-20.04 as top
 
 ##  DOCKER_ENV=ruby && TAG1=ubuntu-20.04 && TAG2=ubuntu && RUBY_VER=ruby-2.7.3 && RAILS_VER=latest && . ./setenv && DEFAULT_RUBY_VER=${RUBY_VER} && DEFAULT_RAILS_VER=${RAILS_VER} && DEBUG=0 build --arg=DEFAULT_RAILS_VER=${DEFAULT_RAILS_VER} --arg=DEFAULT_RUBY_VER=${DEFAULT_RUBY_VER} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=DOCKER_ENV=${DOCKER_ENV} -t ${TAG1} -t=${TAG2}

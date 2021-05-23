@@ -1,3 +1,4 @@
+#!/bin/bash
 # Install missing Alpine Linux kernel modules from a privileged Docker container (Docker for Mac/Windows)
 #
 # Usage:

@@ -1,8 +1,9 @@
+#!/bin/bash
 FROM nginx AS tmp
 
-COPY assets.docker/jdk-8-linux-x64.tar.gz jdk-8.tar.gz
-COPY assets.docker/apache-maven-3-bin.tar.gz apache-maven-3.tar.gz
-COPY assets.docker/apache-tomcat-8.tar.gz apache-tomcat-8.tar.gz
+COPY assets.docker/jdk-1.8.tar.gz jdk-1.8.tar.gz
+COPY assets.docker/apache-maven-3.tar.gz apache-maven-3.tar.gz
+COPY assets.docker/apache-tomcat-8.5.tar.gz apache-tomcat-8.tar.gz
 
 FROM tmp as tmp1
 
@@ -10,7 +11,7 @@ ARG JAVA_HOME=/jdk1.8
 ARG M2_HOME=/maven
 ARG TOMCAT_HOME=/tomcat
 
-RUN tar zxf jdk-8.tar.gz -C /tmp \
+RUN tar zxf jdk-1.8.tar.gz -C /tmp \
 && mv /tmp/jdk* ${JAVA_HOME} \
 && rm -rf jdk-8.tar.gz
 
