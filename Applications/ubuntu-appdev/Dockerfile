@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM local/seed:ubuntu-20.04 as top
 
 RUN apt-get -qq update \
@@ -31,10 +32,10 @@ ARG GO_TAR=go1.tar.gz
 ARG GO_HOME=/usr/local/go
 ENV GO_HOME=$GO_HOME
 ENV PATH="$PATH:$GO_HOME/bin"
-COPY assets.docker/$GO_TAR $GO_TAR
-RUN tar zxf $GO_TAR -C /tmp \
-&& mv /tmp/go* ${GO_HOME} \
-&& rm -rf $GO_TAR
+#COPY assets.docker/$GO_TAR $GO_TAR
+#RUN tar zxf $GO_TAR -C /tmp \
+#&& mv /tmp/go* ${GO_HOME} \
+#&& rm -rf $GO_TAR
 
 FROM go as sudo
 RUN apt-get -qq install \

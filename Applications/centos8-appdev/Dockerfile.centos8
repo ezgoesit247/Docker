@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM local/centos-centos8 as top
 
 RUN yum update -y \
