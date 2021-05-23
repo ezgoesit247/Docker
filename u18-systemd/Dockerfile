@@ -1,4 +1,5 @@
-FROM local/u18-seed as top
+#!/bin/bash
+FROM local/seed as top
 ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive

@@ -1,7 +1,14 @@
-FROM local/u18-developer
+#!/bin/bash
+FROM local/seed as terraform
 
+ARG USER=poweruser
+RUN apt-get install sudo \
+&& groupadd -g 1000 $USER \
+&& useradd -d /home/$USER -s /bin/bash -m $USER -u 1000 -g 1000 \
+&& echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 RUN sudo apt-get -qq update
+FROM terraform as docker
 ### DOCKER ###
 RUN sudo apt-get install -qq \
       apt-transport-https \
@@ -31,7 +38,7 @@ RUN    echo '### DOCKER ###\n \
 cyan "Docker Compose:"; docker-compose --version' >> /home/poweruser/.bashrc
 
 
-
+FROM docker as cli
 
 ### AWS CLI ###
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip" \
@@ -50,6 +57,7 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo /bin/bash \
  azure-cli \
 && echo 'cyan "Azure CLI:"; /usr/bin/az --version' >> /home/poweruser/.bashrc
 
+from cli as terraformcli
 #TERRAFORM
 RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add - \
  && sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
