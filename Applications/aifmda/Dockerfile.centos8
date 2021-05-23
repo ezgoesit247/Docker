@@ -1,10 +1,11 @@
+#!/bin/bash
 FROM local/centos8-appdev as top
 
 ##  . setenv
 
 ##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
-##  build --arg=LOCALUSER=${USER} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
+##  build --arg=LOCALUSER=${USER} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8 Applications/${APP}
 
 ##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
 
@@ -33,7 +34,8 @@ RUN chmod 700 /root/.ssh \
 && sed -i 's/\/Users\/'$LOCALUSER'/'$ROOT_SAFE_PATH'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
 
-ARG UNAME=default_virtual
+ARG gituser
+ARG UNAME=$gituser
 ARG UDIR=/home
 ARG UDIRPATH=$UDIR/$UNAME
 ARG UDIR_SAFE_PATH=\\/home\\/$UNAME
@@ -45,7 +47,6 @@ RUN groupadd -g 1000 $UNAME \
 
 FROM top as code
 
-ARG gituser
 ARG APP
 VOLUME /$APP
 RUN git clone git@github.com:$gituser/$APP /$APP \

@@ -1,10 +1,11 @@
+#!/bin/bash
 FROM local/centos8-appdev as top
 
 ##  . setenv
 
 ##  run --env=dev --purpose=database --app=${APP} mysql/mysql-server:5.7
 
-##  build --arg=LOCALUSER=${USER} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
+##  build --arg=LOCALUSER=${USER} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos Applications/${APP}
 
 ##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
 
