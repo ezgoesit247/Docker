@@ -1,4 +1,5 @@
 #!/bin/bash
+. ${HOME}/.bash_library
 
 if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ]; then debug=1; else debug=0; fi;
 docker_dir=${HOME}/Docker
@@ -148,7 +149,7 @@ done
 build_list=(~/Docker/u18-terraform ~/Docker/Applications/aifmda ~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-scala ~/Docker/u18-node ~/Docker/u18-java8 ~/Docker/u18-jdk8header ~/Docker/u18-seed ~/Docker/u18-seedling)
 if [ ${BUILDALL} ]; then build_all ${build_list} && exit 0; fi
 
-if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then #if [ ${debug} -eq 1 ]; then exit ${LINENO}; fi
+if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then #if [ ${debug} -eq 1 ]; then yellow "Calling build ${TAGS}" && exit ${LINENO}; fi
   pushd ${docker_dir}/${1} > /dev/null && DIR=$(basename ${1})
   if [ -f ${FNAME} ]; then doc ${FNAME}; else doc; fi
   TAGS="-t ${REMOTE}${DIR}"
@@ -159,7 +160,7 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then #if [ ${debug} -eq 1 ]; then
   if [ ${USERTAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${USERTAG}"; fi
   build "${TAGS}"
   popd > /dev/null
-else #if [ ${debug} -eq 1 ]; then exit ${LINENO}; fi
+else #if [ ${debug} -eq 1 ]; then yellow "Calling build -t ${REMOTE}${PWD##*/} ${TGS}" && exit ${LINENO}; fi
   if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then doc; fi
   if [ $MYTAG ];then TGS="-t ${REMOTE}${PWD##*/}:${MYTAG}"; fi
   if [ $TAG ];then TGS="${TGS} -t ${REMOTE}${PWD##*/}:${TAG}"; fi
