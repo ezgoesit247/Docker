@@ -35,3 +35,6 @@ private
 public
 
 !nginx-tomcat/assets.docker/
+!Dockerfile
+Applications/**/Dockerfile.*
+!Applications/**/Dockerfile.*.sh
