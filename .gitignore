@@ -9,7 +9,6 @@ activemq-springjms-demo/
 apache-activemq*/
 AWS-IOT/
 SprintBoot-JMS/
-Dockerfile
 _shared_assets/bash_history/history.*
 _shared_assets/linuxkit/
 **/*assets*/*.tar.gz
@@ -35,6 +34,4 @@ private
 public
 
 !nginx-tomcat/assets.docker/
-!Dockerfile
-Applications/**/Dockerfile.*
-!Applications/**/Dockerfile.*.sh
+Applications/**/Dockerfile
