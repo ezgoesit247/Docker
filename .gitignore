@@ -30,6 +30,7 @@ Docker-Main
 critical-synced-meta-files.txt
 critical-synced-software-files.txt
 critical-synced-application-files.txt
+critical-synced-driver-files.txt
 private
 public
 
