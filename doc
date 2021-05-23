@@ -1,4 +1,5 @@
 #!/bin/bash
+. ${HOME}/.bash_library
 
 if [ $# -eq 0 ]; then ln -fsn ./Dockerfile.sh ./Dockerfile
-else ln -fsn ${1} ./Dockerfile;  fi
+else yellow doc is linking ${1} && ln -fsn ${1} ./Dockerfile;  fi

@@ -161,7 +161,7 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then #if [ ${debug} -eq 1 ]; then
   build "${TAGS}"
   popd > /dev/null
 else #if [ ${debug} -eq 1 ]; then yellow "Calling build -t ${REMOTE}${PWD##*/} ${TGS}" && exit ${LINENO}; fi
-  if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then doc; fi
+  if [ -f ${FNAME} ]; then doc ${FNAME}; fi
   if [ $MYTAG ];then TGS="-t ${REMOTE}${PWD##*/}:${MYTAG}"; fi
   if [ $TAG ];then TGS="${TGS} -t ${REMOTE}${PWD##*/}:${TAG}"; fi
   echo "${PWD##*/} ${TGS}" && build "-t ${REMOTE}${PWD##*/} ${TGS}"
