@@ -1,3 +1,4 @@
+#!/bin/bash
 ### BUILT WITH dosetup
 FROM local/ubuntu-appdev as root
 ARG gituser

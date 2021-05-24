@@ -1,5 +1,6 @@
+#!/bin/bash
 ### BUILT WITH dosetup
-FROM local/ubuntu-appdev:16.04 as root
+FROM local/ubuntu-appdev:18.04 as root
 ARG gituser
 ARG DOCKER_ENV=mesen
 ARG CUSERHOME=/root
@@ -26,9 +27,9 @@ RUN git clone git@github.com:$gituser/mesen /mesen && ln -fsn /mesen $CUSERHOME/
 
 
 FROM root as monodeps
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF \
-&& sudo apt-get install -qq apt-transport-https ca-certificates \
-&& echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list \
+RUN apt-get install -qq gnupg ca-certificates \
+&& apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF \
+&& echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | tee /etc/apt/sources.list.d/mono-official-stable.list \
 && apt-get update
 
 FROM monodeps as mono
@@ -42,28 +43,22 @@ RUN apt-get install -qq libsdl2-dev
 FROM libsdl2 as zip
 RUN apt-get install -qq zip
 
-FROM zip as update
-RUN apt-get -qq update
+FROM zip as clang
+RUN apt-get install -qq clang-10 \
+&& update-alternatives --install /usr/bin/clang clang /usr/bin/clang-10 10 \
+&& update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-10 10
 
-FROM update as clang7
-RUN apt-get install -qq clang-7 \
-&& update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 7 \
-&& update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 7
+#FROM clang9 as gcc9
+#RUN apt-get install -qq build-essential \
+#&& apt-get install manpages-dev \
+#&& apt-get install -qq software-properties-common \
+#&& add-apt-repository -y ppa:ubuntu-toolchain-r/test \
+#&& apt-get install -qq gcc-9 g++-9 \
+#&& update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
 
-FROM clang7 as clang11
-#RUN apt-get install -qq clang-11 \
-#&& update-alternatives --install /usr/bin/clang clang /usr/bin/clang-11 11 \
-#&& update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-11 11
-#FROM builddeps as x11
-#RUN apt-get install -y x11-apps && \
-#rm -rf /tmp/* /usr/share/doc/* /usr/share/info/* /var/tmp/* && \
-#mkdir -p /root/.config/mesen
-#ENV DISPLAY :0
 
-FROM clang11 as nx
-# dpkg -i local.assets/nomachine_7.4.1_1_amd64.deb
 
-FROM nx as runmesen
+FROM clang as runmesen
 VOLUME /root/.config/mesen
 RUN echo 'function buildmesen { LTO=true make ; }\n\
 echo Run buildmesen\n\

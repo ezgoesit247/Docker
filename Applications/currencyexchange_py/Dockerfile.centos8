@@ -1,8 +1,9 @@
+#!/bin/bash
 FROM local/centos8-developer:systemd as developer1
 
 # APP=currencyexchange_py && CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
 
-# build --rm --arg=UNAME=${CUSER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --usertag ${CUSER} -f Dockerfile.centos8.sh Applications/${APP}
+# build --rm --arg=UNAME=${CUSER} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --usertag ${CUSER} -f Dockerfile.centos8 Applications/${APP}
 
 # NAME_CLAUSE="--name ${CUSER}-${APP}"
 

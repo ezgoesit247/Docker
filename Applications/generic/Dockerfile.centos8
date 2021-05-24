@@ -1,8 +1,9 @@
+#!/bin/bash
 FROM local/centos8-appdev as top
 
 ##  . setenv
 
-##  build --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8.sh Applications/${APP}
+##  . setenv && build --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=APP=${APP} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -f Dockerfile.centos8 Applications/${APP}
 
 ##  run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:centos8
 

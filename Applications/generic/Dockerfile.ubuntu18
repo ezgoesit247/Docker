@@ -1,8 +1,9 @@
+#!/bin/bash
 FROM local/ubuntu-appdev as top
 
 #####   APP=generic && CUSER=${GITUSER} && KEYNAME=${GITKEYNAME} && KEYPATH=${GITKEYPATH}
 
-#####   build --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=appvol=${APP} -f Dockerfile.ubuntu18.sh --arg=APP=${APP} -t=${APP} Applications/generic
+#####   build --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gituser=${CUSER} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} --arg=appvol=${APP} -f Dockerfile.ubuntu18 --arg=APP=${APP} -t=${APP} Applications/generic
 
 #####   run --rm --env=dev --purpose=sandbox --container=${APP} --app=${APP} -v=${APP}:/${APP} local/${APP}:ubuntu18
 
