@@ -1,0 +1,7 @@
+APP=createusers
+CUSER=ropedope
+OS=ubuntu
+_USER_="-u ${CUSER}"
+RUNENV="-e='DOCKER_ENV=createusers'"
+RUNSTATE="-rmi -v=userhome:/userhome"
+REMOVE=true
