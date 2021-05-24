@@ -36,3 +36,4 @@ public
 !nginx-tomcat/assets.docker/
 Applications/**/Dockerfile
 !Applications/typescript/Dockerfile
+!Applications/createusers/Dockerfile
