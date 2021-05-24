@@ -7,4 +7,6 @@ ENVVAR="-e='ACCEPT_EULA=Y' -e='SA_PASSWORD=P@ssw0rd!'"
 DBPORT="-p=1433:1433"
 DETACHDB="-d"
 NAMEDCONTAINER="-n=grocery_datagenerator"
+OS=ubuntu
+_USER_="-u ${CUSER}"
 LOCALUSER="--arg=LOCALUSER=${USER}"
