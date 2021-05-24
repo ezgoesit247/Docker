@@ -50,7 +50,7 @@ function dosetenv {
     echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
     echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
 
-    echo RUNENV=\"-e=\'DOCKER_ENV=typescript\'\" >>~/sandbox/assets.docker/${app}/setenv
+    echo RUNENV=\"-e=\'DOCKER_ENV=${app}\'\" >>~/sandbox/assets.docker/${app}/setenv
     echo REMOVE=true >>~/sandbox/assets.docker/${app}/setenv
 
     chmod 1644 ${app}/setenv
