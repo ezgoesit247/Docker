@@ -365,6 +365,7 @@ case $i in
   USER_ARG="${1}"
   USER="--user ${1}"
   USERNAME=${1}
+  if [[ ${USERNAME} == root ]]; then USERDIR=/${USERNAME} ; else USERDIR="/home/${USERNAME}"; fi
   DEBUG ${LINENO} && VARS
   shift
   ;;
