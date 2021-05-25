@@ -16,15 +16,15 @@ sudo \
 
 
 FROM git as user
-ARG gituser=$gituser
-ARG gitlogin=$gitlogin
-ARG homepath=$homepath
+ARG gituser
+ARG gitlogin
+ARG homepath
+ARG LOCALHOMESAFE
 
 
 ARG THISUSER=$gituser
 ARG THISLOGIN=$gitlogin
 ARG HOMEPATH=$homepath
-ARG LOCALHOMESAFE=$LOCALHOMESAFE
 
 # THESE SHOULD NOT *need* TO CHANGE
 ARG SAFEPATH=\\$HOMEPATH

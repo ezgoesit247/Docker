@@ -21,7 +21,7 @@ sudo
 
 
 FROM git as user
-ARG gituser=$gituser
+ARG gituser
 RUN groupadd -g 1000 $gituser \
 && useradd -d /home/$gituser -s /bin/bash -m $gituser -u 1000 -g 1000 \
 && echo "ALL ALL=(ALL) NOPASSWD: ALL"\
