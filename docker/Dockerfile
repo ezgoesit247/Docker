@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM local/seed:ubuntu-20.04 as top
 RUN apt-get -qq update
 ### DOCKER ###
