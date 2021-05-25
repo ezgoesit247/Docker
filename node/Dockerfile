@@ -76,6 +76,3 @@ RUN mkdir $USERHOME/code-store \
 
 VOLUME $USERHOME/code-store
 VOLUME $USERHOME/scratch
-
-FROM bashrc as portexpose
-EXPOSE 3000
