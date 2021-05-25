@@ -1,6 +1,6 @@
 #!/bin/bash
 
-##  . ./setenv && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR}
+##  . ./setenv && TAG1=ubuntu && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR} -t=${TAG1}
 
 FROM local/gituser:ubuntu-20.04 as top
 ARG THISUSER
