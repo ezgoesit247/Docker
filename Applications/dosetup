@@ -1,11 +1,12 @@
 #!/bin/bash
 
-if [ ! ${_GENERATE_} ]; then _GENERATE_=ON; fi
 function usage {
   echo "Usage: $*"
   echo -e "\t_GENERATE_=[\"ON\" | \"LOCAL\"] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
   exit 1
 }
+
+if [ ! ${_GENERATE_} ]; then usage; fi
 
 function use_local_base {
   local app=$1
