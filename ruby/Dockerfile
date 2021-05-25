@@ -85,7 +85,7 @@ RUN chown $THISUSER:$THISUSER $GITTOKEN \
 USER $THISUSER
 
 FROM security as nodeinstall
-RUN git clone https://github.com/nvm-sh/nvm.git ~/.nvm
+RUN git clone https://github.com/nvm-sh/nvm.git $USERHOME/.nvm
 
 FROM nodeinstall as nodeinstall0
 ### NVM *must have* NVM_DIR
@@ -117,7 +117,7 @@ RUN /usr/local/rvm/bin/rvm get stable --autolibs=enable \
 
 FROM rvmconfig as rvmgemupdate
 RUN /usr/local/rvm/bin/rvm \
-&& echo "gem: --no-document" >> ~/.gemrc \
+&& echo "gem: --no-document" >> $USERHOME/.gemrc \
 && PATH="/usr/local/rvm/rubies/default/bin:$PATH" /usr/local/rvm/rubies/default/bin/gem update --system
 
 
