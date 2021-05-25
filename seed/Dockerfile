@@ -57,6 +57,8 @@ function yellow { changetext 0 31 43 $* ; }\n\
 function blue { changetext 0 36 44 $*; }\n\
 function cyan { changetext 0 0 46 $*; }\n\
 function grey { changetext 1 39 100 $* ; }\n\
+function pass { changetext 1 30 42 $(date "+%Y-%m-%d %H:%M:%S") PASS: $* ; echo; }\n\
+function fail { changetext 1 30 41 $(date "+%Y-%m-%d %H:%M:%S") FAIL: $* ; echo; }\n\
 green "$(grep DISTRIB_DESCRIPTION /etc/lsb-release)" && echo\n\
 blue "python:" && python --version\n\
 blue "pip:" && pip --version\
