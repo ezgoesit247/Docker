@@ -175,11 +175,16 @@ EOF
 }
 
 function create_git {
-REPO="${1}"
+local REPO="${1}"
+
+if [[ ${REPO} = $(curl -s -H "Authorization: token $(cat ${GITTOKEN})" \
+-H "Accept: application/vnd.github.v3+json" \
+https://api.github.com/repos/${GITUSER}/${REPO}\
+|jq -r .name) ]]; then printf '\e[33m%s\e[m\n' "repo exists: ${REPO}" && return ${LINENO}; fi
 
 mkdir -p /tmp/gitwork/dosetup/${REPO} && pushd ${_}
 
-RETURN=$(JSON={\"name\":\"${REPO}\"} && \
+local RETURN=$(JSON={\"name\":\"${REPO}\"} && \
 curl -s --url https://api.github.com/user/repos -d ${JSON} \
 -K- <<<"--user ${GITLOGIN}:$(cat ${GITTOKEN})"|jq -r .ssh_url)
 
@@ -214,7 +219,7 @@ CUSER=${GITUSER}
 #echo -e "using ${CUSER} for clone\nenter appname: " && read app
 echo "Gernerate dockerfile is ${_GENERATE_}"
 echo "using ${CUSER} for clone"
-read -p "appname ${app}? (Y/n) " yn
+read -p "appname: ${app}? (Y/n) " yn
 yn=${yn:-Y}
 if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage && exit ${LINENO}; fi
 
