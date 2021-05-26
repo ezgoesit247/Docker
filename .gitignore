@@ -37,3 +37,4 @@ public
 Applications/**/Dockerfile
 !Applications/typescript/Dockerfile
 !Applications/createusers/Dockerfile
+!Applications/ubuntu-appdev/Dockerfile

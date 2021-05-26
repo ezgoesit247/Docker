@@ -1,4 +1,6 @@
 #!/bin/bash
+##  TAG1=ubuntu-20.04 && TAG2=ubuntu && build -t ${TAG1} -t=${TAG2}
+
 FROM local/seed:ubuntu-20.04 as top
 
 RUN apt-get -qq update \
