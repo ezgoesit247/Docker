@@ -50,6 +50,7 @@ function use_local_base {
   local NAMESPACE="local"
   local IMAGE="${NAMESPACE}/$(basename ${PLATFORM_VERSION})"
   dosetenv ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION}
+  sed -i '' "s/PRIV=false/PRIV=true/" ${app}/setenv
   DOCKERFILE=../$(basename ${PLATFORM_VERSION})/Dockerfile
   if [ -f ${DOCKERFILE} ]; then
     if [ ${DEVELOPMENT_PLATFORM} ];then DEVELOPMENT_PLATFORM=":${DEVELOPMENT_PLATFORM}";fi
@@ -95,6 +96,7 @@ function dosetenv {
 
     echo RUNENV=\"-e=\'DOCKER_ENV=${app}\'\" >>~/sandbox/assets.docker/${app}/setenv
     echo REMOVE=true >>~/sandbox/assets.docker/${app}/setenv
+    echo PRIV=false >>~/sandbox/assets.docker/${app}/setenv
 
     chmod 1644 ${app}/setenv
   fi
