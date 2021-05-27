@@ -1,13 +1,16 @@
 #!/bin/bash
 
+TESTAPP=testapp
 function usage {
+  echo "./$(basename $0) -r to remove $TESTAPP"
   echo "Usage: $*"
   echo -e "\t GENERATE=[ON | LOCAL] && <CREATEGIT=true> $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
   exit 1
 }
-if [ ! $CREATEGIT ];then CREATEGIT=false;fi
-printf '\e[33m%s\e[m\n' "CREATEGIT is: ${CREATEGIT}"
-if [ ! ${GENERATE} ];then usage;fi
+function remove_app {
+  local TESTAPP=${1}
+  rm -rf ~/sandbox/assets.docker/${TESTAPP}/* rm -rf ~/sandbox/${TESTAPP} rm -rf ~/sandbox/Applications/${TESTAPP}/
+}
 
 ### GLOBALS ###
 EMBED_DOCKER="
@@ -253,6 +256,22 @@ function create_sandbox_runner {
 }
 
 ### main
+
+for i in "$@"
+do
+case $i in
+-r)
+shift
+echo "removing ${TESTAPP}" && remove_app ${TESTAPP} && exit 0
+;;
+esac
+done
+
+
+if [ ! $CREATEGIT ];then CREATEGIT=false;fi
+printf '\e[33m%s\e[m\n' "CREATEGIT is: ${CREATEGIT}"
+if [ ! ${GENERATE} ];then usage;fi
+
 
 app=$1 && DEVELOPMENT_PLATFORM=$2 && PLATFORM_VERSION=$3 && ROOT_BUILD=$4
 if [ ! $app ]; then usage no app; fi
