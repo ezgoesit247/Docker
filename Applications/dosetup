@@ -2,7 +2,7 @@
 
 function usage {
   echo "Usage: $*"
-  echo -e "\t_GENERATE_=[\"ON\" | \"LOCAL\"] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
+  echo -e "\t_GENERATE_=[ON | LOCAL] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
   exit 1
 }
 
