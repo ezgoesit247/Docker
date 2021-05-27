@@ -159,7 +159,10 @@ EOF
   if ! ${IS_ROOT_BUILD}; then
     sed -i '' "s/${USER_ROOT_CLAUSE}/${USER_CUSER_CLAUSE}/" ${app}/setenv \
       && cat >>./${app}/Dockerfile.${DEVELOPMENT_PLATFORM}
-  else sed -i '' "s/${USER_CUSER_CLAUSE}/${USER_ROOT_CLAUSE}/" ${app}/setenv; fi <<EOF
+  else
+    printf '\e[33m%s\e[m\n' "root build"
+    sed -i '' "s/${USER_CUSER_CLAUSE}/${USER_ROOT_CLAUSE}/" ${app}/setenv;
+  fi <<EOF
 FROM root as user
 ARG CUSERPATH=/home
 ARG CUSER=\$gituser
@@ -195,11 +198,6 @@ RUN sudo chown -R \$CUSER:\$CUSER /$app /$app/.git \
 && sudo sed -i 's/\/Users\/'\$LOCALUSER'/'\$ROOT_SAFE_PATH'/' \$GIT_CONFIG \
 && sudo chmod 600 \$SSH_PRIVATE_KEY_PATH/\$SSH_PRIVATE_KEY
 
-RUN echo '\
-if ! sudo service docker status; then sudo service docker start; fi\n\
-sudo docker run --rm hello-world 2> /dev/null | grep -o "Hello from Docker!"\n\
-'\
->>\$CUSERHOME/.bashrc
 
 ENV DOCKER_ENV=\$DOCKER_ENV
 RUN echo '\
