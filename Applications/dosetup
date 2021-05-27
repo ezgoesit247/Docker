@@ -12,7 +12,8 @@ function use_local_base {
   local app=$1
   local PLATFORM_VERSION=$2
   local DEVELOPMENT_PLATFORM=$3
-  local IMAGE="local/$(basename ${PLATFORM_VERSION})"
+  local NAMESPACE="local"
+  local IMAGE="${NAMESPACE}/$(basename ${PLATFORM_VERSION})"
   dosetenv ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION}
   DOCKERFILE=../$(basename ${PLATFORM_VERSION})/Dockerfile
   if [ -f ${DOCKERFILE} ]; then
