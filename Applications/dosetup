@@ -2,11 +2,12 @@
 
 function usage {
   echo "Usage: $*"
-  echo -e "\t_GENERATE_=[ON | LOCAL] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
+  echo -e "\t GENERATE=[ON | LOCAL] && <CREATEGIT=true> $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
   exit 1
 }
-
-if [ ! ${_GENERATE_} ]; then usage; fi
+if [ ! $CREATEGIT ];then CREATEGIT=false;fi
+printf '\e[33m%s\e[m\n' "CREATEGIT is: ${CREATEGIT}"
+if [ ! ${GENERATE} ];then usage;fi
 
 ### GLOBALS ###
 EMBED_DOCKER="
@@ -261,7 +262,7 @@ if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform; fi
 
 CUSER=${GITUSER}
 #echo -e "using ${CUSER} for clone\nenter appname: " && read app
-echo "Gernerate dockerfile is ${_GENERATE_}"
+echo "Gernerate dockerfile is ${GENERATE}"
 echo "using ${CUSER} for clone"
 read -p "appname: ${app}? (Y/n) " yn
 yn=${yn:-Y}
@@ -299,11 +300,11 @@ mv ~/sandbox/assets.docker/${app}/rundev ~/sandbox/assets.docker/${app}/dev
 mv ~/sandbox/assets.docker/${app}/dobuild ~/sandbox/assets.docker/${app}/build
 
 
-create_git ${app}
+if [ ${CREATEGIT} ]; then create_git ${app}; fi
 
-if [[ ${_GENERATE_} == LOCAL ]];
+if [[ ${GENERATE} == LOCAL ]];
   then use_local_base ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION};
-elif [[ ${_GENERATE_} == ON ]];
+elif [[ ${GENERATE} == ON ]];
   then generate_new_dockerfile ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION} ${ROOT_BUILD};
 else
   usage bad generate && exit ${LINENO}
