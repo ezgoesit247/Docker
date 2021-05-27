@@ -22,7 +22,7 @@ FROM jdk8 as jdk11
 ARG JDK11_TAR=jdk-11.tar.gz
 ARG JAVA11=/usr/local/jdk11
 ENV JAVA_HOME=$JAVA11
-ENV PATH="$PATH:$JAVA_HOME/bin"
+#ENV PATH="$PATH:$JAVA_HOME/bin"
 COPY assets.docker/$JDK11_TAR $JDK11_TAR
 RUN tar zxf $JDK11_TAR -C /tmp \
 && mv /tmp/jdk* ${JAVA11} \
@@ -30,10 +30,10 @@ RUN tar zxf $JDK11_TAR -C /tmp \
 
 
 FROM jdk11 as go
-ARG GO_TAR=go1.tar.gz
-ARG GO_HOME=/usr/local/go
-ENV GO_HOME=$GO_HOME
-ENV PATH="$PATH:$GO_HOME/bin"
+#ARG GO_TAR=go1.tar.gz
+#ARG GO_HOME=/usr/local/go
+#ENV GO_HOME=$GO_HOME
+#ENV PATH="$PATH:$GO_HOME/bin"
 #COPY assets.docker/$GO_TAR $GO_TAR
 #RUN tar zxf $GO_TAR -C /tmp \
 #&& mv /tmp/go* ${GO_HOME} \
@@ -56,9 +56,9 @@ RUN tar zxf $M2_TAR -C /tmp \
 
 
 FROM maven as userstuff
-RUN echo "export GOPATH=\$(go env GOPATH)\n\
-function use { if [ -d /usr/local/\${1} ]; then export JAVA_HOME=/usr/local/\${1} && export PATH=\${JAVA_HOME}/bin:\${PATH}; fi; echo JAVA_HOME is \${JAVA_HOME}; }\n\
-"\
->>/etc/bash.bashrc
+#RUN echo "export GOPATH=\$(go env GOPATH)\n\
+#function use { if [ -d /usr/local/\${1} ]; then export JAVA_HOME=/usr/local/\${1} && export PATH=\${JAVA_HOME}/bin:\${PATH}; fi; echo JAVA_HOME is \${JAVA_HOME}; }\n\
+#"\
+#>>/etc/bash.bashrc
 
 RUN apt-get clean
