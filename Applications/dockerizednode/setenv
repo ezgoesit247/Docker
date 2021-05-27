@@ -7,4 +7,4 @@ LOCALUSER="--arg=LOCALUSER=${USER}"
 _USER_="-u ${CUSER}"
 RUNENV="-e='DOCKER_ENV=dockerizednode'"
 REMOVE=false
-PRIV=--priv
+PRIV=true

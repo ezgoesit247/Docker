@@ -8,6 +8,41 @@ function usage {
 
 if [ ! ${_GENERATE_} ]; then usage; fi
 
+### GLOBALS ###
+EMBED_DOCKER="
+### DOCKER ###
+RUN sudo apt-get -qq update \
+&& sudo apt-get install -qq \
+apt-transport-https \
+ca-certificates \
+gnupg-agent \
+software-properties-common \
+&& curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
+&& sudo apt-key fingerprint 0EBFCD88 \
+&& sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable\" \
+&& sudo apt-get -qq update \
+&& sudo apt-get install -qq \
+docker-ce \
+docker-ce-cli \
+containerd.io
+
+RUN echo '### DOCKER ###\n\
+if ! sudo service docker status;then sudo service docker start && sleep 1 && sudo service docker status;fi\n\
+if sudo docker run --rm hello-world 2>/dev/null|grep -q \"Hello from Docker!\"\n\
+then pass \"Docker Hello World\"; else fail \"Docker Hello World\"\n\
+fi\n\
+cyan \"Docker:\"; docker --version\n\
+cyan \"Docker Compose:\"; docker-compose --version'\
+>>~/.bashrc
+"
+
+EMBED_COMPOSE="
+### DOCKER COMPOSE ###
+RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-\`uname -s\`-\`uname -m\` -o /usr/local/bin/docker-compose\
+&& sudo chmod +x /usr/local/bin/docker-compose
+"
+
+
 function use_local_base {
   local app=$1
   local PLATFORM_VERSION=$2
@@ -34,6 +69,10 @@ RUN sudo mkdir /${app} \
 ARG gituser
 RUN git clone git@github.com:\$gituser/${app} /${app}
 CMD [ "/bin/bash" ]
+
+FROM ${app} as docker
+${EMBED_DOCKER}
+${EMBED_COMPOSE}
 EOF
 
   else
@@ -174,6 +213,10 @@ pushd /\${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 |
 >>\$CUSERHOME/.bashrc
 EOF
 }
+
+
+
+
 
 function create_git {
 local REPO="${1}"
