@@ -27,7 +27,6 @@ function do_build {
 #   CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ${STREAM_ARG} ."
    local TAGS="${*}"
    CMD="docker build ${NOCACHE} ${ARGS} --rm ${TAGS} ${STREAM_ARG} ."
-   msg "do_build:${LINENO}" "trying: ${CMD}"
 #   while ! ${CMD}; do
 #      if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
 #         msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
@@ -38,10 +37,11 @@ function do_build {
 #      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
 #      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
 #   done
+  msg "do_build:${LINENO}" "trying: ${CMD}"
   if [ ${debug} -eq 1 ]; then exit ${LINENO}; else
-    if ! ${CMD}; then msg "do_build:${LINENO}" "retrying: ${CMD}"
+    #if ! ${CMD}; then msg "do_build:${LINENO}" "retrying: ${CMD}"
       eval ${CMD}
-    fi
+    #fi
   fi
 }
 function build {
