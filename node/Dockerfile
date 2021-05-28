@@ -27,7 +27,7 @@ tzdata
 
 FROM tzdata as bashrc
 
-RUN echo '### NODE ###\n\
+RUN echo '### NODE VIA NVM ###\n\
 cyan "Updating nvm:" && echo $(cd .nvm && git pull)\n\
 if  ! command -v nvm >/dev/null; then\n\
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm\n\
@@ -46,6 +46,10 @@ function nodever() {\n\
 }\n\
 nodever\n\
 '\
+>>$USERHOME/.bashrc
+
+ARG PACKAGE="function PACKAGE { echo \$(node -p \"try { require('./package.json').name } catch(e) {}\"); }"
+RUN echo $PACKAGE \
 >>$USERHOME/.bashrc
 
 RUN echo '### YARN (NEEDS NVM) ###\n\
