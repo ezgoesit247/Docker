@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ];then debug=1 && if [ ${NORUN} ];then NORUN=true;else NORUN=false;fi;else debug=0;fi;
+if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ];then debug=1;else debug=0;fi;
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${INTERACTIVE}:\t\t${INTERACTIVE}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}\n\t\${EXT}:\t\t\t${EXT}\n\t\${ENV}:\t\t\t${ENV}\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${PRIV}:\t\t${PRIV}\n\t\${USER}:\t\t${USER}\n\t\${NETWORK}:\t\t${NETWORK}\n\t\${ENVVAR}:\t\t${ENVVAR}\n\t\${USERNAME}:\t\t${USERNAME}\n\t\${CONX_CLI}:\t\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
@@ -285,17 +285,11 @@ function c7 {
 function ubuntu-systemd {
   print_bindings
   local base="$(basename ${IMAGE}|awk -F: '{print $1}')" && BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${base##*-}-application,target=${USERDIR}/assets.${base##*-} ${BINDINGS}"#&& BINDINGS="-v ${HOME}/Docker/assets.${base##*-}-application:/root/assets.${base##*-} ${BINDINGS}"
-  CMD="docker run ${NETWORK}  --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${DEV_BNDGNS} ${BINDINGS} --hostname=ubuntu-systemd --name ubuntu-systemd --rm local/ubuntu-systemd" && DEBUG "${LINENO} Executing:\n$(blue ${CMD})"
-  GUID=$(${CMD})
-  CMD="docker exec -it ${GUID} /bin/bash; docker rm -f ${GUID} > /dev/null" && DEBUG "${LINENO} Executing:\n$(blue ${CMD})"
-  #if [ ! ${NORUN} ];then
-    eval ${CMD}
-  #fi
-}
-function eval_this {
-  if [ ! ${NORUN} ];then
-    eval $1
-  fi
+  CMD="docker run ${NETWORK}  --privileged -d --tmpfs /tmp --tmpfs /run --tmpfs /run/lock -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${USER} ${DEV_BNDGNS} ${BINDINGS}" && if [[ ${RM} != "" ]];then CMD="${CMD} --name tmp-systemd --hostname=tmp-systemd";else CMD="${CMD} --name ubuntu-systemd --hostname=ubuntu-systemd";fi && CMD="${CMD} local/ubuntu-systemd" && DEBUG "${LINENO} Executing:\n$(blue ${CMD})"
+  GUID=$(${CMD}) && \
+  CMD="docker exec -it ${GUID} /bin/bash;" && if [[ ${RM} != "" ]];then CMD="${CMD} docker rm -f ${GUID}> /dev/null";fi && DEBUG "${LINENO} Executing:\n$(blue ${CMD})"
+    eval ${CMD} \
+  || bright "Container exists... recalling by name: ubuntu-systemd" && $0 ubuntu-systemd
 }
 
 ### THIS STARTS MAIN MORE OR LESS ###
