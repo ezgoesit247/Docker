@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ]; then debug=1; else debug=0; fi;
+if [ ${DEBUG} ] && [ ${DEBUG} -gt 0 ];then debug=1 && if [ ${NORUN} ];then NORUN=true;else NORUN=false;fi;else debug=0;fi;
 
 function DEBUG { if [ ${debug} -eq 1 ]; then echo -e "DEBUG ${*}"; fi }
 function VARS { if [ ${debug} -eq 1 ]; then echo -e $(tput setaf 3) "\t\${NAME}:\t\t${NAME}\n\t\${CONTAINER}:\t\t${CONTAINER}\n\t\${INTERACTIVE}:\t\t${INTERACTIVE}\n\t\${NAMEDCONTAINER}:\t${NAMEDCONTAINER}\n\t\${EXT}:\t\t\t${EXT}\n\t\${ENV}:\t\t\t${ENV}\n\t\${RM}:\t\t\t${RM}\n\t\${IMAGE}:\t\t${IMAGE}\n\t\${LCL_IMAGE_VAR}:\t${LCL_IMAGE_VAR}\n\t\${PRIV}:\t\t${PRIV}\n\t\${USER}:\t\t${USER}\n\t\${NETWORK}:\t\t${NETWORK}\n\t\${ENVVAR}:\t\t${ENVVAR}\n\t\${USERNAME}:\t\t${USERNAME}\n\t\${CONX_CLI}:\t\t${CONX_CLI}\n\t\${BINDINGS}:\t${BINDINGS}\n\t\${DEV_BNDGNS}:\t${DEV_BNDGNS}\n********************************$(tput sgr 0)"; fi }
@@ -32,7 +32,8 @@ function bright {
   println '\e[97m%s\e[m' "$*"
 }
 function do_it {
-  DEBUG "${LINENO} Executing: ${*}" && VARS
+  #DEBUG "${LINENO} Executing: ${*}" && VARS
+  DEBUG "${LINENO} Executing:\n$(blue ${CMD})" && VARS
   eval ${*};
 }
 function set_hostname {
@@ -62,7 +63,7 @@ function driver {
 ### CASE 1 RUNS/REMOVES UNAMED CONTAINER FOR IMAGE $PWD #
 ###
   if [ -z $1 ]; then DEBUG ${LINENO} && green "Looking for Case #0"
-    if [[ ${PWD##*/} == "u18-systemd" ]]; then DEBUG ${LINENO} calling u18-systemd && VARS && u18-systemd; else
+    if [[ ${PWD##*/} == "ubuntu-systemd" ]]; then DEBUG ${LINENO} calling ubuntu-systemd && VARS && ubuntu-systemd; else
     if [[ ${PWD##*/} == "c7-docker" ]]; then NAME="--hostname c7-docker --rm" && RM="--rm" && IMAGE="local/c7-docker" \
                                           && DEBUG ${LINENO} calling c7-docker && VARS && c7-docker; else
     DEBUG ${LINENO}; echo "Looking for image-container: ${PWD##*/}"
@@ -309,16 +310,14 @@ USERNAME=default_virtual
 USERDIR=/home/${USERNAME}
 ROOT_BIND=" -v ${HOME}/Docker/_shared_assets:/root/_assets"
 
-if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $* is: ' && echo "${*}"; fi
-DEBUG ${LINENO} && VARS
-
+if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $* is: ' && bright "${*}"; fi
 ### GET PARAMETERS ###
 ### INFINITY PREVENTION COUNTERS ###
 HITENV=0
 HITUSER=0
+DEBUG ${LINENO} && VARS
 for i in "$@"
 do
-  DEBUG ${LINENO} && VARS
   if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $* is: ' && echo "${*}"; fi
   if [ ${debug} -eq 1 ]; then echo -n ${LINENO} && echo -n ': $# is ' && echo -n "$#" && echo -n ': $1 is: ' && echo "${1}"; fi
 case $i in
@@ -347,7 +346,9 @@ case $i in
   shift
   ;;
 --ext=*|--appext=*|--purpose=*)
+  EXT_ARG="${i#*=}"
   EXT="_${i#*=}"
+  DEBUG ${LINENO} && VARS
   shift
   ;;
 --app=*|--appvol=*)
@@ -501,6 +502,12 @@ if [ $ENV_ARG ] && [ $USER_ARG ]; then
     if [[ ${USERNAME} != "root" ]]; then HOME_DIR_LOC="/home"; fi
     BINDINGS="${BINDINGS} -v code-store:${HOME_DIR_LOC}/${USERNAME}/code-store"
   fi
+  if [[ ${EXT_ARG} == node ]]; then DEV_BNDGNS=
+    DEV_BNDGNS="${DEV_BNDGNS} -v ${PWD}/assets.docker:${USERDIR}/local.assets"
+#    DEV_BNDGNS="${DEV_BNDGNS} -v ${HOME}/.ssh:${USERDIR}/.ssh"
+    if [[ ${USERNAME} != "root" ]]; then HOME_DIR_LOC="/home"; fi
+    BINDINGS="${BINDINGS} -v code-store:${HOME_DIR_LOC}/${USERNAME}/code-store"
+  fi
 fi
 if [ ${LOCAL_APP} ]; then
   BINDINGS="--mount type=bind,source=${HOME}/Docker/assets.${LOCAL_APP}-application,target=${USERDIR}/assets.${LOCAL_APP} ${BINDINGS}"
@@ -565,9 +572,9 @@ c7-systemd|local/c7-systemd)
   c7-systemd
   ;;
 
-local/u18-systemd)
-  DEBUG "${LINENO} calling function: u18-systemd"
-  u18-systemd
+local/ubuntu-systemd)
+  DEBUG "${LINENO} calling function: ubuntu-systemd"
+  ubuntu-systemd
   ;;
 
 local/u18-crio)
