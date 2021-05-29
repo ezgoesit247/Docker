@@ -4,7 +4,7 @@ TESTAPP=testapp
 function usage {
   echo "./$(basename $0) -r to remove $TESTAPP"
   echo "Usage: $*"
-  echo -e "\t GENERATE=[ON | LOCAL] && <CREATEGIT=true> $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
+  echo -e "\t GENERATE=[ON | LOCAL] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
   exit 1
 }
 function remove_app {
@@ -28,22 +28,44 @@ software-properties-common \
 && sudo apt-get install -qq \
 docker-ce \
 docker-ce-cli \
-containerd.io
+containerd.io \
+&& sudo usermod -a -G docker \$gituser
 
 RUN echo '### DOCKER ###\n\
 if ! sudo service docker status;then sudo service docker start && sleep 1 && sudo service docker status;fi\n\
-if sudo docker run --rm hello-world 2>/dev/null|grep -q \"Hello from Docker!\"\n\
+if docker run --rm hello-world 2>/dev/null|grep -q \"Hello from Docker!\"\n\
 then pass \"Docker Hello World\"; else fail \"Docker Hello World\"\n\
 fi\n\
 cyan \"Docker:\"; docker --version\n\
-cyan \"Docker Compose:\"; docker-compose --version'\
+cyan \"Docker Compose:\"; docker-compose --version' \
 >>~/.bashrc
 "
 
 EMBED_COMPOSE="
 ### DOCKER COMPOSE ###
-RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-\`uname -s\`-\`uname -m\` -o /usr/local/bin/docker-compose\
+RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-\`uname -s\`-\`uname -m\` -o /usr/local/bin/docker-compose \
 && sudo chmod +x /usr/local/bin/docker-compose
+"
+
+EMBED_MONGODB="
+### MONGODB ###
+#RUN MONGO_RUN=/usr/bin && MONGO_DIR=/usr/local/mongo && MONGO=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-4.4.6.tgz && sudo mkdir -p \${MONGO_DIR} && curl -s \$MONGO | sudo tar zxv --strip-components=1 -C \$MONGO_DIR && sudo ln \$MONGO_DIR/bin/mongo{,d,s} \$MONGO_RUN/ && sudo mkdir -p /var/lib/mongo && sudo mkdir -p /var/log/mongodb && sudo chown \$(whoami) /var/lib/mongo && sudo chown \$(whoami) /var/log/mongodb \
+#&& cd /etc/init.d/ && sudo cp \${HOME}/public.assets/mongodb ./mongodb && sudo chmod 755 ./mongodb \
+#&& cd /etc/rc3.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
+#&& cd /etc/rc4.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
+#&& cd /etc/rc5.d/ && sudo ln -s ../init.d/mongodb S01mongodb
+#sudo service mongodb start
+#sudo service mongodb status
+#sudo service mongodb stop
+#echo 'forked process: 595'|sed 's/[^0-9]*//'
+"
+
+
+EMBED_MONGODB_SYSTEMD="
+#RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add - \
+#&& echo \"deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse\" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list \
+#&& apt-get update \
+#&& apt-get install -y mongodb-org
 "
 
 
@@ -268,8 +290,6 @@ esac
 done
 
 
-if [ ! $CREATEGIT ];then CREATEGIT=false;fi
-printf '\e[33m%s\e[m\n' "CREATEGIT is: ${CREATEGIT}"
 if [ ! ${GENERATE} ];then usage;fi
 
 
@@ -304,6 +324,8 @@ if [ ! -k ${app}/setenv ]; then
   cp ./generic/setenv ${app}/
   sed -i '' "s/generic/${app}/" ${app}/setenv
 fi
+
+## HARD LINK SETENV
 ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 
 
@@ -319,7 +341,7 @@ mv ~/sandbox/assets.docker/${app}/rundev ~/sandbox/assets.docker/${app}/dev
 mv ~/sandbox/assets.docker/${app}/dobuild ~/sandbox/assets.docker/${app}/build
 
 
-if [ ${CREATEGIT} ]; then create_git ${app}; fi
+create_git ${app}
 
 if [[ ${GENERATE} == LOCAL ]];
   then use_local_base ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION};
