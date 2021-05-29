@@ -1,0 +1,78 @@
+#!/bin/bash
+#
+# mongodb     Startup script for the mongodb server
+#
+# chkconfig: - 64 36
+# description: MongoDB Database Server
+#
+# processname: mongodb
+#
+
+# Source function library
+
+prog="mongod"
+mongod="/usr/bin/mongod"
+mongodb_user=$(whoami)
+RETVAL=0
+
+start() {
+        echo -n $"Starting $prog: "
+        PID=$($mongod  --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork|sed 's/[^0-9]*//')
+        RETVAL=$?
+        echo ${PID}
+        [ $PID -gt 0 ] && echo ${PID} >/var/lock/subsys/$prog
+        return $PID
+}
+
+stop() {
+        echo -n $"Stopping $prog: "
+        PID=$(cat /var/lock/subsys/$prog)
+        kill ${PID}
+        RETVAL=$?
+#        if ! ps -ef|grep mongodb|grep -v grep >/dev/null; then echo stopped; fi
+        while ! ps -ef|grep mongodb|grep -v grep >/dev/null; do sleep 1; done; echo stopped
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+        return $RETVAL
+}
+reload() {
+        echo -n $"Reloading $prog: "
+        kill $prog -HUP
+        RETVAL=$?
+        echo
+        return $RETVAL
+}
+status() {
+        if [ -f /var/lock/subsys/$prog ]; then echo "PID $(cat /var/lock/subsys/$prog)";
+        else echo "$mongod not running"; fi
+}
+
+case "$1" in
+        start)
+                start
+                ;;
+        stop)
+                stop
+                ;;
+        restart)
+                stop
+                start
+                ;;
+        condrestart)
+                if [ -f /var/lock/subsys/$prog ]; then
+                        stop
+                        start
+                fi
+                ;;
+        reload)
+                reload
+                ;;
+        status)
+                status $mongod
+                RETVAL=$?
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|restart|condrestart|reload|status}"
+                RETVAL=1
+esac
+
+exit $RETVAL
