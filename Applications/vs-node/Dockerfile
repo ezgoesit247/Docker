@@ -14,6 +14,9 @@ RUN sudo apt-get -qq update && sudo apt-get install -qq apt-transport-https ca-c
 
 RUN echo '### DOCKER ###\nif ! sudo service docker status;then sudo service docker start && sleep 1 && sudo service docker status;fi\nif docker run --rm hello-world 2>/dev/null|grep -q "Hello from Docker!"\nthen pass "Docker Hello World"; else fail "Docker Hello World"\nfi\ncyan "Docker:"; docker --version\ncyan "Docker Compose:"; docker-compose --version' >>~/.bashrc
 
+ARG dockerpushnodeapp="function dockerpushnodeapp { echo \$(cat \${DOCKERHUBTOKEN})|docker login -u \$(cat \${DOCKERHUBUSER}) --password-stdin && docker push \$(cat \${DOCKERHUBUSER})/\$(PACKAGE); }"
+RUN echo '\n'$dockerpushnodeapp'\n'>>~/.bashrc
+
 
 ### DOCKER COMPOSE ###
 RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose

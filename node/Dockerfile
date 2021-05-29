@@ -49,10 +49,8 @@ nodever\n\
 >>$USERHOME/.bashrc
 
 ARG PACKAGE="function PACKAGE { echo \$(node -p \"try { require('./package.json').name } catch(e) {}\"); }"
-ARG dockerpushnodeapp="function dockerpushnodeapp { echo \$(cat \${DOCKERHUBTOKEN})|sudo docker login -u \$(cat \${DOCKERHUBUSER}) --password-stdin && sudo docker push \$(cat \${DOCKERHUBUSER})/\$(PACKAGE); }"
 RUN echo '\n\
 '$PACKAGE'\n\
-'$dockerpushnodeapp'\n\
 '\
 >>$USERHOME/.bashrc
 

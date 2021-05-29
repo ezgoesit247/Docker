@@ -34,12 +34,18 @@ RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/doc
 FROM compose as end
 RUN echo '### DOCKER ###\n\
 if ! sudo service docker status;then sudo service docker start && sleep 1 && sudo service docker status;fi\n\
-if sudo run --rm hello-world 2>/dev/null|grep -q "Hello from Docker!"\n\
+if docker run --rm hello-world 2>/dev/null|grep -q "Hello from Docker!"\n\
 then pass "Docker Hello World"; else fail "Docker Hello World"\n\
 fi\n\
 cyan "Docker:"; docker --version\n\
 cyan "Docker Compose:"; docker-compose --version'\
 >>~/.bashrc
+ARG dockerpushnodeapp="function dockerpushnodeapp { echo \$(cat \${DOCKERHUBTOKEN})|docker login -u \$(cat \${DOCKERHUBUSER}) --password-stdin && docker push \$(cat \${DOCKERHUBUSER})/\$(PACKAGE); }"
+RUN echo '\n\
+'$dockerpushnodeapp'\n\
+'\
+>>~/.bashrc
+
 RUN sudo apt-get clean
 CMD [ "/bin/bash" ]
 EXPOSE 8080
