@@ -39,4 +39,4 @@ Applications/**/Dockerfile
 !Applications/createusers/Dockerfile
 !Applications/ubuntu-appdev/Dockerfile
 !Applications/dockerizednode/Dockerfile
-!Applications/workstation/Dockerfile
+!Applications/vs-node/Dockerfile
