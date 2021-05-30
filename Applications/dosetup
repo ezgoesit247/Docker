@@ -1,15 +1,14 @@
 #!/bin/bash
 
-TESTAPP=testapp
 function usage {
-  echo "./$(basename $0) -r to remove $TESTAPP"
   echo "Usage: $*"
+  echo "./$(basename $0) -r to remove ${TESTAPP}"
+  echo "./$(basename $0) -t to run: GENERATE=LOCAL ./dosetup ${TESTAPP} ${TESTPLATFORM} ${TESTVERSION}"
   echo -e "\t GENERATE=[ON | LOCAL] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
   exit 1
 }
-function remove_app {
-  local TESTAPP=${1}
-  rm -rf ~/sandbox/assets.docker/${TESTAPP}/* rm -rf ~/sandbox/${TESTAPP} rm -rf ~/sandbox/Applications/${TESTAPP}/
+function msg {
+  printf '\e[33m%s\e[m\n' "$*"
 }
 
 ### GLOBALS ###
@@ -64,8 +63,23 @@ EMBED_MONGODB="
 #sudo service mongodb status
 #sudo service mongodb stop
 #echo 'forked process: 595'|sed 's/[^0-9]*//'
+
+mkdir -p ~/code-store/mongo_project && cd $_
+cat >mondo_user.json<<EOF
+db.createUser(
+{
+user: \"\${GITUSER}\",
+pwd: \"P@ssw0rd!\",
+roles: [ { role: \"userAdminAnyDatabase\", db: \"admin\" } ]
+}
+)
+EOF
+mongo <<<\$(cat mongo_user.json
+code-store/mongo_project
+npm install mongoose
 "
 
+EMBED_TREE="sudo apt-get install -y tree"
 
 EMBED_MONGODB_SYSTEMD="
 #RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add - \
@@ -247,9 +261,6 @@ EOF
 }
 
 
-
-
-
 function create_git {
 local REPO="${1}"
 
@@ -283,20 +294,39 @@ function create_sandbox_runner {
   fi
 }
 
-### main
+TESTAPP="testapp"
+TESTPLATFORM="local/node"
+TESTVERSION="ubuntu"
+TESTGENERATE="GENERATE=LOCAL"
+function remove_app {
+  rm -rf ~/sandbox/assets.docker/${TESTAPP}/* rm -rf ~/sandbox/${TESTAPP} rm -rf ~/sandbox/Applications/${TESTAPP}/
+}
+function build_app {
+  echo $(GENERATE=LOCAL ./dosetup ${TESTAPP} ${TESTPLATFORM} ${TESTVERSION}) >/dev/null
+}
+
+### parms
 
 for i in "$@"
 do
 case $i in
 -r)
 shift
-echo "removing ${TESTAPP}" && remove_app ${TESTAPP} && exit 0
+echo "removing ${TESTAPP}" && remove_app ${TESTAPP}
+exit 0
+;;
+-t)
+shift
+echo "removing ${TESTAPP}" && remove_app
+echo "buildling ${TESTAPP}" && build_app && msg ${TESTAPP} built
+exit 0
 ;;
 esac
 done
 
+### main
 
-if [ ! ${GENERATE} ];then usage;fi
+if [ ! ${GENERATE} ];then usage no generate;fi
 
 
 app=$1 && DEVELOPMENT_PLATFORM=$2 && PLATFORM_VERSION=$3 && ROOT_BUILD=$4
@@ -307,7 +337,7 @@ if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform; fi
 
 CUSER=${GITUSER}
 #echo -e "using ${CUSER} for clone\nenter appname: " && read app
-echo "Gernerate dockerfile is ${GENERATE}"
+msg "Generate dockerfile is ${GENERATE}"
 echo "using ${CUSER} for clone"
 read -p "appname: ${app}? (Y/n) " yn
 yn=${yn:-Y}
