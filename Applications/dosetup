@@ -54,29 +54,33 @@ RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/doc
 
 EMBED_MONGODB="
 ### MONGODB ###
-#RUN MONGO_RUN=/usr/bin && MONGO_DIR=/usr/local/mongo && MONGO=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-4.4.6.tgz && sudo mkdir -p \${MONGO_DIR} && curl -s \$MONGO | sudo tar zxv --strip-components=1 -C \$MONGO_DIR && sudo ln \$MONGO_DIR/bin/mongo{,d,s} \$MONGO_RUN/ && sudo mkdir -p /var/lib/mongo && sudo mkdir -p /var/log/mongodb && sudo chown \$(whoami) /var/lib/mongo && sudo chown \$(whoami) /var/log/mongodb \
-#&& cd /etc/init.d/ && sudo cp \${HOME}/public.assets/mongodb ./mongodb && sudo chmod 755 ./mongodb \
-#&& cd /etc/rc3.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
-#&& cd /etc/rc4.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
-#&& cd /etc/rc5.d/ && sudo ln -s ../init.d/mongodb S01mongodb
+ARG MONGO_RUN=/usr/bin
+ARG MONGO_DIR=/usr/local/mongo
+ARG MONGO=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-4.4.6.tgz
+RUN sudo mkdir -p \$MONGO_DIR && curl -s \$MONGO | sudo tar zxv --strip-components=1 -C \$MONGO_DIR
+
+RUN sudo ln \$MONGO_DIR/bin/mongo \$MONGO_RUN/ && sudo ln \$MONGO_DIR/bin/mongos \$MONGO_RUN/ && sudo ln \$MONGO_DIR/bin/mongod \$MONGO_RUN/
+
+
+RUN touch ~/mongodb && chmod 755 ~/mongodb && sudo cp -p ~/mongodb /etc/init.d/mongodb \
+&& cd /etc/rc3.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
+&& cd /etc/rc4.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
+&& cd /etc/rc5.d/ && sudo ln -s ../init.d/mongodb S01mongodb
 #sudo service mongodb start
 #sudo service mongodb status
 #sudo service mongodb stop
 #echo 'forked process: 595'|sed 's/[^0-9]*//'
 
-mkdir -p ~/code-store/mongo_project && cd $_
-cat >mondo_user.json<<EOF
-db.createUser(
-{
-user: \"\${GITUSER}\",
-pwd: \"P@ssw0rd!\",
-roles: [ { role: \"userAdminAnyDatabase\", db: \"admin\" } ]
-}
-)
-EOF
-mongo <<<\$(cat mongo_user.json
-code-store/mongo_project
-npm install mongoose
+ARG mongo_user=\"\\
+use admin\\
+db.createUser( {\\
+user: \\\"MONGOUSERENAME\\\",\\
+pwd: \\\"MONGOUSERPASSWORD\\\",\\
+roles: [ { role: \\\"userAdminAnyDatabase\\\", db: \\\"admin\\\" } ]\\
+} )\"
+RUN mkdir -p ~/mongo_setup \
+&& echo \$mongo_user >~/mongo_setup/mongo_user.in.mongo
+#&& npm install mongoose
 "
 
 EMBED_TREE="sudo apt-get install -y tree"
@@ -121,6 +125,10 @@ FROM ${app} as docker
 ${EMBED_DOCKER}
 ${EMBED_COMPOSE}
 EOF
+#${EMBED_DOCKER}
+#${EMBED_COMPOSE}
+#${EMBED_MONGODB}
+#${EMBED_TREE}
 
   else
     usage no Dockerfile: $DOCKERFILE \
