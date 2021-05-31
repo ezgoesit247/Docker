@@ -39,4 +39,5 @@ Applications/**/Dockerfile
 !Applications/createusers/Dockerfile
 !Applications/ubuntu-appdev/Dockerfile
 !Applications/dockerizednode/Dockerfile
-!Applications/vs-node/Dockerfile
+!Applications/mkl-node/Dockerfile
+!Applications/mkl-mongo/Dockerfile
