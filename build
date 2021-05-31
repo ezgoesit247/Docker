@@ -9,34 +9,31 @@ function msg {
 function err {
   red2 "build::${1}" "${2}"
 }
-function init { #
-  for path in ~/Docker/root_docker/node_r_admin ~/Docker/root_docker/awsdev_r_admin ~/Docker/root_docker/terraform_r_admin ~/Docker/root_docker/kubernetes_r_admin ~/Docker/root_docker/docker_r_admin ~/Docker/root_docker/development_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin ~/Docker/root_docker/ubuntu_seed_r_admin
-  do pushd ${path} > /dev/null; done
-}
 function build_all {
    build_list=${1}
    for d in "${build_list[@]}"; do
+      if [ -f ${d} ]; then d="${d%/*}/"; fi
+      if [ ! -d ${d} ]; then red2 ${LINENO} need directory; fi
       pushd ${d} > /dev/null; done
    for d in "${build_list[@]}"; do
 #      popd ${d}; done
-      build ${PWD##*/} && popd > /dev/null; done
+      build ${PWD##*/} && popd >/dev/null; done
 #   exit 2
+}
+function build {
+  local tag="${1}"
+#  if [[ ${tag} == ubuntu_seed_r_admin ]];
+#    then do_build ${tag} \
+#      && tag=${tag}:20.04; do_build ${tag}
+#    else do_build "${tag}"
+#  fi
+  do_build "${tag}"
 }
 function do_build {
 #   if [[ -n ${TAG} ]]; then TG=" -t ${REMOTE}${1}:${TAG}"; fi
 #   CMD="docker build ${NOCACHE} ${ARGS} --rm -t ${REMOTE}${1} ${TG} ${STREAM_ARG} ."
    local TAGS="${*}"
    CMD="docker build ${NOCACHE} ${ARGS} --rm ${TAGS} ${STREAM_ARG} ."
-#   while ! ${CMD}; do
-#      if [ ! -f ./Dockerfile ] && [ -f ./Dockerfile.sh ]; then
-#         msg "do_build" "${1}/Dockerfile.sh -> ${1}/Dockerfile" \
-#            && ln -s ./Dockerfile.sh ./Dockerfile \
-#            && msg "do_build" "Retrying..." && continue
-#      fi
-#      eval $CMD
-#      err "do_build" "Error in ${REMOTE}${1}, fix then press <Enter> to retry";
-#      read x; msg "do_build" "Retrying for tag ${REMOTE}${1}";
-#   done
   msg "do_build:${LINENO}" "trying: ${CMD}"
   if [ ${debug} -eq 1 ]; then exit ${LINENO}; else
     #if ! ${CMD}; then msg "do_build:${LINENO}" "retrying: ${CMD}"
@@ -44,26 +41,8 @@ function do_build {
     #fi
   fi
 }
-function build {
-  local tag="${1}"
-  if [[ ${tag} == ubuntu_seed_r_admin ]];
-    then do_build ${tag} \
-      && tag=${tag}:20.04; do_build ${tag}
-    else do_build "${tag}"
-  fi
-}
 function usage {
    echo -e "\n Usage:\tbuild [NAME] looks for Dockerfile ${docker_dir}/NAME/\n\tbuild NOARGS looks for Dockerfile in PWD"; echo
-}
-function error {
-    # Send the first element as one argument, and the rest of the elements as a combined argument.
-    # Arguments to println:
-    #   1 -> '\e[31mError (%d): %s\e[m'
-    #   2 -> "$1"
-    #   3 -> "${*:2}"
-
-    println '\e[31mError (%d): %s\e[m' "$1" "${*:2}"
-    exit "$1"
 }
 function success {
     println '\e[32mComplete: %s\e[m' "${*:1}"
@@ -119,8 +98,6 @@ case $i in
    ;;
 --key|--pem)
   shift
-  #ARGS="${ARGS} --build-arg ${1}=\"$(cat ${2})\""
-  #if [ $# -ne 2 ]; then error $LINENO "two(2) args for --pem or --key"; fi
   BUILD_ARG=${1}
   PEM_KEY_FILE=${2}
   STREAM_ARG="--build-arg ${BUILD_ARG}=\"\$(cat ${PEM_KEY_FILE})\""
@@ -146,8 +123,9 @@ done
 ###
 # - main
 ###
-build_list=(~/Docker/u18-terraform ~/Docker/Applications/aifmda ~/Docker/u18-docker ~/Docker/u18-systemd ~/Docker/u18-scala ~/Docker/u18-node ~/Docker/u18-java8 ~/Docker/u18-jdk8header ~/Docker/u18-seed ~/Docker/u18-seedling)
-if [ ${BUILDALL} ]; then build_all ${build_list} && exit 0; fi
+build_list=(~/Docker/gituser/Dockerfile ~/Docker/docker/Dockerfile ~/Docker/ubuntu-systemd/Dockerfile ~/Docker/jdk8header/Dockerfile ~/Docker/ubuntu-terraform/Dockerfile ~/Docker/ruby/Dockerfile)
+if [ ${BUILDALL} ]; then if [ ! "${#build_list[@]}" -gt 0 ];then echo need build_list\(\) && exit ${LINENO};fi
+build_all ${build_list} && exit 0; fi
 
 if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   pushd ${docker_dir}/${1} > /dev/null && DIR=$(basename ${1})

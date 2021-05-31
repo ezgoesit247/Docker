@@ -1,5 +1,5 @@
 #!/bin/bash
-FROM ubuntu:20.04 as seedling
+FROM local/seedling as seed
 CMD [ "/bin/bash" ]
 
 RUN apt-get -qq update \
@@ -19,7 +19,7 @@ RUN apt-get -qq update \
    ca-certificates \
    gnupg-agent
 
-FROM seedling as python
+FROM seed as python
 RUN apt-get -qq install -y \
 python \
 python3-pip \
@@ -64,11 +64,3 @@ blue "python:" && python --version\n\
 blue "pip:" && pip --version\
 '\
 >>/etc/bash.bashrc
-
-FROM stuff as rootstuff
-RUN echo '### ROOT STUFF ###\n\
-alias ls="ls -Altr --color=auto"\n\
-export PS1="\\[\\033[1;32m\\]\\u\\[\\033[0m\\]@\\[\\033[1;31m\\]\\h:\\[\\033[0;37m\\]\\w\\[\\033[0m\\]\\$ " \n\
-export HISTTIMEFORMAT="%FT%T\t"\n\
-'\
->>/root/.bashrc
