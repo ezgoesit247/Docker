@@ -1,9 +1,9 @@
 #!/bin/bash
 
 function usage {
-  echo "Usage: $(error $*)"
-  echo "./$(basename $0) -r to remove ${TESTAPP}"
-  echo "./$(basename $0) -t to run: GENERATE=LOCAL ./dosetup ${TESTAPP} ${TESTPLATFORM} ${TESTVERSION}"
+  echo "Usage ($(basename ${0})): $(error $*)"
+  echo "dosetup -r to remove ${TESTAPP}"
+  echo "dosetup -t to run: GENERATE=LOCAL ./dosetup ${TESTAPP} ${TESTPLATFORM} ${TESTVERSION}"
   echo -e "\t GENERATE=[ON | LOCAL] $(basename $0) [APP] [PLATFORM] <VERSION> <ROOT_BUILD>\n\tex: ./dosetup bestappever ubuntu 18.04"
   exit 1
 }
