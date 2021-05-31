@@ -86,7 +86,8 @@ RUN mkdir -p ~/mongo_setup \
 #&& npm install mongoose
 "
 
-EMBED_TREE="sudo apt-get install -y tree"
+EMBED_TREE="sudo apt-get install -qq tree"
+EMBED_SUDO="apt-get install -qq sudo && echo \"ALL ALL=(ALL) NOPASSWD: ALL\" >>/etc/sudoers"
 
 EMBED_MONGODB_SYSTEMD="
 #RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add - \
@@ -128,11 +129,10 @@ EOF
 #${EMBED_COMPOSE}
 #${EMBED_MONGODB}
 #${EMBED_TREE}
+#${EMBED_SUDO}
       if [ ! ${ISBUILDTEST} ]; then
 cat >>./${app}/Dockerfile <<EOF
-FROM ${app} as docker
-${EMBED_DOCKER}
-${EMBED_COMPOSE}
+FROM ${app} as ${app}packages
 EOF
     fi
 
