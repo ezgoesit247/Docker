@@ -120,15 +120,18 @@ RUN sudo mkdir /${app} \
 ARG gituser
 RUN git clone git@github.com:\$gituser/${app} /${app}
 CMD [ "/bin/bash" ]
-
-FROM ${app} as docker
-${EMBED_DOCKER}
-${EMBED_COMPOSE}
 EOF
 #${EMBED_DOCKER}
 #${EMBED_COMPOSE}
 #${EMBED_MONGODB}
 #${EMBED_TREE}
+      if [ ! ${ISBUILDTEST} ]; then
+cat >>./${app}/Dockerfile <<EOF
+FROM ${app} as docker
+${EMBED_DOCKER}
+${EMBED_COMPOSE}
+EOF
+    fi
 
   else
     usage no Dockerfile: $DOCKERFILE \
@@ -315,6 +318,7 @@ function build_app {
 
 ### parms
 
+ISBUILDTEST=false
 for i in "$@"
 do
 case $i in
@@ -325,6 +329,7 @@ exit 0
 ;;
 -t)
 shift
+ISBUILDTEST=true
 echo "removing ${TESTAPP}" && remove_app
 echo "buildling ${TESTAPP}" && build_app && msg ${TESTAPP} built
 exit 0
