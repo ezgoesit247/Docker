@@ -60,14 +60,10 @@ EMBED_MONGODB="
 ARG MONGO_RUN=/usr/bin
 ARG MONGO_DIR=/usr/local/mongo
 ARG MONGO=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-4.4.6.tgz
+COPY assets.mongo/mongodb.service /etc/init.d/mongodb.service
 RUN sudo mkdir -p \$MONGO_DIR && curl -s \$MONGO | sudo tar zxv --strip-components=1 -C \$MONGO_DIR
-
 RUN sudo ln \$MONGO_DIR/bin/mongo \$MONGO_RUN/ && sudo ln \$MONGO_DIR/bin/mongos \$MONGO_RUN/ && sudo ln \$MONGO_DIR/bin/mongod \$MONGO_RUN/
-
-RUN touch ~/mongodb && chmod 755 ~/mongodb && sudo cp -p ~/mongodb /etc/init.d/mongodb \
-&& cd /etc/rc3.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
-&& cd /etc/rc4.d/ && sudo ln -s ../init.d/mongodb S01mongodb \
-&& cd /etc/rc5.d/ && sudo ln -s ../init.d/mongodb S01mongodb
+RUN sudo chmod 755 /etc/init.d/mongodb.service && cd /etc/rc3.d/ && sudo ln -s ../init.d/mongodb.service S01mongodb && cd /etc/rc4.d/ && sudo ln -s ../init.d/mongodb.service S01mongodb && cd /etc/rc5.d/ && sudo ln -s ../init.d/mongodb.service S01mongodb
 #sudo service mongodb start
 #sudo service mongodb status
 #sudo service mongodb stop
@@ -86,7 +82,18 @@ RUN mkdir -p ~/mongo_setup \
 "
 
 EMBED_TREE="sudo apt-get install -qq tree"
-EMBED_SUDO="RUN apt-get install -qq sudo && echo \"ALL ALL=(ALL) NOPASSWD: ALL\" >>/etc/sudoers"
+EMBED_SUDO="RUN apt-get install -qq sudo curl && echo \"ALL ALL=(ALL) NOPASSWD: ALL\" >>/etc/sudoers
+ARG gituser
+RUN groupadd -g 1000 \$gituser \
+&& useradd -ms /bin/bash -u 1000 -g 1000 \$gituser
+USER \$gituser
+WORKDIR ~
+RUN echo '\
+export PS1=\"\\\[\\\033[1;34m\\\]\\\u\\\[\\\033[0m\\\]@\\\[\\\033[1;31m\\\]\\\h:\\\[\\\033[0;37m\\\]\\\w\\\[\\\033[0m\\\] \\\$ \"\n\
+alias ls=\"ls -Altr --color=auto\"\n\
+'\
+>>~/.bashrc"
+
 EMBED_GIT="VOLUME ${1}
 RUN sudo mkdir /${1} \
 && sudo chown -R 1000:1000 /${1} \
@@ -131,11 +138,12 @@ EOF
 #${EMBED_MONGODB}
 #${EMBED_TREE}
 #${EMBED_GIT}
-      if [ ! ${ISBUILDTEST} ]; then
-cat >>./${app}/Dockerfile <<EOF
+#      if [ ! ${ISBUILDTEST} ]; then
+    cat >>./${app}/Dockerfile <<EOF
 FROM ${app} as ${app}packages
+${EMBED_MONGODB}
 EOF
-    fi
+#    fi
 
   else
     usage no Dockerfile: $DOCKERFILE \
