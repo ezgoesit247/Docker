@@ -26,10 +26,10 @@ assets.docker.private/
 private.assets
 Docker-Applications
 Docker-Main
-critical-synced-meta-files.txt
-critical-synced-software-files.txt
-critical-synced-application-files.txt
-critical-synced-driver-files.txt
+critical-synced-meta-files
+critical-synced-software-files
+critical-synced-application-files
+critical-synced-driver-files
 private
 public
 
