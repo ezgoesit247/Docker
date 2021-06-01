@@ -13,25 +13,28 @@
 prog="mongod"
 mongod="/usr/bin/mongod"
 mongodb_user=$(whoami)
+SUBSYS=/var/lock/subsys
 RETVAL=0
 
 start() {
+        if [ ! -d $SUBSYS ]; then sudo mkdir ${SUBSYS} && sudo chmod 755 ${SUBSYS}; fi
         echo -n $"Starting $prog: "
-        PID=$($mongod  --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork|sed 's/[^0-9]*//')
+        PID=$($mongod --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork|sed 's/[^0-9]*//')
         RETVAL=$?
+        #echo "PID: ${PID}"
         echo ${PID}
-        [ $PID -gt 0 ] && echo ${PID} >/var/lock/subsys/$prog
+        [ $PID -gt 0 ] && echo ${PID} >$SUBSYS/$prog
         return $PID
 }
 
 stop() {
         echo -n $"Stopping $prog: "
-        PID=$(cat /var/lock/subsys/$prog)
+        PID=$(cat $SUBSYS/$prog)
         kill ${PID}
         RETVAL=$?
 #        if ! ps -ef|grep mongodb|grep -v grep >/dev/null; then echo stopped; fi
         while ! ps -ef|grep mongodb|grep -v grep >/dev/null; do sleep 1; done; echo stopped
-        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+        [ $RETVAL -eq 0 ] && rm -f $SUBSYS/$prog
         return $RETVAL
 }
 reload() {
@@ -42,7 +45,7 @@ reload() {
         return $RETVAL
 }
 status() {
-        if [ -f /var/lock/subsys/$prog ]; then echo "PID $(cat /var/lock/subsys/$prog)";
+        if [ -f $SUBSYS/$prog ]; then echo "PID $(cat $SUBSYS/$prog)";
         else echo "$mongod not running"; fi
 }
 
@@ -58,7 +61,7 @@ case "$1" in
                 start
                 ;;
         condrestart)
-                if [ -f /var/lock/subsys/$prog ]; then
+                if [ -f $SUBSYS/$prog ]; then
                         stop
                         start
                 fi
