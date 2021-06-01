@@ -10,15 +10,20 @@ function err {
   red2 "build::${1}" "${2}"
 }
 function build_all {
-   build_list=${1}
-   for d in "${build_list[@]}"; do
-      if [ -f ${d} ]; then d="${d%/*}/"; fi
-      if [ ! -d ${d} ]; then red2 ${LINENO} need directory; fi
-      pushd ${d} > /dev/null; done
-   for d in "${build_list[@]}"; do
-#      popd ${d}; done
-      build ${PWD##*/} && popd >/dev/null; done
-#   exit 2
+  echo build_all not implemented
+  for f in ${build_list[@]}; do if [ -f ${f} ] && [ ! -d ${f} ]; then echo "${f%/*}/"|sed 's/\.\//~\/Docker\//'; fi; done
+  exit ${LINENO}
+  build_list=${1}
+  for d in "${build_list[@]}"; do
+#  if [ -f ${d} ]; then d="${d%/*}/"; fi
+#  if [ ! -d ${d} ]; then red2 ${LINENO} need directory; fi
+
+  pushd ${d} > /dev/null; done
+  for d in "${build_list[@]}"; do
+    build ${PWD##*/}
+    popd >/dev/null
+  done
+
 }
 function build {
   local tag="${1}"
@@ -123,7 +128,11 @@ done
 ###
 # - main
 ###
-build_list=(~/Docker/gituser/Dockerfile ~/Docker/docker/Dockerfile ~/Docker/ubuntu-systemd/Dockerfile ~/Docker/jdk8header/Dockerfile ~/Docker/ubuntu-terraform/Dockerfile ~/Docker/ruby/Dockerfile)
+_BUILDTYPE_="local/seed"
+pushd ~/Docker >/dev/null && build_list=(); for f in $(searchfor "FROM ${_BUILDTYPE_}" Dockerfile|awk -F: '{print $1}'|grep -vE './seed'); do build_list+=($f); done && popd >/dev/null
+
+#build_list=(~/Docker/gituser/ ~/Docker/docker/ ~/Docker/ubuntu-systemd/ ~/Docker/jdk8header/ ~/Docker/ubuntu-terraform/ ~/Docker/ruby/)
+
 if [ ${BUILDALL} ]; then if [ ! "${#build_list[@]}" -gt 0 ];then echo need build_list\(\) && exit ${LINENO};fi
 build_all ${build_list} && exit 0; fi
 
@@ -145,4 +154,5 @@ else
   if [ $TAG ];then TGS="${TGS} -t ${REMOTE}${PWD##*/}:${TAG}"; fi
   if [ ${debug} -eq 1 ]; then yellow "(${LINENO}) Calling build -t ${REMOTE}${PWD##*/} ${TGS}" && exit ${LINENO}; fi
   build "-t ${REMOTE}${PWD##*/} ${TGS}"
+  for tag in $(cat taglist); do docker tag "${REMOTE}${PWD##*/}" "${REMOTE}${PWD##*/}:${tag}" && echo "${REMOTE}${PWD##*/}:${tag}"; done
 fi

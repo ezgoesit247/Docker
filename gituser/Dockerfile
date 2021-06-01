@@ -1,7 +1,7 @@
 #!/bin/bash
 FROM local/seed:ubuntu-20.04 as top
 
-##  TAG1=ubuntu-20.04 && TAG2=ubuntu && . ./setenv && DEBUG=0 build --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gitlogin=${CLOGIN} --arg=gituser=${CUSER} --arg=homepath=${HOMEPATH} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH} -t ${TAG1} -t=${TAG2}
+##  . ./setenv && DEBUG=0 build --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gitlogin=${CLOGIN} --arg=gituser=${CUSER} --arg=homepath=${HOMEPATH} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
 
 ##  . ./setenv && DEBUG=0 run --rm -I -e='DOCKER_ENV=developer'
 
