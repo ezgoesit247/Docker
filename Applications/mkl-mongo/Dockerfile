@@ -50,3 +50,4 @@ roles: [ { role: \"userAdminAnyDatabase\", db: \"admin\" } ]\
 RUN mkdir -p ~/mongo_setup && echo $mongo_user >~/mongo_setup/mongo_user.in.mongo
 #&& npm install mongoose
 
+EXPOSE 27017
