@@ -6,6 +6,7 @@ OS=ubuntu
 LOCALUSER="--arg=LOCALUSER=${USER}"
 _USER_="-u ${CUSER}"
 RUNENV="-e='DOCKER_ENV=${APP}'"
-REMOVE=true
+REMOVE=false
 PRIV=true
 PORT="-p=27017:27017"
+RUNSTATE="-I --name=my-mongo"
