@@ -41,3 +41,4 @@ Applications/**/Dockerfile
 !Applications/dockerizednode/Dockerfile
 !Applications/mkl-node/Dockerfile
 !Applications/mkl-mongo/Dockerfile
+!Applications/mkl-seed/Dockerfile
