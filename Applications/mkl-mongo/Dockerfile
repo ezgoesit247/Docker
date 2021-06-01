@@ -13,27 +13,16 @@ CMD [ "/bin/bash" ]
 FROM user as mkl-mongopackages
 
 ### MONGODB ###
+VOLUME mkl-mongo
+RUN sudo mkdir -p /mkl-mongo/lib/mongo && sudo mkdir -p /mkl-mongo/log/mongodb && sudo chown -R 1000:1000 /mkl-mongo && ln -s /mkl-mongo ~/mkl-mongo
 ARG MONGO_DIR=/usr/local/mongo
 ARG MONGO_BIN_DIR=/usr/bin
 ARG MONGO=https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-4.4.6.tgz
-RUN sudo mkdir -p $MONGO_DIR
-RUN curl -s $MONGO | sudo tar zxv --strip-components=1 -C $MONGO_DIR
-RUN sudo ln -fn $MONGO_DIR/bin/mongo $MONGO_BIN_DIR
-RUN sudo ln -fn $MONGO_DIR/bin/mongos $MONGO_BIN_DIR
-RUN sudo ln -fn $MONGO_DIR/bin/mongod $MONGO_BIN_DIR
-RUN sudo mkdir -p /var/lib/mongo
-RUN sudo mkdir -p /var/log/mongodb
-RUN sudo chown $(whoami) /var/lib/mongo
-RUN sudo chown $(whoami) /var/log/mongodb
-RUN sudo ln $MONGO_DIR/bin/mongo /usr/local/sbin/
-RUN sudo ln $MONGO_DIR/bin/mongod /usr/local/sbin/
-RUN sudo ln $MONGO_DIR/bin/mongos /usr/local/sbin/
-#RUN sudo cp -p ${HOME}/public.assets/mongodb /etc/init.d/ && sudo chmod 755 /etc/init.d/mongodb
 COPY assets.mongo/mongodb.service /etc/init.d/mongodb
-RUN sudo chmod 755 /etc/init.d/mongodb
-RUN cd /etc/rc3.d/ && sudo ln -fsn ../init.d/mongodb S01mongodb
-RUN cd /etc/rc4.d/ && sudo ln -fsn ../init.d/mongodb S01mongodb
-RUN cd /etc/rc5.d/ && sudo ln -fsn ../init.d/mongodb S01mongodb
+RUN sudo mkdir -p $MONGO_DIR && curl -s $MONGO | sudo tar zxv --strip-components=1 -C $MONGO_DIR && sudo ln -fn $MONGO_DIR/bin/mongo $MONGO_BIN_DIR && sudo ln -fn $MONGO_DIR/bin/mongos $MONGO_BIN_DIR && sudo ln -fn $MONGO_DIR/bin/mongod $MONGO_BIN_DIR
+RUN sudo mkdir -p /var/lib/mongo  && sudo mkdir -p /var/log/mongodb && sudo chown $(whoami) /var/lib/mongo && sudo chown $(whoami) /var/log/mongodb
+RUN sudo ln $MONGO_DIR/bin/mongo /usr/local/sbin/ && sudo ln $MONGO_DIR/bin/mongod /usr/local/sbin/ && sudo ln $MONGO_DIR/bin/mongos /usr/local/sbin/
+RUN sudo chmod 755 /etc/init.d/mongodb && cd /etc/rc3.d/ && sudo ln -fsn ../init.d/mongodb S01mongodb && cd /etc/rc4.d/ && sudo ln -fsn ../init.d/mongodb S01mongodb && cd /etc/rc5.d/ && sudo ln -fsn ../init.d/mongodb S01mongodb
 
 #sudo service mongodb start
 #sudo service mongodb status
@@ -50,4 +39,3 @@ roles: [ { role: \"userAdminAnyDatabase\", db: \"admin\" } ]\
 RUN mkdir -p ~/mongo_setup && echo $mongo_user >~/mongo_setup/mongo_user.in.mongo
 #&& npm install mongoose
 
-EXPOSE 27017

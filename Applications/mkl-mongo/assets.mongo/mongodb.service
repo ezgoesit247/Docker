@@ -19,7 +19,7 @@ RETVAL=0
 start() {
         if [ ! -d $SUBSYS ]; then sudo mkdir ${SUBSYS} && sudo chmod 755 ${SUBSYS}; fi
         echo -n $"Starting $prog: "
-        PID=$($mongod --dbpath /var/lib/mongo --logpath /var/log/mongodb/mongod.log --fork|sed 's/[^0-9]*//')
+        PID=$($mongod --dbpath /mkl-mongo/lib/mongo --logpath /mkl-mongo/log/mongodb/mongod.log --fork|sed 's/[^0-9]*//')
         RETVAL=$?
         #echo "PID: ${PID}"
         echo ${PID}
