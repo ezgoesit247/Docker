@@ -64,9 +64,10 @@ case $i in
 esac
 done
 
-if [ ! ${GENERATE} ];then GENERATE="LOCAL";fi
 
 ### GLOBALS ###
+if [ ! ${GENERATE} ];then GENERATE="LOCAL";fi
+
 app=$1 && DEVELOPMENT_PLATFORM=$2 && PLATFORM_VERSION=$3 && ROOT_BUILD=$4
 if [ ! $app ]; then usage no app; fi
 if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform; fi
