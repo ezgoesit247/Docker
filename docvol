@@ -42,7 +42,7 @@ function do_network {
   docker network ls
 }
 function help {
-  echo -e "\t-i VOL: inspect \n\t-n: network \n\t-s VOL: size \n\t-r|--rm VOL: remove \n\t-c VOL: create"
+  echo "\t-i [VOL]: inspect\n\t-s [VOL]: size\n\t-c [VOL]: create\n\t-l [VOL]: list\n\t-r [VOL]: remove\n\t-n: network"
 }
 
 for i in "$@"
@@ -54,7 +54,7 @@ case $i in
   shift
 #  if [ ! ${VOL} ]; then usage need volume arg; fi
   ;;
--n|--network)
+-n|-network)
   #shift
   NETWORK=$@ && NET=1
   shift
@@ -66,7 +66,7 @@ case $i in
   shift
   if [ ! ${VOL} ]; then usage need volume arg; fi
   ;;
--r|--rm)
+-r)
   shift
   VOL=$@ && RVOL=1
   if [ ! $# -gt 0 ]; then usage need volume arg; fi
@@ -84,8 +84,9 @@ case $i in
   shift
   if [ ! ${VOL} ]; then usage need volume arg; fi
   ;;
---help)
+-h|-help|--help)
   help && exit $LINENO
+  ;;
 esac
 done
 
