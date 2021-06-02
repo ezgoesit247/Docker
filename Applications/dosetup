@@ -73,7 +73,7 @@ if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform; fi
 TAGLIST=${PLATFORM_VERSION}
 
 EMBED_DOCKER="
-### DOCKER ###
+### EMBED_DOCKER ###
 RUN sudo apt-get -qq update \
 && sudo apt-get install -qq \
 apt-transport-https \
@@ -106,14 +106,14 @@ RUN echo '\n\
 >>~/.bashrc
 "
 
-EMBED_COMPOSE="
-### DOCKER COMPOSE ###
+EMBED_DOCKER_COMPOSE="
+### EMBED_DOCKER_COMPOSE ###
 RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-\`uname -s\`-\`uname -m\` -o /usr/local/bin/docker-compose \
 && sudo chmod +x /usr/local/bin/docker-compose
 "
 
 EMBED_MONGODB="
-### MONGODB ###
+### EMBED_MONGODB ###
 VOLUME ${app}
 RUN sudo mkdir -p /${app}/lib/mongo \
 && sudo mkdir -p /${app}/log/mongodb \
@@ -141,6 +141,7 @@ RUN sudo chmod 755 /etc/init.d/mongodb \
 && cd /etc/rc5.d/ && sudo ln -fsn ../init.d/mongodb S01mongodb
 "
 MONGO_USER="
+### MONGO_USER ###
 ARG mongo_user=\"\\
 use admin\\
 db.createUser( {\\
@@ -155,9 +156,14 @@ RUN echo -e \$MONGOOSE >~/mongo_setup/mongoose
 "
 
 
-EMBED_TREE="sudo apt-get install -qq tree"
-EMBED_NMAP="sudo apt-get install -qq nmap -y"
+EMBED_TREE="
+### EMBED_TREE ###
+sudo apt-get install -qq tree"
+EMBED_NMAP="
+### EMBED_NMAP ###
+sudo apt-get install -qq nmap -y"
 EMBED_USER="
+### EMBED_USER ###
 RUN apt-get update && apt-get install -qq sudo curl vim
 RUN echo \"ALL ALL=(ALL) NOPASSWD: ALL\" >>/etc/sudoers
 ARG gituser
@@ -171,7 +177,9 @@ alias ls=\"ls -Altr --color=auto\"\n\
 '\
 >>~/.bashrc"
 
-EMBED_GIT="VOLUME ${app}
+EMBED_GIT="
+### EMBED_GIT ###
+VOLUME ${app}
 RUN sudo mkdir /${app} \
 && sudo chown -R 1000:1000 /${app} \
 && ln -s /${app} ~/${app}
@@ -179,6 +187,7 @@ ARG gituser
 RUN git clone git@github.com:\$gituser/${app} /${app}"
 
 EMBED_MONGODB_SYSTEMD="
+### EMBED_MONGODB_SYSTEMD ###
 #RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add - \
 #&& echo \"deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse\" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list \
 #&& apt-get update \
