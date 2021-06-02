@@ -7,8 +7,8 @@ _USER_="-u ${CUSER}"
 RUNENV="-e='DOCKER_ENV=${APP}'"
 REMOVE=false
 PRIV=true
-purpose=sandbox
-ENV=dev
+PURPOSE=db
+ENV=run
 OS=ubuntu
 PORT="-p=27017:27017"
-RUNSTATE="-I --name=my-mongo"
+RUNSTATE="-I --name=mongo"

@@ -7,7 +7,7 @@ _USER_="-u ${CUSER}"
 RUNENV="-e='DOCKER_ENV=${APP}'"
 REMOVE=true
 PRIV=false
-purpose=sandbox
+PURPOSE=sandbox
 ENV=dev
 OS=ubuntu
 PORT=
