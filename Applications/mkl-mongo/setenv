@@ -2,11 +2,13 @@ APP=mkl-mongo
 CUSER=${GITUSER}
 KEYNAME=${GITKEYNAME}
 KEYPATH=${GITKEYPATH}
-OS=ubuntu
 LOCALUSER="--arg=LOCALUSER=${USER}"
 _USER_="-u ${CUSER}"
 RUNENV="-e='DOCKER_ENV=${APP}'"
 REMOVE=false
 PRIV=true
+purpose=sandbox
+ENV=dev
+OS=ubuntu
 PORT="-p=27017:27017"
 RUNSTATE="-I --name=my-mongo"
