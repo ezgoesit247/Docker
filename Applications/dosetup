@@ -72,6 +72,8 @@ app=$1 && DEVELOPMENT_PLATFORM=$2 && PLATFORM_VERSION=$3 && ROOT_BUILD=$4
 if [ ! $app ]; then usage no app; fi
 if [ ! $DEVELOPMENT_PLATFORM ]; then usage no platform; fi
 
+TAGLIST=${PLATFORM_VERSION}
+
 EMBED_DOCKER="
 ### DOCKER ###
 RUN sudo apt-get -qq update \
@@ -456,8 +458,9 @@ else
 fi
 
 
-## BUILD DEVELOPMENT COMTAINER
-echo "Building dev container"
-~/sandbox/assets.docker/${app}/build --no-cache
+## BUILD COMTAINER
+echo "Building container"
+echo -e "${TAGLIST}" >./${app}/taglist
+~/sandbox/assets.docker/${app}/build
 #echo $LINENO
 create_sandbox_runner
