@@ -24,7 +24,12 @@ function build_test_app {
   build_app ${TESTAPP} ${TESTPLATFORM} ${TESTVERSION}
 }
 function clean_local {
-  echo "cleaning local ${1}" && rm -rf ~/sandbox/assets.docker/${1}/* rm -rf ~/sandbox/${1} rm -rf ~/sandbox/Applications/${1}
+  local toclean="/tmp/gitwork/dosetup/${1} ${HOME}/sandbox/${1} ${HOME}/sandbox/assets.docker/${1}/* ${HOME}/sandbox/assets.docker/${1} ${HOME}/sandbox/Applications/${1} ${HOME}/Docker/assets.${1}-application"
+  read -p "remove local traces of: $(msg ${toclean})? (Y/n) " yn
+  yn=${yn:-Y}
+  if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage clean exited && exit ${LINENO}; fi
+
+  rm -rf ${toclean}
 }
 
 ### parms
@@ -48,15 +53,9 @@ case $i in
 ;;
 -c)
   shift
-  toclean="${1}"
-  shift
-  if [ -z "${toclean}" ]; then usage -c expects an argument && exit ${LINENO}; fi
-    if [[ "${toclean}" == '*' ]]; then usage 'dont pass *' && exit ${LINENO}; fi
-    read -p "remove local traces of: $(msg ${toclean})? (Y/n) " yn
-    yn=${yn:-Y}
-    if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage clean exited && exit ${LINENO}; fi
-    echo ${toclean} removed
-  clean_local ${toclean} && msg ${toclean} cleaned
+  if [ -z "${1}" ]; then usage -c expects an argument && exit ${1}; fi
+  if [[ "${1}" == '*' ]]; then usage 'dont pass *' && exit ${1}; fi
+  clean_local ${1} && echo ${1} cleaned!
   shift
   exit 0
 ;;
@@ -383,13 +382,14 @@ EOF
 
 function create_git {
 local REPO="${1}"
+local gitwork=/tmp/gitwork/dosetup
 
 if [[ ${REPO} = $(curl -s -H "Authorization: token $(cat ${GITTOKEN})" \
 -H "Accept: application/vnd.github.v3+json" \
 https://api.github.com/repos/${GITUSER}/${REPO}\
 |jq -r .name) ]]; then printf '\e[33m%s\e[m\n' "repo exists: ${REPO}" && return ${LINENO}; fi
 
-mkdir -p /tmp/gitwork/dosetup/${REPO} && pushd ${_}
+mkdir -p ${gitwork}/${REPO} && pushd ${_}
 
 local RETURN=$(JSON={\"name\":\"${REPO}\"} && \
 curl -s --url https://api.github.com/user/repos -d ${JSON} \
