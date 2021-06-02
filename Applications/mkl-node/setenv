@@ -1,12 +1,14 @@
-APP=vs-node
-PURPOSE=vscode
+APP=mkl-node
 CUSER=${GITUSER}
 KEYNAME=${GITKEYNAME}
 KEYPATH=${GITKEYPATH}
-OS=ubuntu
 LOCALUSER="--arg=LOCALUSER=${USER}"
 _USER_="-u ${CUSER}"
 RUNENV="-e='DOCKER_ENV=${APP}'"
-REMOVE=false
+REMOVE=true
 PRIV=true
-RUNSTATE="-I -d"
+PURPOSE=application
+ENV=run
+OS=ubuntu
+PORT="-p=8080:8080"
+RUNSTATE="-I --name=sharkdemo"
