@@ -13,6 +13,56 @@ function msg {
 function error {
   printf '\e[31m%s\e[m\n' "$*"
 }
+function build_app {
+  msg "Running: GENERATE=LOCAL ./dosetup ${1} ${2} ${3}"
+  echo $(GENERATE=LOCAL ./dosetup ${1} ${2} ${3}) >/dev/null
+}
+function build_test_app {
+  local TESTAPP="testapp"
+  local TESTPLATFORM="local/node"
+  local TESTVERSION="ubuntu"
+  build_app ${TESTAPP} ${TESTPLATFORM} ${TESTVERSION}
+}
+function clean_local {
+  echo "cleaning local ${1}" && rm -rf ~/sandbox/assets.docker/${1}/* rm -rf ~/sandbox/${1} rm -rf ~/sandbox/Applications/${1}
+}
+
+### parms
+
+TESTAPP="testapp"
+ISBUILDTEST=false
+for i in "$@"
+do
+case $i in
+-r)
+  shift
+  clean_local ${TESTAPP}
+  exit 0
+;;
+-t)
+  shift
+  ISBUILDTEST=true
+  clean_local ${TESTAPP}
+  build_test_app
+  msg ${TESTAPP} built
+  exit 0
+;;
+-c)
+  shift
+  toclean="${1}"
+  shift
+  if [ -z "${toclean}" ]; then usage -c expects an argument && exit ${LINENO}; fi
+    if [[ "${toclean}" == '*' ]]; then usage 'dont pass *' && exit ${LINENO}; fi
+    read -p "remove local traces of: $(msg ${toclean})? (Y/n) " yn
+    yn=${yn:-Y}
+    if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage clean exited && exit ${LINENO}; fi
+    echo ${toclean} removed
+  clean_local ${toclean} && msg ${toclean} cleaned
+  shift
+  exit 0
+;;
+esac
+done
 
 if [ ! ${GENERATE} ];then GENERATE="LOCAL";fi
 
@@ -349,62 +399,8 @@ function create_sandbox_runner {
   fi
 }
 
-function build_app {
-  msg "Running: GENERATE=LOCAL ./dosetup ${1} ${2} ${3}"
-  echo $(GENERATE=LOCAL ./dosetup ${1} ${2} ${3}) >/dev/null
-}
-function build_test_app {
-  local TESTAPP="testapp"
-  local TESTPLATFORM="local/node"
-  local TESTVERSION="ubuntu"
-  build_app ${TESTAPP} ${TESTPLATFORM} ${TESTVERSION}
-}
-function clean_local {
-  echo "cleaning local ${1}" && rm -rf ~/sandbox/assets.docker/${1}/* rm -rf ~/sandbox/${1} rm -rf ~/sandbox/Applications/${1}
-}
-
-### parms
-
-TESTAPP="testapp"
-ISBUILDTEST=false
-for i in "$@"
-do
-case $i in
--r)
-  shift
-  clean_local ${TESTAPP}
-  exit 0
-;;
--t)
-  shift
-  ISBUILDTEST=true
-  clean_local ${TESTAPP}
-  build_test_app
-  msg ${TESTAPP} built
-  exit 0
-;;
--c)
-  shift
-  toclean="${1}"
-  shift
-  if [ -z "${toclean}" ]; then usage -c expects an argument && exit ${LINENO}; fi
-    if [[ "${toclean}" == '*' ]]; then usage 'dont pass *' && exit ${LINENO}; fi
-    read -p "remove local traces of: $(msg ${toclean})? (Y/n) " yn
-    yn=${yn:-Y}
-    if [[ ! ${yn} == Y ]] && [[ ! ${yn} == y ]]; then usage clean exited && exit ${LINENO}; fi
-    echo ${toclean} removed
-  clean_local ${toclean} && msg ${toclean} cleaned
-  shift
-  exit 0
-;;
-esac
-done
 
 ### main
-
-
-
-
 CUSER=${GITUSER}
 #echo -e "using ${CUSER} for clone\nenter appname: " && read app
 msg "Generate dockerfile is ${GENERATE}"
