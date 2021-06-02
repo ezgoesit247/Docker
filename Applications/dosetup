@@ -28,7 +28,6 @@ function clean_local {
 }
 
 ### parms
-
 TESTAPP="testapp"
 ISBUILDTEST=false
 for i in "$@"
@@ -189,13 +188,16 @@ EMBED_MONGODB_SYSTEMD="
 
 
 function use_local_base {
+#echo -e "At use_local_base\n \$1:$1\n \$2:$2\n \$3:$3\n \$4:$4"
+#echo -e "\n app:$app\n DEVELOPMENT_PLATFORM:$DEVELOPMENT_PLATFORM\n PLATFORM_VERSION:$PLATFORM_VERSION\n ROOT_BUILD:$ROOT_BUILD"
+#exit ${LINENO}
   local app=$1
   local PLATFORM_VERSION=$2
   local DEVELOPMENT_PLATFORM=$3
   local NAMESPACE="local"
   local IMAGE="${NAMESPACE}/$(basename ${PLATFORM_VERSION})"
   dosetenv ${app} ${DEVELOPMENT_PLATFORM} ${PLATFORM_VERSION}
-  sed -i '' "s/PRIV=false/PRIV=true/" ${app}/setenv
+
   DOCKERFILE=../$(basename ${PLATFORM_VERSION})/Dockerfile
   if [ -f ${DOCKERFILE} ]; then
     if [ ${DEVELOPMENT_PLATFORM} ];then DEVELOPMENT_PLATFORM=":${DEVELOPMENT_PLATFORM}";fi
@@ -237,25 +239,35 @@ EOF
   #cp ./generic/Dockerfile.${DEVELOPMENT_PLATFORM} ./${app}/
 }
 function dosetenv {
-  local app=$1
-  local DEVELOPMENT_PLATFORM=$2
+#echo -e "At dosetenv\n$app\n$DEVELOPMENT_PLATFORM\n$3"
+#exit ${LINENO}
   local OS_CLAUSE="OS=${DEVELOPMENT_PLATFORM}"
   LOCALUSER_CLAUSE='LOCALUSER="--arg=LOCALUSER=${USER}"'
   USER_CUSER_CLAUSE='_USER_="-u ${CUSER}"'
    ## COPY AND CHANGE ENV FILE UNLESS MARKED STICKY
-  if [ ! -k ${app}/setenv ]; then
-    echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-    echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-    echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+  if [ ! -f ${app}/setenv ]; then cp ./generic/setenv ${app}/
+#    echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+#    echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
+#    echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
 
-    echo RUNENV=\"-e=\'DOCKER_ENV=\${APP}\'\" >>~/sandbox/assets.docker/${app}/setenv
-    echo REMOVE=true >>~/sandbox/assets.docker/${app}/setenv
-    echo PRIV=false >>~/sandbox/assets.docker/${app}/setenv
+#    echo RUNENV=\"-e=\'DOCKER_ENV=\${APP}\'\" >>~/sandbox/assets.docker/${app}/setenv
+#    echo REMOVE=true >>~/sandbox/assets.docker/${app}/setenv
+#    echo PRIV=false >>~/sandbox/assets.docker/${app}/setenv
 
-    chmod 1644 ${app}/setenv
+
+
+    if [ ! -k ${app}/setenv ]; then
+      sed -i '' "s/generic/${app}/" ${app}/setenv
+      if [[ ${app} == "mkl-mongo" ]]; then
+        sed -i '' "s/PRIV=false/PRIV=true/" ${app}/setenv; fi
+      chmod 1644 ${app}/setenv
+    fi
   fi
 }
 function generate_new_dockerfile {
+#echo -e "At generate_new_dockerfile\n \$1:$1\n \$2:$2\n \$3:$3\n \$4:$4"
+#echo -e "\n app:$app\n DEVELOPMENT_PLATFORM:$DEVELOPMENT_PLATFORM\n PLATFORM_VERSION:$PLATFORM_VERSION\n ROOT_BUILD:$ROOT_BUILD"
+#exit ${LINENO}
   local app=$1
   local DEVELOPMENT_PLATFORM=$2
   local PLATFORM_VERSION=$3
@@ -424,12 +436,7 @@ ln -fsn ~/Docker/assets.${app}-application ~/sandbox/assets.docker/${app}
 
 
 
-# COPY AND CHANGE ENV FILE
-if [ ! -k ${app}/setenv ]; then
-  cp ./generic/setenv ${app}/
-  sed -i '' "s/generic/${app}/" ${app}/setenv
-fi
-
+dosetenv
 ## HARD LINK SETENV
 ln -fn ${app}/setenv ~/sandbox/assets.docker/${app}/
 
