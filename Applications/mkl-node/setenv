@@ -5,7 +5,7 @@ KEYPATH=${GITKEYPATH}
 LOCALUSER="--arg=LOCALUSER=${USER}"
 _USER_="-u ${CUSER}"
 RUNENV="-e='DOCKER_ENV=${APP}'"
-REMOVE=true
+REMOVE=false
 PRIV=true
 PURPOSE=application
 ENV=run
