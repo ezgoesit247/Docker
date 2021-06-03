@@ -38,6 +38,11 @@ ISBUILDTEST=false
 for i in "$@"
 do
 case $i in
+--appvol)
+  shift
+  APPLICATIONVOLUME=${1}
+  shift
+;;
 -r)
   shift
   clean_local ${TESTAPP}
@@ -105,13 +110,11 @@ RUN echo '\n\
 '\
 >>~/.bashrc
 "
-
 EMBED_DOCKER_COMPOSE="
 ### EMBED_DOCKER_COMPOSE ###
 RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-\`uname -s\`-\`uname -m\` -o /usr/local/bin/docker-compose \
 && sudo chmod +x /usr/local/bin/docker-compose
 "
-
 EMBED_MONGODB="
 ### EMBED_MONGODB ###
 VOLUME ${app}
@@ -154,8 +157,6 @@ RUN mkdir -p ~/mongo_setup \
 ARG MONGOOSE=\"#!/bin/sh\nnpm install mongoose\"
 RUN echo -e \$MONGOOSE >~/mongo_setup/mongoose
 "
-
-
 EMBED_TREE="
 ### EMBED_TREE ###
 sudo apt-get install -qq tree"
@@ -176,7 +177,6 @@ export PS1=\"\\\[\\\033[1;34m\\\]\\\u\\\[\\\033[0m\\\]@\\\[\\\033[1;31m\\\]\\\h:
 alias ls=\"ls -Altr --color=auto\"\n\
 '\
 >>~/.bashrc"
-
 EMBED_GIT="
 ### EMBED_GIT ###
 VOLUME ${app}
@@ -223,8 +223,14 @@ CMD [ "/bin/bash" ]
 FROM ${app} as ${app}packages
 ${EMBED_DOCKER}
 ${EMBED_DOCKER_COMPOSE}
-
 RUN sudo apt-get clean
+FROM ${app}packages as vol
+
+VOLUME ${APPLICATIONVOLUME}
+RUN sudo mkdir /${APPLICATIONVOLUME} \
+&& sudo chown -R 1000:1000 /${APPLICATIONVOLUME} \
+&& ln -s /${APPLICATIONVOLUME} ~/${APPLICATIONVOLUME}
+
 EOF
 #${EMBED_DOCKER}
 #${EMBED_COMPOSE}
@@ -253,18 +259,11 @@ function dosetenv {
   USER_CUSER_CLAUSE='_USER_="-u ${CUSER}"'
    ## COPY AND CHANGE ENV FILE UNLESS MARKED STICKY
   if [ ! -f ${app}/setenv ]; then cp ./generic/setenv ${app}/
-#    echo ${OS_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-#    echo ${LOCALUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-#    echo ${USER_CUSER_CLAUSE} >>~/sandbox/assets.docker/${app}/setenv
-
-#    echo RUNENV=\"-e=\'DOCKER_ENV=\${APP}\'\" >>~/sandbox/assets.docker/${app}/setenv
-#    echo REMOVE=true >>~/sandbox/assets.docker/${app}/setenv
-#    echo PRIV=false >>~/sandbox/assets.docker/${app}/setenv
-
-
-
     if [ ! -k ${app}/setenv ]; then
       sed -i '' "s/generic/${app}/" ${app}/setenv
+      if [ ! -z ${APPLICATIONVOLUME} ]; then
+        echo "RUNENV=\"\${RUNENV} -v=${APPLICATIONVOLUME}:/${APPLICATIONVOLUME}\"" >>${app}/setenv
+      fi
       if [[ ${app} == "mkl-mongo" ]] || [[ ${app} == "mkl-node" ]]; then
         sed -i '' "s/PRIV=false/PRIV=true/" ${app}/setenv; fi
       chmod 1644 ${app}/setenv

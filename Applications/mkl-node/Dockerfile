@@ -17,5 +17,9 @@ RUN echo '\n'$dockerpushnodeapp'\n'>>~/.bashrc
 ### EMBED_DOCKER_COMPOSE ###
 RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
 
-
 RUN sudo apt-get clean
+FROM mkl-nodepackages as vol
+
+VOLUME sharkdemo
+RUN sudo mkdir /sharkdemo && sudo chown -R 1000:1000 /sharkdemo && ln -s /sharkdemo ~/sharkdemo
+

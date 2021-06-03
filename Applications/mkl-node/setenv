@@ -12,3 +12,4 @@ ENV=run
 OS=ubuntu
 PORT="-p=8080:8080"
 RUNSTATE="-I --name=sharkdemo"
+RUNENV="${RUNENV} -v=sharkdemo:/sharkdemo"
