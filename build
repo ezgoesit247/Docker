@@ -63,6 +63,7 @@ function red2 {
 }
 RM=""
 REMOTE="local/"
+MAJIKL="majikl/"
 for i in "$@"
 do
 case $i in
@@ -155,4 +156,5 @@ else
   if [ ${debug} -eq 1 ]; then yellow "(${LINENO}) Calling build -t ${REMOTE}${PWD##*/} ${TGS}" && exit ${LINENO}; fi
   build "-t ${REMOTE}${PWD##*/} ${TGS}"
   for tag in $(cat taglist); do docker tag "${REMOTE}${PWD##*/}" "${REMOTE}${PWD##*/}:${tag}" && echo "${REMOTE}${PWD##*/}:${tag}"; done
+  for tag in $(cat taglist); do docker tag "${REMOTE}${PWD##*/}" "${MAJIKL}${PWD##*/}:${tag}" && echo "${MAJIKL}${PWD##*/}:${tag}"; done
 fi
