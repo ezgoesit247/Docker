@@ -71,9 +71,17 @@ RUN tar zxf $M2_TAR -C /tmp \
 && sudo mv /tmp/apache-maven-3* ${M2_HOME} \
 && sudo rm -rf $M2_TAR
 
+FROM maven as docker
+### EMBED_DOCKER ###
+RUN sudo apt-get -qq update && sudo apt-get install -qq apt-transport-https ca-certificates gnupg-agent software-properties-common && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && sudo apt-key fingerprint 0EBFCD88 && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && sudo apt-get -qq update && sudo apt-get install -qq docker-ce docker-ce-cli containerd.io
+RUN sudo usermod -a -G docker $(whoami);
 
-FROM maven as azcli
+FROM docker as dockercompose
+### EMBED_DOCKER_COMPOSE ###
+RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
 
+
+FROM dockercompose as azcli
 #AZURE CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo /bin/bash
 RUN curl -sL https://packages.microsoft.com/keys/microsoft.asc \
@@ -85,21 +93,28 @@ RUN sudo apt-get -y update && sudo apt-get -y install \
   azure-cli
 
 RUN echo '\n\
-blue "AZ CLI" && az -v\n\
+blue "AZ CLI:" && az -v\n\
 '\
 >>$USERHOME/.bashrc
 
-FROM azcli as docker
 
-### EMBED_DOCKER ###
-RUN sudo apt-get -qq update && sudo apt-get install -qq apt-transport-https ca-certificates gnupg-agent software-properties-common && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && sudo apt-key fingerprint 0EBFCD88 && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && sudo apt-get -qq update && sudo apt-get install -qq docker-ce docker-ce-cli containerd.io
-RUN sudo usermod -a -G docker $(whoami);
 
-FROM docker as dockercompose
-### EMBED_DOCKER_COMPOSE ###
-RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
+FROM azcli as powershell
+#SEE https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1#ubuntu-2004
+RUN sudo apt-get update \
+&& sudo wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb \
+&& sudo dpkg -i packages-microsoft-prod.deb \
+&& sudo apt-get update \
+&& sudo add-apt-repository universe \
+&& sudo apt-get install -y \
+powershell
 
-FROM dockercompose as bashrc
+RUN echo '\n\
+blue "PowerShell:" && pwsh -v\n\
+'\
+>>$USERHOME/.bashrc
+
+FROM powershell as bashrc
 RUN echo '### NODE VIA NVM ###\n\
 cyan "Updating nvm:" && echo $(cd .nvm && git pull)\n\
 if  ! command -v nvm >/dev/null; then\n\
