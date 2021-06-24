@@ -84,6 +84,11 @@ RUN echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb
 RUN sudo apt-get -y update && sudo apt-get -y install \
   azure-cli
 
+RUN echo '\n\
+blue "AZ CLI" && az -v\n\
+'\
+>>$USERHOME/.bashrc
+
 FROM azcli as docker
 
 ### EMBED_DOCKER ###
@@ -146,8 +151,5 @@ ARG line="$line\nhi CursorLineNr   cterm=NONE ctermbg=36 ctermfg=NONE"
 RUN echo "$line" >$USERHOME/.vimrc
 
 WORKDIR $USERHOME
-RUN mkdir $USERHOME/code-store \
-&& mkdir $USERHOME/scratch
-
+RUN mkdir $USERHOME/code-store
 VOLUME $USERHOME/code-store
-VOLUME $USERHOME/scratch
