@@ -2,7 +2,7 @@
 
 ##  . ./setenv && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR}
 
-##  docker run --rm -it -P --hostname nodejava --user ${CUSER} -e DOCKER_ENV=nodejava -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets local/nodejava
+##  docker run --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets local/${APP}
 
 FROM local/gituser:ubuntu-20.04 as top
 ARG THISUSER
@@ -72,10 +72,29 @@ RUN tar zxf $M2_TAR -C /tmp \
 && sudo rm -rf $M2_TAR
 
 
-FROM maven as userstuff
+FROM maven as azcli
 
-FROM userstuff as bashrc
+#AZURE CLI
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo /bin/bash
+RUN curl -sL https://packages.microsoft.com/keys/microsoft.asc \
+  | gpg --dearmor \
+  | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+RUN echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
+| sudo tee /etc/apt/sources.list.d/azure-cli.list
+RUN sudo apt-get -y update && sudo apt-get -y install \
+  azure-cli
 
+FROM azcli as docker
+
+### EMBED_DOCKER ###
+RUN sudo apt-get -qq update && sudo apt-get install -qq apt-transport-https ca-certificates gnupg-agent software-properties-common && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && sudo apt-key fingerprint 0EBFCD88 && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && sudo apt-get -qq update && sudo apt-get install -qq docker-ce docker-ce-cli containerd.io
+RUN sudo usermod -a -G docker $(whoami);
+
+FROM docker as dockercompose
+### EMBED_DOCKER_COMPOSE ###
+RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
+
+FROM dockercompose as bashrc
 RUN echo '### NODE VIA NVM ###\n\
 cyan "Updating nvm:" && echo $(cd .nvm && git pull)\n\
 if  ! command -v nvm >/dev/null; then\n\

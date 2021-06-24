@@ -1,2 +1,3 @@
 CUSER=${GITUSER}
 HOMEDIR=home
+APP=mcsdeveloper
