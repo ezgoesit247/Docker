@@ -46,6 +46,21 @@ function do_build {
     #fi
   fi
 }
+function tag_local {
+  for tag in $(cat taglist); do
+    local tagged="${REMOTE}${PWD##*/}:${tag}"
+    docker tag "${REMOTE}${PWD##*/}" "${tagged}" && echo "${tagged}";
+  done
+}
+function tag_remote {
+  CONTAINERHUB="majikl/"
+  local tagged="${CONTAINERHUB}${PWD##*/}"
+  docker tag "${REMOTE}${PWD##*/}" "${tagged}" && echo "${tagged}";
+  for tag in $(cat taglist); do
+    tagged="${CONTAINERHUB}${PWD##*/}:${tag}"
+    docker tag "${CONTAINERHUB}${PWD##*/}" "${tagged}" && echo "${tagged}";
+  done
+}
 function usage {
    echo -e "\n Usage:\tbuild [NAME] looks for Dockerfile ${docker_dir}/NAME/\n\tbuild NOARGS looks for Dockerfile in PWD"; echo
 }
@@ -63,7 +78,6 @@ function red2 {
 }
 RM=""
 REMOTE="local/"
-MAJIKL="majikl/"
 for i in "$@"
 do
 case $i in
@@ -156,6 +170,7 @@ else
   if [ ${debug} -eq 1 ]; then yellow "(${LINENO}) Calling build -t ${REMOTE}${PWD##*/} ${TGS}"; fi
   build "-t ${REMOTE}${PWD##*/} ${TGS}"
 
-  for tag in $(cat taglist); do docker tag "${REMOTE}${PWD##*/}" "${REMOTE}${PWD##*/}:${tag}" && echo "${REMOTE}${PWD##*/}:${tag}"; done
-  for tag in $(cat taglist); do docker tag "${REMOTE}${PWD##*/}" "${MAJIKL}${PWD##*/}:${tag}" && echo "${MAJIKL}${PWD##*/}:${tag}"; done
+  tag_local
+  tag_remote
+
 fi
