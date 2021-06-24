@@ -2,6 +2,8 @@
 
 ##  . ./setenv && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR}
 
+##  docker run --rm -it -P --hostname nodejava -v /Users/brandonindia/Docker/assets.docker.public:/home/default_virtual/public.assets -e DOCKER_ENV=nodejava majikl/nodejava
+
 FROM local/gituser:ubuntu-20.04 as top
 ARG THISUSER
 ARG HOMEDIR

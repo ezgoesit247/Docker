@@ -146,15 +146,16 @@ if [ -d ${docker_dir}/${1} ] && [ ! -z ${1} ]; then
   if [ ${TAG} ] && [ ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${TAG}:${FILETAG}"; fi
   if [ ${MYTAG} ] && [ ! ${FILETAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${MYTAG}"; fi
   if [ ${USERTAG} ]; then TAGS="${TAGS} -t ${REMOTE}${DIR}:${USERTAG}"; fi
-  if [ ${debug} -eq 1 ]; then yellow "(${LINENO}) Calling build ${TAGS}" && popd && exit ${LINENO}; fi
+  if [ ${debug} -eq 1 ]; then yellow "(${LINENO}) Calling build ${TAGS}" && popd; fi
   build "${TAGS}"
   popd >/dev/null
 else
   if [ -f ${FNAME} ]; then doc ${FNAME}; fi
   if [ $MYTAG ];then TGS="-t ${REMOTE}${PWD##*/}:${MYTAG}"; fi
   if [ $TAG ];then TGS="${TGS} -t ${REMOTE}${PWD##*/}:${TAG}"; fi
-  if [ ${debug} -eq 1 ]; then yellow "(${LINENO}) Calling build -t ${REMOTE}${PWD##*/} ${TGS}" && exit ${LINENO}; fi
+  if [ ${debug} -eq 1 ]; then yellow "(${LINENO}) Calling build -t ${REMOTE}${PWD##*/} ${TGS}"; fi
   build "-t ${REMOTE}${PWD##*/} ${TGS}"
+
   for tag in $(cat taglist); do docker tag "${REMOTE}${PWD##*/}" "${REMOTE}${PWD##*/}:${tag}" && echo "${REMOTE}${PWD##*/}:${tag}"; done
   for tag in $(cat taglist); do docker tag "${REMOTE}${PWD##*/}" "${MAJIKL}${PWD##*/}:${tag}" && echo "${MAJIKL}${PWD##*/}:${tag}"; done
 fi
