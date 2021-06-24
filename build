@@ -56,10 +56,14 @@ function tag_remote {
   CONTAINERHUB="majikl/"
   local tagged="${CONTAINERHUB}${PWD##*/}"
   docker tag "${REMOTE}${PWD##*/}" "${tagged}" && echo "${tagged}";
+  if [ ${PUBLISH} ]; then docker push "${tagged}"; fi
   for tag in $(cat taglist); do
     tagged="${CONTAINERHUB}${PWD##*/}:${tag}"
     docker tag "${CONTAINERHUB}${PWD##*/}" "${tagged}" && echo "${tagged}";
+    if [ ${PUBLISH} ]; then docker push "${tagged}"; fi
   done
+
+
 }
 function usage {
    echo -e "\n Usage:\tbuild [NAME] looks for Dockerfile ${docker_dir}/NAME/\n\tbuild NOARGS looks for Dockerfile in PWD"; echo
@@ -137,6 +141,10 @@ case $i in
   shift
   FNAME=${1} && FILETAG="$(echo ${1#*.}|awk -F. '{print $1}')"
   shift
+  ;;
+--publish)
+  shift
+  PUBLISH=1
   ;;
 esac
 done

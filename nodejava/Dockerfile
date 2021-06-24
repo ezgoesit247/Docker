@@ -2,7 +2,7 @@
 
 ##  . ./setenv && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR}
 
-##  docker run --rm -it -P --hostname nodejava -v /Users/brandonindia/Docker/assets.docker.public:/home/default_virtual/public.assets -e DOCKER_ENV=nodejava majikl/nodejava
+##  docker run --rm -it -P --hostname nodejava --user ${CUSER} -e DOCKER_ENV=nodejava -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets local/nodejava
 
 FROM local/gituser:ubuntu-20.04 as top
 ARG THISUSER
@@ -109,7 +109,8 @@ RUN echo '### YARN (NEEDS NVM) ###\n\
 >>$USERHOME/.bashrc
 
 
-
+ARG DOCKER_ENV
+ENV DOCKER_ENV=$DOCKER_ENV
 RUN echo '### SHARED HISTORY ###\n\
 if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.${DOCKER_ENV}"; fi && green "Shared bash history at:" && echo ${HISTFILE}\n\
 '\
