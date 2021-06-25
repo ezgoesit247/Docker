@@ -4,7 +4,7 @@
 
 ##  . ./setenv && docker build   --build-arg THISUSER=${CUSER} --build-arg HOMEDIR=${HOMEDIR} --build-arg LOCALHOMESAFE=${LOCALHOMESAFE} --build-arg gitlogin=${CLOGIN} --build-arg gituser=${CUSER} --build-arg homepath=${HOMEPATH} --build-arg SSH_PRIVATE_KEY=${KEYNAME} --rm -t majikl/${APP}  --build-arg SSH_PRIVATE_KEY_STREAM="$(cat ${KEYPATH})" .
 
-##  docker run --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets majikl/${APP}
+##  docker run --privileged --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets majikl/${APP}
 
 FROM local/seed:ubuntu-20.04 as top2
 
@@ -170,7 +170,17 @@ FROM maven as docker
 RUN sudo apt-get -qq update && sudo apt-get install -qq apt-transport-https ca-certificates gnupg-agent software-properties-common && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && sudo apt-key fingerprint 0EBFCD88 && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && sudo apt-get -qq update && sudo apt-get install -qq docker-ce docker-ce-cli containerd.io
 RUN sudo usermod -a -G docker $(whoami);
 
-FROM docker as dockercompose
+FROM docker as dockertest
+RUN echo '### DOCKER ###\n\
+if ! sudo service docker status;then sudo service docker start && sleep 1 && sudo service docker status;fi\n\
+if docker run --rm hello-world 2>/dev/null|grep -q "Hello from Docker!"\n\
+then pass "Docker Hello World"; else fail "Docker Hello World"\n\
+fi\n\
+cyan "Docker:"; docker --version\n\
+cyan "Docker Compose:"; docker-compose --version' \
+>>$USERHOME/.bashrc
+
+FROM dockertest as dockercompose
 ### EMBED_DOCKER_COMPOSE ###
 RUN sudo curl -sL https://github.com/docker/compose/releases/download/1.21.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
 
