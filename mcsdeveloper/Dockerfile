@@ -4,7 +4,7 @@
 
 ##  . ./setenv && docker build   --build-arg THISUSER=${CUSER} --build-arg HOMEDIR=${HOMEDIR} --build-arg LOCALHOMESAFE=${LOCALHOMESAFE} --build-arg gitlogin=${CLOGIN} --build-arg gituser=${CUSER} --build-arg homepath=${HOMEPATH} --build-arg SSH_PRIVATE_KEY=${KEYNAME} --rm -t majikl/${APP}  --build-arg SSH_PRIVATE_KEY_STREAM="$(cat ${KEYPATH})" .
 
-##  docker run --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets local/${APP}
+##  docker run --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets majikl/${APP}
 
 FROM local/seed:ubuntu-20.04 as top2
 
