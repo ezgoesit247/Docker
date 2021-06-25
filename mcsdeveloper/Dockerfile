@@ -2,13 +2,11 @@
 
 ##  . ./setenv && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gitlogin=${CLOGIN} --arg=gituser=${CUSER} --arg=homepath=${HOMEPATH} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
 
+##  . ./setenv && docker build   --build-arg THISUSER=${CUSER} --build-arg HOMEDIR=${HOMEDIR} --build-arg LOCALHOMESAFE=${LOCALHOMESAFE} --build-arg gitlogin=${CLOGIN} --build-arg gituser=${CUSER} --build-arg homepath=${HOMEPATH} --build-arg SSH_PRIVATE_KEY=${KEYNAME} --rm -t majikl/${APP}  --build-arg SSH_PRIVATE_KEY_STREAM="$(cat ${KEYPATH})" .
+
 ##  docker run --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets local/${APP}
 
 FROM local/seed:ubuntu-20.04 as top2
-
-##  . ./setenv && DEBUG=0 build
-
-##  . ./setenv && DEBUG=0 run --rm -I -e='DOCKER_ENV=developer'
 
 ##  CUSER=${GITUSER} && HOMEPATH=/home && CPATH=${HOMEPATH}/${CUSER} && DEBUG=0 run --rm -I -e='DOCKER_ENV=developer' -u ${CUSER} -w ${CPATH} local/gituser
 
@@ -62,8 +60,9 @@ RUN chmod 700 $USERHOME/.ssh \
 && chmod 755 $GIT_SSH \
 && chmod 600 $KNOWN_HOSTS \
 && chmod 644 $GIT_CONFIG \
-&& chmod 644 $GIT_IGNORE_GLOBAL \
-&& sed -i 's/'$LOCALHOMESAFE'/'$SAFEHOME'/' $GIT_CONFIG \
+&& chmod 644 $GIT_IGNORE_GLOBAL
+
+RUN sed -i 's/'$LOCALHOMESAFE'/'$SAFEHOME'/' $GIT_CONFIG \
 && chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY \
 && chown -R $THISUSER:$THISUSER $USERHOME
 
