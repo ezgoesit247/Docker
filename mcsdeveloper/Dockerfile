@@ -1,10 +1,105 @@
 #!/bin/bash
 
-##  . ./setenv && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR}
+##  . ./setenv && DEBUG=0 build --arg=THISUSER=${CUSER} --arg=HOMEDIR=${HOMEDIR} --arg=LOCALHOMESAFE=${LOCALHOMESAFE} --arg=gitlogin=${CLOGIN} --arg=gituser=${CUSER} --arg=homepath=${HOMEPATH} --arg=SSH_PRIVATE_KEY=${KEYNAME} --key SSH_PRIVATE_KEY_STREAM ${KEYPATH}
 
 ##  docker run --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets local/${APP}
 
-FROM local/gituser:ubuntu-20.04 as top
+FROM local/seed:ubuntu-20.04 as top2
+
+##  . ./setenv && DEBUG=0 build
+
+##  . ./setenv && DEBUG=0 run --rm -I -e='DOCKER_ENV=developer'
+
+##  CUSER=${GITUSER} && HOMEPATH=/home && CPATH=${HOMEPATH}/${CUSER} && DEBUG=0 run --rm -I -e='DOCKER_ENV=developer' -u ${CUSER} -w ${CPATH} local/gituser
+
+FROM top2 as git2
+RUN apt-get -qq update \
+&& apt-get -qq install \
+git \
+sudo \
+&& apt-get clean
+
+
+FROM git2 as user2
+ARG gituser
+ARG gitlogin
+ARG homepath
+ARG LOCALHOMESAFE
+
+
+ARG THISUSER=$gituser
+ARG THISLOGIN=$gitlogin
+ARG HOMEPATH=$homepath
+
+# THESE SHOULD NOT *need* TO CHANGE
+ARG SAFEPATH=\\$HOMEPATH
+ARG USERHOME=$HOMEPATH/$THISUSER
+ARG SAFEHOME=$SAFEPATH\\/$THISUSER
+ENV GIT_SSH=$USERHOME/bin/git-ssh
+ARG GIT_CONFIG=$USERHOME/.gitconfig
+ARG KNOWN_HOSTS=$USERHOME/.ssh/known_hosts
+ARG GIT_IGNORE_GLOBAL=$USERHOME/.gitignore_global
+
+ARG SSH_PRIVATE_KEY_PATH=$USERHOME/.ssh
+ARG SSH_PRIVATE_KEY
+ARG SSH_PRIVATE_KEY_STREAM
+
+
+RUN groupadd -g 1000 $THISUSER \
+&& useradd -d $USERHOME -s /bin/bash -m $THISUSER -u 1000 -g 1000 \
+&& echo "ALL ALL=(ALL) NOPASSWD: ALL"\
+>>/etc/sudoers
+
+
+COPY assets.docker/git-ssh $GIT_SSH
+COPY assets.docker/.gitconfig $GIT_CONFIG
+COPY assets.docker/known_hosts $KNOWN_HOSTS
+COPY assets.docker/.gitignore_global $GIT_IGNORE_GLOBAL
+RUN echo "${SSH_PRIVATE_KEY_STREAM}" > $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY
+
+RUN chmod 700 $USERHOME/.ssh \
+&& chmod 755 $USERHOME/bin \
+&& chmod 755 $GIT_SSH \
+&& chmod 600 $KNOWN_HOSTS \
+&& chmod 644 $GIT_CONFIG \
+&& chmod 644 $GIT_IGNORE_GLOBAL \
+&& sed -i 's/'$LOCALHOMESAFE'/'$SAFEHOME'/' $GIT_CONFIG \
+&& chmod 600 $SSH_PRIVATE_KEY_PATH/$SSH_PRIVATE_KEY \
+&& chown -R $THISUSER:$THISUSER $USERHOME
+
+
+ENV GITUSER=$THISUSER
+ENV GITLOGIN=$THISLOGIN
+
+ARG GITTOKEN=$USERHOME/.ssh/GITTOKEN
+ENV GITTOKEN=$GITTOKEN
+COPY assets.docker/GITTOKEN $GITTOKEN
+RUN chown $THISUSER:$THISUSER $GITTOKEN \
+&& chmod 600 $GITTOKEN
+
+ARG DOCKERHUBUSER=$USERHOME/.ssh/DOCKERHUBUSER
+ENV DOCKERHUBUSER=$DOCKERHUBUSER
+COPY assets.docker/DOCKERHUBUSER $DOCKERHUBUSER
+ARG DOCKERHUBTOKEN=$USERHOME/.ssh/DOCKERHUBTOKEN
+ENV DOCKERHUBTOKEN=$DOCKERHUBTOKEN
+COPY assets.docker/DOCKERHUBTOKEN $DOCKERHUBTOKEN
+
+RUN sudo chown $THISUSER:$THISUSER $DOCKERHUBUSER \
+&& sudo chmod 600 $DOCKERHUBUSER \
+&& sudo chown $THISUSER:$THISUSER $DOCKERHUBTOKEN \
+&& sudo chmod 600 $DOCKERHUBTOKEN
+
+
+USER $THISUSER
+
+FROM user2 as gituser
+RUN echo '### USER STUFF ###\n\
+alias ls="ls -Altr --color=auto"\n\
+export PS1="\\[\\033[1;34m\\]\\u\\[\\033[0m\\]@\\[\\033[1;31m\\]\\h:\\[\\033[0;37m\\]\\w\\[\\033[0m\\]\\$ " \n\
+'\
+>>$USERHOME/.bashrc
+
+FROM gituser as top
 ARG THISUSER
 ARG HOMEDIR
 ARG USERHOME=/$HOMEDIR/$THISUSER
@@ -150,8 +245,8 @@ RUN echo '### YARN (NEEDS NVM) ###\n\
 
 ARG DOCKER_ENV
 ENV DOCKER_ENV=$DOCKER_ENV
-RUN echo '### SHARED HISTORY ###\n\
-if [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.${DOCKER_ENV}"; fi && green "Shared bash history at:" && echo ${HISTFILE}\n\
+RUN echo '### PERSIST HISTORY ###\n\
+if touch ${HOME}/history/${DOCKER_ENV}.history;then export HISTFILE="${HOME}/history/${DOCKER_ENV}.history" && green "Persistent history at:" && echo ${HISTFILE};else yellow History not persistent;fi \n\
 '\
 >>$USERHOME/.bashrc
 
@@ -168,3 +263,6 @@ RUN echo "$line" >$USERHOME/.vimrc
 WORKDIR $USERHOME
 RUN mkdir $USERHOME/code-store
 VOLUME $USERHOME/code-store
+
+RUN mkdir $USERHOME/history
+VOLUME $USERHOME/history
