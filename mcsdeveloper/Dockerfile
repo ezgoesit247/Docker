@@ -4,7 +4,7 @@
 
 ##  . ./setenv && docker build   --build-arg THISUSER=${CUSER} --build-arg HOMEDIR=${HOMEDIR} --build-arg LOCALHOMESAFE=${LOCALHOMESAFE} --build-arg gitlogin=${CLOGIN} --build-arg gituser=${CUSER} --build-arg homepath=${HOMEPATH} --build-arg SSH_PRIVATE_KEY=${KEYNAME} --rm -t majikl/${APP}  --build-arg SSH_PRIVATE_KEY_STREAM="$(cat ${KEYPATH})" .
 
-##  docker run --privileged --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets majikl/${APP}
+##  docker run --privileged --rm -it -P --hostname ${APP} --user ${CUSER} -e DOCKER_ENV=${APP} -v ${HOME}/sandbox/assets.docker:/${HOMEDIR}/${CUSER}/local.assets -v ${HOME}/.m2:/${HOMEDIR}/${CUSER}/.m2 -v ${HOME}/.aws:/${HOMEDIR}/${CUSER}/.aws -v code-store:/${HOMEDIR}/${CUSER}/code-store -v history:/${HOMEDIR}/${CUSER}/history -v ${DOCKER_ASSETS}:/${HOMEDIR}/${CUSER}/public.assets majikl/${APP}
 
 FROM local/seed:ubuntu-20.04 as top2
 
@@ -104,7 +104,36 @@ ARG HOMEDIR
 ARG USERHOME=/$HOMEDIR/$THISUSER
 
 
-FROM top as nodeinstall
+FROM top as ntp
+### NTP ###
+ENV DEBIAN_FRONTEND=noninteractive
+RUN sudo ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
+&& sudo apt-get install -qq tzdata \
+&& sudo dpkg-reconfigure --frontend noninteractive tzdata \
+&& sudo apt-get -qq update \
+&& sudo apt-get -qq install \
+ntp \
+ntpdate \
+ntpstat
+RUN echo '### NTP ###\n\
+echo "Doing NTP sync..."\n\
+sudo service ntp stop > /dev/null 2>&1\n\
+sudo ntpdate time.nist.gov && sudo service ntp start\n\
+ntp_tries=5 && ntp_delay_seconds=8 && i=0\n\
+while ! sudo ntpstat > /dev/null 2>&1\n\
+   do sleep ${ntp_delay_seconds} && i=`expr ${i} + 1`\n\
+   if [ ${i} -ge ${ntp_tries} ]\n\
+      then yellow "NTP:" && echo bailing && break\n\
+   fi\n\
+done\n\
+if ntpstat > /dev/null 2>&1\n\
+   then green "NTP:" && ntpstat\n\
+   else grey "NTP:" && echo "not synchronized"\n\
+fi'\
+>>$USERHOME/.bashrc
+
+
+FROM ntp as nodeinstall
 
 ### NVM *must have* NVM_DIR
 ENV NVM_DIR=$USERHOME/.nvm
@@ -172,6 +201,7 @@ RUN sudo usermod -a -G docker $(whoami);
 
 FROM docker as dockertest
 RUN echo '### DOCKER ###\n\
+echo Testing Docker...\n\
 if ! sudo service docker status;then sudo service docker start && sleep 1 && sudo service docker status;fi\n\
 if docker run --rm hello-world 2>/dev/null|grep -q "Hello from Docker!"\n\
 then pass "Docker Hello World"; else fail "Docker Hello World"\n\
@@ -255,7 +285,7 @@ RUN echo '### YARN (NEEDS NVM) ###\n\
 ARG DOCKER_ENV
 ENV DOCKER_ENV=$DOCKER_ENV
 RUN echo '### PERSIST HISTORY ###\n\
-if touch ${HOME}/history/${DOCKER_ENV}.history;then export HISTFILE="${HOME}/history/${DOCKER_ENV}.history" && green "Persistent history at:" && echo ${HISTFILE};else yellow History not persistent;fi \n\
+if touch ${HOME}/history/${DOCKER_ENV}.history;then export HISTFILE="${HOME}/history/${DOCKER_ENV}.history" && green "Persistent history at:" && echo ${HISTFILE};else grey History not persistent;fi \n\
 '\
 >>$USERHOME/.bashrc
 
