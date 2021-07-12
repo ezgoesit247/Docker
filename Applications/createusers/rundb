@@ -19,7 +19,7 @@ if [ $# -eq 1 ]; then DEBUG=$1; fi
 
 
 
-CMD="DEBUG=${DEBUG} run --env=${ENV} --purpose=database --container=${APP} --app=${APP} ${DBPORT} ${DETACHDB} ${NAMEDCONTAINER} ${DBINTERACTIVE} \"${ENVVAR}\" ${DB}"
+CMD="DEBUG=${DEBUG} run --env=${ENV} --purpose=database --container=${APP} --app=${APP} ${NETWORK_CLAUSE} ${DBPORT} ${DETACHDB} ${NAMEDCONTAINER} ${DBINTERACTIVE} \"${ENVVAR}\" ${DB}"
 
 #echo ${CMD} && exit 1
 eval ${CMD}

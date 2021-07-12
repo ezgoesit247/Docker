@@ -24,7 +24,7 @@ if ${REMOVE};         then RM=--rm;fi
 if ${PRIV};           then _PRIV_=--priv;fi
 
 
-CMD="DEBUG=${DEBUG} run --env=${ENV} --purpose=${PURPOSE} --container=${APP} --app=${APP} ${RM} -v=${APP}:/${APP} ${PORT} ${_PRIV_} ${_USER_} ${RUNENV} ${RUNSTATE} local/${APP}:${OS}"
+CMD="DEBUG=${DEBUG} run --env=${ENV} --purpose=${PURPOSE} --container=${APP} --app=${APP} ${NETWORK_CLAUSE} ${RM} -v=${APP}:/${APP} ${PORT} ${_PRIV_} ${_USER_} ${RUNENV} ${RUNSTATE} local/${APP}:${OS}"
 
 #echo ${CMD} && exit 1
 eval ${CMD}

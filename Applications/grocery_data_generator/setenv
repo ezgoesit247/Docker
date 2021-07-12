@@ -10,3 +10,6 @@ NAMEDCONTAINER="-n=grocery_datagenerator"
 OS=ubuntu
 _USER_="-u ${CUSER}"
 LOCALUSER="--arg=LOCALUSER=${USER}"
+NETWORK_CLAUSE="--network=${APP}"
+RUNSTATE="-I -d"
+REMOVE=false
