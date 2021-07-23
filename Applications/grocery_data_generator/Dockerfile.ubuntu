@@ -52,3 +52,13 @@ RUN sudo chown -R $CUSER:$CUSER /grocery_data_generator /grocery_data_generator/
 
 ENV DOCKER_ENV=$DOCKER_ENV
 RUN echo 'export PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\]\w\[\033[0m\]$ "\nexport HISTTIMEFORMAT="%F	%T	"\nalias ls="ls -Altr --color=auto"\nif [ -d ${HOME}/public.assets/bash_history/ ]; then export HISTFILE="${HOME}/public.assets/bash_history/history.${DOCKER_ENV}"; fi && green "Shared bash history at: " && echo ${HISTFILE}\npushd /${APP} >/dev/null 2>&1 && git pull 2>/dev/null && popd >/dev/null 2>&1 || popd >/dev/null 2>&1\n'>>$CUSERHOME/.bashrc
+
+FROM user as EP
+WORKDIR /grocery_data_generator
+#ARG ENTRYFILE=/entrypoint.sh
+#RUN sudo su - -c "echo 'cd /grocery_data_generator && mvn benerator:generate' \
+#>$ENTRYFILE \
+#&& chown $CUSER:$CUSER $ENTRYFILE \
+#&& chmod 744 $ENTRYFILE"
+
+#ENTRYPOINT ["/entrypoint.sh"]
