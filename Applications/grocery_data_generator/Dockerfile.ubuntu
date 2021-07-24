@@ -55,6 +55,7 @@ RUN echo 'export PS1="\[\033[1;34m\]\u\[\033[0m\]@\[\033[1;31m\]\h:\[\033[0;37m\
 
 FROM user as EP
 WORKDIR /grocery_data_generator
+ENTRYPOINT ["mvn","benerator:generate"]
 #ARG ENTRYFILE=/entrypoint.sh
 #RUN sudo su - -c "echo 'cd /grocery_data_generator && mvn benerator:generate' \
 #>$ENTRYFILE \
