@@ -1,0 +1,9 @@
+### DB
+docker run --network grocery_data_generator_network -d -p 1433:1433 --hostname grocery_datagenerator_database_dev --name grocery_datagenerator_database_dev -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=P@ssw0rd!' -v /Users/brandonindia/Docker/assets.docker.public:/home/default_virtual/public.assets mcr.microsoft.com/mssql/server:2017-latest
+#
+docker run --network grocery_data_generator_network -d -p 1433:1433 --hostname grocery_database --name grocery_database majikl/grocery_datagenerator_database_dev
+
+### App
+docker run --network grocery_data_generator_network --privileged -d -it -P --hostname grocery_data_generator_sandbox_dev --name grocery_data_generator_sandbox_dev --user ezgoesit247 -v /Users/brandonindia/sandbox/assets.docker:/home/ezgoesit247/local.assets -v /Users/brandonindia/.m2:/home/ezgoesit247/.m2 -v /Users/brandonindia/.aws:/home/ezgoesit247/.aws -v grocery_data_generator:/grocery_data_generator -v code-store:/home/ezgoesit247/code-store -v /Users/brandonindia/Docker/assets.docker.public:/home/ezgoesit247/public.assets local/grocery_data_generator:ubuntu
+#
+docker run --network grocery_data_generator_network -it --hostname data_generator --name data_generator --user ezgoesit247 -v /Users/brandonindia/.m2:/home/ezgoesit247/.m2 -v grocery_data_generator:/grocery_data_generator majikl/grocery_data_generator_sandbox_dev
